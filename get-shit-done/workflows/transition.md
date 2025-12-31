@@ -459,13 +459,17 @@ Exit skill and invoke SlashCommand("/gsd:plan-phase [X+1]")
 ```
 
 <queue_for_auto_continue>
-Queue this command for auto-continue after `/clear`:
+**REQUIRED:** Queue the next command for auto-continue.
 
+Run this bash command NOW, substituting the actual phase number:
 ```bash
-~/.claude/get-shit-done/bin/queue-next.sh "/gsd:plan-phase [X+1]"
+~/.claude/get-shit-done/bin/queue-next.sh "/gsd:plan-phase [NEXT_PHASE_NUMBER]"
 ```
 
-Replace `[X+1]` with the actual next phase number.
+Example: If phase 2 just completed, run:
+```bash
+~/.claude/get-shit-done/bin/queue-next.sh "/gsd:plan-phase 3"
+```
 </queue_for_auto_continue>
 
 </if>
@@ -512,13 +516,17 @@ Exit skill and invoke SlashCommand("/gsd:complete-milestone [version]")
 ```
 
 <queue_for_auto_continue>
-Queue this command for auto-continue after `/clear`:
+**REQUIRED:** Queue the next command for auto-continue.
 
+Run this bash command NOW, substituting the milestone version from ROADMAP.md:
 ```bash
-~/.claude/get-shit-done/bin/queue-next.sh "/gsd:complete-milestone [version]"
+~/.claude/get-shit-done/bin/queue-next.sh "/gsd:complete-milestone [VERSION]"
 ```
 
-Replace `[version]` with the actual milestone version from ROADMAP.md.
+Example: If milestone is v1.0, run:
+```bash
+~/.claude/get-shit-done/bin/queue-next.sh "/gsd:complete-milestone v1.0"
+```
 </queue_for_auto_continue>
 
 </if>

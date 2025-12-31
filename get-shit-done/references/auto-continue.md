@@ -69,14 +69,30 @@ Project-scoped queues prevent conflicts when running multiple projects in parall
 
 ## Manual Queue Commands
 
-Queue a task manually:
+Queue a task manually using the helper script:
 
 ```bash
-# Using the /queue command
-/queue /gsd:execute-plan .planning/phases/01-foundation/01-02-PLAN.md
+~/.claude/get-shit-done/bin/queue-next.sh "/gsd:execute-plan .planning/phases/01-foundation/01-02-PLAN.md"
+```
 
-# Or directly
-~/.claude/get-shit-done/bin/queue-next.sh "/gsd:execute-plan ..."
+Then run `/clear` to trigger execution.
+
+## Stale Queue Handling
+
+If a queue is older than 24 hours, a warning is shown:
+
+```
+⚠️ WARNING: This task was queued 48 hours ago. Verify it's still relevant.
+```
+
+To clear a stale queue manually, see Debugging section below.
+
+## Git Ignore
+
+Add `.planning/queue.json` to your project's `.gitignore` to avoid committing queue state:
+
+```bash
+echo ".planning/queue.json" >> .gitignore
 ```
 
 ## Debugging
@@ -115,14 +131,14 @@ Window 1:                 /clear → runs /gsd:plan-phase 3 (correct project)
 Window 2:                 /clear → runs /gsd:execute-plan ... (correct project)
 ```
 
-## Integration with /spawn
+## Parallel Project Sessions
 
-The `/spawn` command launches Claude sessions with `/gsd:progress`. Combined with auto-continue:
+When running multiple GSD projects in parallel (e.g., via tmux):
 
-1. `/spawn` launches projects in parallel tmux windows
-2. Each project runs `/gsd:progress` to determine next action
-3. User works through phases, running `/clear` between each
-4. Queue system handles continuation automatically
+1. Each terminal/window has its own working directory
+2. Launch Claude with `/gsd:progress` to determine next action
+3. Work through phases, running `/clear` between each
+4. Queue system handles continuation automatically per-project
 
 ## Workflow Example
 

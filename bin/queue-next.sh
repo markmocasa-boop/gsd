@@ -21,11 +21,17 @@ fi
 # Check if queue is enabled in config
 CONFIG_FILE=".planning/config.json"
 if [[ -f "$CONFIG_FILE" ]]; then
-    # Check if queue.enabled is explicitly false
-    QUEUE_ENABLED=$(cat "$CONFIG_FILE" | grep -o '"enabled"[[:space:]]*:[[:space:]]*false' || true)
-    if [[ -n "$QUEUE_ENABLED" ]]; then
-        # Queue explicitly disabled
-        exit 0
+    if command -v jq &> /dev/null; then
+        # Use jq for reliable JSON parsing
+        QUEUE_ENABLED=$(jq -r '.queue.enabled // true' "$CONFIG_FILE" 2>/dev/null)
+        if [[ "$QUEUE_ENABLED" == "false" ]]; then
+            exit 0
+        fi
+    else
+        # Fallback: basic grep check (less reliable)
+        if grep -q '"queue"' "$CONFIG_FILE" && grep -q '"enabled"[[:space:]]*:[[:space:]]*false' "$CONFIG_FILE"; then
+            exit 0
+        fi
     fi
 fi
 
