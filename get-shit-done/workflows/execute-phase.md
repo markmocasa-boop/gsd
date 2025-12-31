@@ -1294,7 +1294,7 @@ MODE=$(cat .planning/config.json 2>/dev/null | grep -o '"mode"[[:space:]]*:[[:sp
 SPAWN_ENABLED=$(cat .planning/config.json 2>/dev/null | grep -o '"spawn"[[:space:]]*:[[:space:]]*{[^}]*"enabled"[[:space:]]*:[[:space:]]*true')
 
 if [[ "$MODE" == "yolo" ]] || [[ -n "$SPAWN_ENABLED" ]]; then
-  PROJECT=$(basename "$(pwd)")
+  PROJECT="$(basename "$(pwd)")-$(date +%s)"
   tmux new-window -n "$PROJECT" -c "$(pwd)"
   tmux send-keys -t "$PROJECT" "claude --dangerously-skip-permissions --chrome '/gsd:progress'" Enter
   echo "✓ New session spawned in tmux window '$PROJECT'"
@@ -1368,7 +1368,7 @@ MODE=$(cat .planning/config.json 2>/dev/null | grep -o '"mode"[[:space:]]*:[[:sp
 SPAWN_ENABLED=$(cat .planning/config.json 2>/dev/null | grep -o '"spawn"[[:space:]]*:[[:space:]]*{[^}]*"enabled"[[:space:]]*:[[:space:]]*true')
 
 if [[ "$MODE" == "yolo" ]] || [[ -n "$SPAWN_ENABLED" ]]; then
-  PROJECT=$(basename "$(pwd)")
+  PROJECT="$(basename "$(pwd)")-$(date +%s)"
   tmux new-window -n "$PROJECT" -c "$(pwd)"
   tmux send-keys -t "$PROJECT" "claude --dangerously-skip-permissions --chrome '/gsd:progress'" Enter
   echo "✓ New session spawned in tmux window '$PROJECT'"
@@ -1417,7 +1417,7 @@ MODE=$(cat .planning/config.json 2>/dev/null | grep -o '"mode"[[:space:]]*:[[:sp
 SPAWN_ENABLED=$(cat .planning/config.json 2>/dev/null | grep -o '"spawn"[[:space:]]*:[[:space:]]*{[^}]*"enabled"[[:space:]]*:[[:space:]]*true')
 
 if [[ "$MODE" == "yolo" ]] || [[ -n "$SPAWN_ENABLED" ]]; then
-  PROJECT=$(basename "$(pwd)")
+  PROJECT="$(basename "$(pwd)")-$(date +%s)"
   tmux new-window -n "$PROJECT" -c "$(pwd)"
   tmux send-keys -t "$PROJECT" "claude --dangerously-skip-permissions --chrome '/gsd:progress'" Enter
   echo "✓ New session spawned in tmux window '$PROJECT'"
