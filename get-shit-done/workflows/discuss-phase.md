@@ -182,8 +182,13 @@ Write file.
 <step name="confirm_creation">
 Present CONTEXT.md summary, then spawn or handoff based on mode.
 
+**First, check mode:**
+```bash
+MODE=$(cat .planning/config.json 2>/dev/null | jq -r '.mode // "interactive"')
+```
+
 <yolo_spawn>
-**If yolo mode:** Output spawn marker (hook handles tmux):
+**If MODE is "yolo":** Output the spawn marker exactly as shown:
 
 ```
 Created: .planning/phases/${PHASE}-${SLUG}/${PHASE}-CONTEXT.md
@@ -195,7 +200,7 @@ Then exit normally. The SessionEnd hook will spawn the new window and clean up.
 </yolo_spawn>
 
 <interactive_fallback>
-**If NOT yolo mode**, show summary and next step:
+**If MODE is NOT "yolo"**, show summary and next step:
 
 ```
 Created: .planning/phases/${PHASE}-${SLUG}/${PHASE}-CONTEXT.md

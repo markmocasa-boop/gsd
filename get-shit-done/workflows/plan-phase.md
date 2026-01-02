@@ -257,8 +257,14 @@ For multi-plan phases: each plan has focused scope, references previous plan sum
 </step>
 
 <step name="offer_next">
+**First, check mode:**
+```bash
+MODE=$(cat .planning/config.json 2>/dev/null | jq -r '.mode // "interactive"')
+echo "Mode: $MODE"
+```
+
 <yolo_spawn>
-**If yolo mode:** Output spawn marker (hook handles tmux):
+**If MODE is "yolo":** Output the spawn marker exactly as shown (hook handles the rest):
 
 ```
 Phase plan created: .planning/phases/XX-name/{phase}-01-PLAN.md
@@ -268,10 +274,12 @@ GSD_SPAWN: /gsd:execute-plan .planning/phases/XX-name/{phase}-01-PLAN.md
 ```
 
 Then exit normally. The SessionEnd hook will spawn the new window and clean up.
+
+**IMPORTANT:** The marker must be exactly `GSD_SPAWN: /gsd:...` on its own line. No extra formatting.
 </yolo_spawn>
 
 <interactive_fallback>
-**If NOT yolo mode:**
+**If MODE is NOT "yolo":**
 
 ```
 Phase plan created: .planning/phases/XX-name/{phase}-01-PLAN.md

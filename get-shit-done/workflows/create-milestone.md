@@ -316,8 +316,13 @@ Confirm: "Committed: docs: create milestone v[X.Y] [Name]"
 </step>
 
 <step name="offer_next">
+**First, check mode:**
+```bash
+MODE=$(cat .planning/config.json 2>/dev/null | jq -r '.mode // "interactive"')
+```
+
 <yolo_spawn>
-**If yolo mode:** Output spawn marker (hook handles tmux):
+**If MODE is "yolo":** Output the spawn marker exactly as shown:
 
 ```
 Milestone v[X.Y] [Name] created:
@@ -332,7 +337,7 @@ Then exit normally. The SessionEnd hook will spawn the new window and clean up.
 </yolo_spawn>
 
 <interactive_fallback>
-**If NOT yolo mode:**
+**If MODE is NOT "yolo":**
 
 ```
 Milestone v[X.Y] [Name] created:

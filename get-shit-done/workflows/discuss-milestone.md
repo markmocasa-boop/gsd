@@ -123,10 +123,13 @@ Loop until "Create milestone" selected.
 </step>
 
 <step name="handoff">
-**In yolo mode: Spawn new session directly. No /clear needed.**
+**First, check mode:**
+```bash
+MODE=$(cat .planning/config.json 2>/dev/null | jq -r '.mode // "interactive"')
+```
 
 <yolo_spawn>
-**If yolo mode:** Output spawn marker (hook handles tmux):
+**If MODE is "yolo":** Output the spawn marker exactly as shown:
 
 ```
 Milestone scope:
@@ -141,7 +144,7 @@ Then exit normally. The SessionEnd hook will spawn the new window and clean up.
 </yolo_spawn>
 
 <interactive_fallback>
-**Only if NOT yolo mode**, show manual handoff:
+**If MODE is NOT "yolo"**, show manual handoff:
 
 ```
 Milestone scope defined:
