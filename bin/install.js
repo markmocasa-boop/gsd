@@ -76,6 +76,12 @@ function installHooks(claudeDir, pathPrefix) {
         type: 'command'
       }]
     }],
+    Stop: [{
+      hooks: [{
+        command: hooksPrefix + 'gsd-stop.sh',
+        type: 'command'
+      }]
+    }],
     SessionEnd: [{
       hooks: [{
         command: hooksPrefix + 'gsd-session-end.sh',
@@ -125,7 +131,11 @@ function installHooks(claudeDir, pathPrefix) {
     // Check if GSD hooks already exist
     const hasGsdHook = settings.hooks[hookType].some(entry =>
       entry.hooks && entry.hooks.some(h =>
-        h.command && (h.command.includes('gsd-session-start.sh') || h.command.includes('gsd-session-end.sh'))
+        h.command && (
+          h.command.includes('gsd-session-start.sh') ||
+          h.command.includes('gsd-stop.sh') ||
+          h.command.includes('gsd-session-end.sh')
+        )
       )
     );
 

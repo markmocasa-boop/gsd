@@ -2,12 +2,17 @@
 # GSD Session End Hook
 # Detects GSD_SPAWN marker and handles spawn + cleanup
 
-set -e
+LOGFILE="$HOME/.claude/hooks/gsd-session.log"
+
+# Debug: log immediately on entry
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] HOOK CALLED - gsd-session-end.sh" >> "$LOGFILE"
 
 INPUT=$(cat)
 CWD=$(echo "$INPUT" | jq -r '.cwd // empty')
 TRANSCRIPT_PATH=$(echo "$INPUT" | jq -r '.transcript_path // empty')
-LOGFILE="$HOME/.claude/hooks/gsd-session.log"
+
+# Debug: log input data
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] CWD=$CWD TRANSCRIPT=$TRANSCRIPT_PATH" >> "$LOGFILE"
 
 log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$LOGFILE"

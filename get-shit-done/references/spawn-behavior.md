@@ -2,7 +2,7 @@
 
 ## Yolo Mode Spawn Protocol
 
-**When mode is `yolo` in `.planning/config.json`, Claude outputs a spawn marker and the SessionEnd hook handles everything.**
+**When mode is `yolo` in `.planning/config.json`, Claude outputs a spawn marker and the Stop hook handles everything.**
 
 No tmux commands. No variation. Just output the marker.
 
@@ -22,11 +22,11 @@ GSD_SPAWN: /gsd:progress
 GSD_SPAWN: /gsd:complete-milestone
 ```
 
-Then exit normally. The SessionEnd hook will:
+Then stop (the hook fires when Claude finishes responding). The Stop hook will:
 1. Parse the marker from the transcript
 2. Spawn a new tmux window with the command
 3. Verify the new window exists
-4. Kill the old window (by ID, safely)
+4. Send `/exit` to the source window (which closes Claude and the window)
 
 ## Checking Mode
 
@@ -67,16 +67,30 @@ Claude:
 
 ## Hook Architecture
 
-Two hooks work together:
+Three hooks work together:
 
 1. **SessionStart** (`gsd-session-start.sh`): Captures tmux window ID to `.planning/.current-window-id`
-2. **SessionEnd** (`gsd-session-end.sh`): Reads window ID, parses spawn marker, spawns successor, kills source by ID
+2. **Stop** (`gsd-stop.sh`): Fires when Claude finishes responding. Checks for GSD_SPAWN marker, spawns successor, sends /exit to source
+3. **SessionEnd** (`gsd-session-end.sh`): Fallback cleanup if session ends without Stop hook (e.g., manual /exit)
 
-Window ID is stable (integer), window names can change. Always kill by ID.
+**Why Stop, not SessionEnd?**
+- SessionEnd only fires when Claude **exits** (the process ends)
+- Stop fires every time Claude **finishes responding** (returns to prompt)
+- We need to spawn when Claude outputs the marker, while it's still at the prompt
+
+Window ID is stable (integer), window names can change. Always reference by ID.
 
 ## Safety Guarantees
 
-- New window is verified to exist BEFORE killing old window
-- Kill uses window ID (`:N`), not name (avoids wrong-window bugs)
-- 2-second delay allows spawn to stabilize
+- New window is verified to exist BEFORE sending /exit to old window
+- Uses window ID (`:N`), not name (avoids wrong-window bugs)
+- Duplicate spawn prevention: stores processed markers in `.planning/.spawn-marker-processed`
 - If spawn fails, source window stays open for debugging
+
+## Hook Data
+
+The Stop hook receives JSON input with:
+- `cwd`: Current working directory
+- `transcript_path`: Path to the JSONL transcript file
+
+Example: `/Users/bob/.claude/projects/-Users-bob-code-myproject/abc123.jsonl`
