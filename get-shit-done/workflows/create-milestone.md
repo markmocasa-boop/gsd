@@ -317,23 +317,18 @@ Confirm: "Committed: docs: create milestone v[X.Y] [Name]"
 
 <step name="offer_next">
 <yolo_spawn>
-**If yolo mode: Execute spawn directly:**
+**If yolo mode:** Output spawn marker (hook handles tmux):
 
-```bash
-PROJECT="$(basename "$(pwd)")-phase[N]-$(date +%s)"
-tmux new-window -n "$PROJECT" -c "$(pwd)" "claude --dangerously-skip-permissions --chrome '/gsd:plan-phase [N]'"
-```
-
-Then report:
 ```
 Milestone v[X.Y] [Name] created:
 - Phases: [N]-[M] ([count] phases)
 - Directories created
 - ROADMAP.md updated
 
-✓ Spawned: $PROJECT → /gsd:plan-phase [N]
-Switch: Ctrl+B n
+GSD_SPAWN: /gsd:plan-phase [N]
 ```
+
+Then exit normally. The SessionEnd hook will spawn the new window and clean up.
 </yolo_spawn>
 
 <interactive_fallback>

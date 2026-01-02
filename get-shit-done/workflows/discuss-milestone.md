@@ -126,26 +126,18 @@ Loop until "Create milestone" selected.
 **In yolo mode: Spawn new session directly. No /clear needed.**
 
 <yolo_spawn>
-**EXECUTE THIS DIRECTLY** (don't show /clear messaging):
+**If yolo mode:** Output spawn marker (hook handles tmux):
 
-```bash
-PROJECT="$(basename "$(pwd)")-milestone-$(date +%s)"
-# Build context string with actual values from discussion
-CONTEXT="v[X.Y] [Theme Name] - Features: [Feature 1], [Feature 2], [Feature 3]"
-tmux new-window -n "$PROJECT" -c "$(pwd)" "claude --dangerously-skip-permissions --chrome '/gsd:new-milestone $CONTEXT'"
 ```
-
-Then present:
-```
-✓ Spawned new session: $PROJECT
-
 Milestone scope:
 - v[X.Y] [Theme Name]
 - Features: [list]
 - Estimated phases: [N]
 
-Switch to new window: Ctrl+B n
+GSD_SPAWN: /gsd:new-milestone v[X.Y] [Theme Name]
 ```
+
+Then exit normally. The SessionEnd hook will spawn the new window and clean up.
 </yolo_spawn>
 
 <interactive_fallback>

@@ -1284,21 +1284,14 @@ Summary: .planning/phases/XX-name/{phase}-{plan}-SUMMARY.md
 ```
 
 <spawn_next_session>
-**REQUIRED:** Spawn new session for auto-continue.
+**REQUIRED:** Output spawn marker for auto-continue.
 
-Check if spawn is enabled:
-```bash
-# Check if mode is yolo OR spawn.enabled is true in config
-MODE=$(cat .planning/config.json 2>/dev/null | grep -o '"mode"[[:space:]]*:[[:space:]]*"[^"]*"' | grep -o '"[^"]*"$' | tr -d '"')
-SPAWN_ENABLED=$(cat .planning/config.json 2>/dev/null | grep -o '"spawn"[[:space:]]*:[[:space:]]*{[^}]*"enabled"[[:space:]]*:[[:space:]]*true')
-
-if [[ "$MODE" == "yolo" ]] || [[ -n "$SPAWN_ENABLED" ]]; then
-  PROJECT="$(basename "$(pwd)")-$(date +%s)"
-  tmux new-window -n "$PROJECT" -c "$(pwd)" "claude --dangerously-skip-permissions --chrome '/gsd:progress'"
-  echo "✓ New session spawned in tmux window '$PROJECT'"
-  echo "  Type 'exit' to close this session."
-fi
+If yolo/spawn mode enabled, output:
 ```
+GSD_SPAWN: /gsd:progress
+```
+
+The SessionEnd hook handles spawning and cleanup automatically.
 </spawn_next_session>
 
 Wait for user to clear and run next command.
@@ -1356,21 +1349,14 @@ This milestone is 100% done.
 ```
 
 <spawn_next_session>
-**REQUIRED:** Spawn new session for auto-continue.
+**REQUIRED:** Output spawn marker for auto-continue.
 
-Check if spawn is enabled:
-```bash
-# Check if mode is yolo OR spawn.enabled is true in config
-MODE=$(cat .planning/config.json 2>/dev/null | grep -o '"mode"[[:space:]]*:[[:space:]]*"[^"]*"' | grep -o '"[^"]*"$' | tr -d '"')
-SPAWN_ENABLED=$(cat .planning/config.json 2>/dev/null | grep -o '"spawn"[[:space:]]*:[[:space:]]*{[^}]*"enabled"[[:space:]]*:[[:space:]]*true')
-
-if [[ "$MODE" == "yolo" ]] || [[ -n "$SPAWN_ENABLED" ]]; then
-  PROJECT="$(basename "$(pwd)")-$(date +%s)"
-  tmux new-window -n "$PROJECT" -c "$(pwd)" "claude --dangerously-skip-permissions --chrome '/gsd:progress'"
-  echo "✓ New session spawned in tmux window '$PROJECT'"
-  echo "  Type 'exit' to close this session."
-fi
+If yolo/spawn mode enabled, output:
 ```
+GSD_SPAWN: /gsd:progress
+```
+
+The SessionEnd hook handles spawning and cleanup automatically.
 </spawn_next_session>
 
 **If phase complete but more phases remain:**
@@ -1403,21 +1389,14 @@ All [Y] plans finished.
 ```
 
 <spawn_next_session>
-**REQUIRED:** Spawn new session for auto-continue.
+**REQUIRED:** Output spawn marker for auto-continue.
 
-Check if spawn is enabled:
-```bash
-# Check if mode is yolo OR spawn.enabled is true in config
-MODE=$(cat .planning/config.json 2>/dev/null | grep -o '"mode"[[:space:]]*:[[:space:]]*"[^"]*"' | grep -o '"[^"]*"$' | tr -d '"')
-SPAWN_ENABLED=$(cat .planning/config.json 2>/dev/null | grep -o '"spawn"[[:space:]]*:[[:space:]]*{[^}]*"enabled"[[:space:]]*:[[:space:]]*true')
-
-if [[ "$MODE" == "yolo" ]] || [[ -n "$SPAWN_ENABLED" ]]; then
-  PROJECT="$(basename "$(pwd)")-$(date +%s)"
-  tmux new-window -n "$PROJECT" -c "$(pwd)" "claude --dangerously-skip-permissions --chrome '/gsd:progress'"
-  echo "✓ New session spawned in tmux window '$PROJECT'"
-  echo "  Type 'exit' to close this session."
-fi
+If yolo/spawn mode enabled, output:
 ```
+GSD_SPAWN: /gsd:progress
+```
+
+The SessionEnd hook handles spawning and cleanup automatically.
 </spawn_next_session>
 
 </step>

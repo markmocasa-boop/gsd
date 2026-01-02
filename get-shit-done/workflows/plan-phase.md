@@ -258,22 +258,16 @@ For multi-plan phases: each plan has focused scope, references previous plan sum
 
 <step name="offer_next">
 <yolo_spawn>
-**If yolo mode: Execute spawn directly:**
+**If yolo mode:** Output spawn marker (hook handles tmux):
 
-```bash
-PROJECT="$(basename "$(pwd)")-{phase}-01-$(date +%s)"
-PLAN_PATH=".planning/phases/XX-name/{phase}-01-PLAN.md"
-tmux new-window -n "$PROJECT" -c "$(pwd)" "claude --dangerously-skip-permissions --chrome '/gsd:execute-plan $PLAN_PATH'"
-```
-
-Then report:
 ```
 Phase plan created: .planning/phases/XX-name/{phase}-01-PLAN.md
 [X] tasks defined.
 
-✓ Spawned: $PROJECT → /gsd:execute-plan
-Switch: Ctrl+B n
+GSD_SPAWN: /gsd:execute-plan .planning/phases/XX-name/{phase}-01-PLAN.md
 ```
+
+Then exit normally. The SessionEnd hook will spawn the new window and clean up.
 </yolo_spawn>
 
 <interactive_fallback>

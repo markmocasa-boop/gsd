@@ -2,33 +2,38 @@
 
 ## Yolo Mode Spawn Protocol
 
-**When mode is `yolo` in `.planning/config.json`, Claude spawns new sessions directly.**
+**When mode is `yolo` in `.planning/config.json`, Claude outputs a spawn marker and the SessionEnd hook handles everything.**
 
-No `/clear` messaging. No user intervention. Just spawn and continue.
+No tmux commands. No variation. Just output the marker.
 
 ## How to Spawn
 
-At the end of any workflow with a handoff, execute this bash directly:
+At the end of any workflow with a handoff, output this marker:
 
-```bash
-PROJECT="$(basename "$(pwd)")-$(date +%s)"
-NEXT_CMD="/gsd:next-command [args]"
-tmux new-window -n "$PROJECT" -c "$(pwd)" "claude --dangerously-skip-permissions --chrome '$NEXT_CMD'"
+```
+GSD_SPAWN: /gsd:next-command [args]
 ```
 
-Then report:
+Examples:
 ```
-✓ Spawned: $PROJECT
-Next: $NEXT_CMD
-Switch: Ctrl+B n
+GSD_SPAWN: /gsd:execute-plan .planning/phases/05/05-01-PLAN.md
+GSD_SPAWN: /gsd:plan-phase 6
+GSD_SPAWN: /gsd:progress
+GSD_SPAWN: /gsd:complete-milestone
 ```
+
+Then exit normally. The SessionEnd hook will:
+1. Parse the marker from the transcript
+2. Spawn a new tmux window with the command
+3. Verify the new window exists
+4. Kill the old window (by ID, safely)
 
 ## Checking Mode
 
 ```bash
 MODE=$(cat .planning/config.json 2>/dev/null | jq -r '.mode // "interactive"')
 if [[ "$MODE" == "yolo" ]]; then
-  # Spawn directly
+  # Output GSD_SPAWN marker
 else
   # Show manual handoff
 fi
@@ -36,24 +41,42 @@ fi
 
 ## Workflow Handoffs
 
-| From Workflow | Spawns | Next Command |
-|---------------|--------|--------------|
-| discuss-milestone | new-milestone | `/gsd:new-milestone [context]` |
-| create-milestone | plan-phase | `/gsd:plan-phase [first-phase]` |
-| discuss-phase | plan-phase | `/gsd:plan-phase [N]` |
-| plan-phase | execute-plan | `/gsd:execute-plan [path]` |
-| execute-phase (plan done) | execute-plan | `/gsd:execute-plan [next-path]` |
-| execute-phase (phase done) | plan-phase | `/gsd:plan-phase [N+1]` |
-| execute-phase (milestone done) | complete-milestone | `/gsd:complete-milestone` |
-| complete-milestone | discuss-milestone | `/gsd:discuss-milestone` |
-| transition | plan-phase | `/gsd:plan-phase [N+1]` |
+| From Workflow | Next Command |
+|---------------|--------------|
+| discuss-milestone | `/gsd:new-milestone [context]` |
+| create-milestone | `/gsd:plan-phase [first-phase]` |
+| discuss-phase | `/gsd:plan-phase [N]` |
+| plan-phase | `/gsd:execute-plan [path]` |
+| execute-phase (plan done) | `/gsd:execute-plan [next-path]` |
+| execute-phase (phase done) | `/gsd:plan-phase [N+1]` |
+| execute-phase (milestone done) | `/gsd:complete-milestone` |
+| complete-milestone | `/gsd:discuss-milestone` |
+| transition | `/gsd:plan-phase [N+1]` |
 
-## Key Principle
+## Key Principles
 
 **In yolo mode, the user never types commands manually between workflow steps.**
 
 Claude:
 1. Finishes current workflow
-2. Spawns new tmux window with next command
-3. Reports what was spawned
-4. User switches windows (Ctrl+B n) to see new session running
+2. Outputs `GSD_SPAWN: /gsd:next-command`
+3. Exits normally
+4. Hook spawns new window and kills old one
+
+**Claude NEVER runs tmux commands directly** - this prevents variation and breakage.
+
+## Hook Architecture
+
+Two hooks work together:
+
+1. **SessionStart** (`gsd-session-start.sh`): Captures tmux window ID to `.planning/.current-window-id`
+2. **SessionEnd** (`gsd-session-end.sh`): Reads window ID, parses spawn marker, spawns successor, kills source by ID
+
+Window ID is stable (integer), window names can change. Always kill by ID.
+
+## Safety Guarantees
+
+- New window is verified to exist BEFORE killing old window
+- Kill uses window ID (`:N`), not name (avoids wrong-window bugs)
+- 2-second delay allows spawn to stabilize
+- If spawn fails, source window stays open for debugging

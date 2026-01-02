@@ -61,6 +61,85 @@ function copyWithPathReplacement(srcDir, destDir, pathPrefix) {
 }
 
 /**
+ * Merge GSD hooks into existing settings.json
+ * Adds SessionStart and SessionEnd hooks without removing existing hooks
+ */
+function installHooks(claudeDir, pathPrefix) {
+  const settingsPath = path.join(claudeDir, 'settings.json');
+  const hooksPrefix = pathPrefix + 'hooks/';
+
+  // GSD hooks to install
+  const gsdHooks = {
+    SessionStart: [{
+      hooks: [{
+        command: hooksPrefix + 'gsd-session-start.sh',
+        type: 'command'
+      }]
+    }],
+    SessionEnd: [{
+      hooks: [{
+        command: hooksPrefix + 'gsd-session-end.sh',
+        type: 'command'
+      }]
+    }]
+  };
+
+  // Load existing settings or create new
+  let settings = {};
+  if (fs.existsSync(settingsPath)) {
+    try {
+      settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+    } catch (e) {
+      console.log(`  ${yellow}⚠${reset} Could not parse settings.json, creating backup`);
+      fs.copyFileSync(settingsPath, settingsPath + '.backup');
+      settings = {};
+    }
+  }
+
+  // Ensure hooks object exists
+  if (!settings.hooks) {
+    settings.hooks = {};
+  }
+
+  // Remove old gsd-auto-spawn.sh if present (broken hook)
+  for (const hookType of Object.keys(settings.hooks)) {
+    if (Array.isArray(settings.hooks[hookType])) {
+      settings.hooks[hookType] = settings.hooks[hookType].filter(entry => {
+        if (entry.hooks && Array.isArray(entry.hooks)) {
+          entry.hooks = entry.hooks.filter(h =>
+            !h.command || !h.command.includes('gsd-auto-spawn.sh')
+          );
+          return entry.hooks.length > 0;
+        }
+        return true;
+      });
+    }
+  }
+
+  // Add GSD hooks (append, don't replace)
+  for (const [hookType, hookEntries] of Object.entries(gsdHooks)) {
+    if (!settings.hooks[hookType]) {
+      settings.hooks[hookType] = [];
+    }
+
+    // Check if GSD hooks already exist
+    const hasGsdHook = settings.hooks[hookType].some(entry =>
+      entry.hooks && entry.hooks.some(h =>
+        h.command && (h.command.includes('gsd-session-start.sh') || h.command.includes('gsd-session-end.sh'))
+      )
+    );
+
+    if (!hasGsdHook) {
+      settings.hooks[hookType].push(...hookEntries);
+    }
+  }
+
+  // Write updated settings
+  fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
+  return true;
+}
+
+/**
  * Install to the specified directory
  */
 function install(isGlobal) {
@@ -93,6 +172,27 @@ function install(isGlobal) {
   const skillDest = path.join(claudeDir, 'get-shit-done');
   copyWithPathReplacement(skillSrc, skillDest, pathPrefix);
   console.log(`  ${green}✓${reset} Installed get-shit-done`);
+
+  // Copy hooks
+  const hooksSrc = path.join(src, 'hooks');
+  const hooksDest = path.join(claudeDir, 'hooks');
+  if (fs.existsSync(hooksSrc)) {
+    fs.mkdirSync(hooksDest, { recursive: true });
+    const hookFiles = fs.readdirSync(hooksSrc);
+    for (const file of hookFiles) {
+      const srcFile = path.join(hooksSrc, file);
+      const destFile = path.join(hooksDest, file);
+      fs.copyFileSync(srcFile, destFile);
+      // Make executable
+      fs.chmodSync(destFile, 0o755);
+    }
+    console.log(`  ${green}✓${reset} Installed hooks`);
+
+    // Install hook configuration into settings.json
+    if (installHooks(claudeDir, pathPrefix)) {
+      console.log(`  ${green}✓${reset} Configured hooks in settings.json`);
+    }
+  }
 
   console.log(`
   ${green}Done!${reset} Run ${cyan}/gsd:help${reset} to get started.

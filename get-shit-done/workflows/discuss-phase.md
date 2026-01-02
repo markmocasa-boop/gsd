@@ -183,19 +183,15 @@ Write file.
 Present CONTEXT.md summary, then spawn or handoff based on mode.
 
 <yolo_spawn>
-**If yolo mode: Execute spawn directly:**
+**If yolo mode:** Output spawn marker (hook handles tmux):
 
-```bash
-PROJECT="$(basename "$(pwd)")-phase${PHASE}-$(date +%s)"
-tmux new-window -n "$PROJECT" -c "$(pwd)" "claude --dangerously-skip-permissions --chrome '/gsd:plan-phase ${PHASE}'"
-```
-
-Then report:
 ```
 Created: .planning/phases/${PHASE}-${SLUG}/${PHASE}-CONTEXT.md
-✓ Spawned: $PROJECT → /gsd:plan-phase ${PHASE}
-Switch: Ctrl+B n
+
+GSD_SPAWN: /gsd:plan-phase ${PHASE}
 ```
+
+Then exit normally. The SessionEnd hook will spawn the new window and clean up.
 </yolo_spawn>
 
 <interactive_fallback>

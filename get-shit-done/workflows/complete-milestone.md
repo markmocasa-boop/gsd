@@ -557,14 +557,8 @@ Confirm: "Committed: chore: complete v[X.Y] milestone"
 
 <step name="offer_next">
 <yolo_spawn>
-**If yolo mode: Execute spawn directly:**
+**If yolo mode:** Output spawn marker (hook handles tmux):
 
-```bash
-PROJECT="$(basename "$(pwd)")-next-milestone-$(date +%s)"
-tmux new-window -n "$PROJECT" -c "$(pwd)" "claude --dangerously-skip-permissions --chrome '/gsd:discuss-milestone'"
-```
-
-Then report:
 ```
 ✅ Milestone v[X.Y] [Name] complete
 
@@ -574,9 +568,10 @@ Shipped:
 
 Tag: v[X.Y]
 
-✓ Spawned: $PROJECT → /gsd:discuss-milestone
-Switch: Ctrl+B n
+GSD_SPAWN: /gsd:discuss-milestone
 ```
+
+Then exit normally. The SessionEnd hook will spawn the new window and clean up.
 </yolo_spawn>
 
 <interactive_fallback>
