@@ -25,7 +25,7 @@
     "./commands/gsd/pause-work.md",
     "./commands/gsd/resume-work.md",
     "./commands/gsd/consider-issues.md",
-    "./commands/gsd/help.md",
-    "./commands/gsd/auto.md"
-  ]
+    "./commands/gsd/help.md"
+  ],
+  "hooks": "./hooks/hooks.json"
 }

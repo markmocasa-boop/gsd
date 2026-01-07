@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "ln -sf ${CLAUDE_PLUGIN_ROOT} ~/.claude/get-shit-done"
+          }
+        ]
+      }
+    ]
+  }
+}
