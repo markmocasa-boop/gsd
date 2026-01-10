@@ -104,6 +104,13 @@ Usage in OpenCode:
 /gsd:plan-phase 1
 ```
 
+TUI command palette (type command manually):
+
+```
+gsd:new-project
+gsd:help
+```
+
 Troubleshooting:
 
 ```bash

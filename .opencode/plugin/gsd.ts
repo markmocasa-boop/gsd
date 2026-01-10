@@ -120,10 +120,30 @@ function resolvePlanningContext(worktree: string) {
   return contextBlocks
 }
 
-export const GsdPlugin = async ({ worktree }) => {
+function parseTuiCommand(command: string) {
+  const trimmed = command.trim()
+  if (!trimmed.startsWith("gsd")) return null
+  if (trimmed === "gsd") return "help"
+  if (trimmed.startsWith("gsd:")) return trimmed.slice("gsd:".length)
+  if (trimmed.startsWith("gsd ")) return trimmed.slice("gsd ".length)
+  return null
+}
+
+export const GsdPlugin = async ({ worktree, client }) => {
   const commandsIndex = loadCommandsIndex()
 
   return {
+    event: async ({ event }) => {
+      if (event.type !== "tui.command.execute") return
+      const commandText = parseTuiCommand(event.properties.command)
+      if (!commandText) return
+
+      const slashCommand = `/gsd:${commandText.trim()}`
+      await client.tui.clearPrompt()
+      await client.tui.appendPrompt({ body: { text: slashCommand } })
+      await client.tui.submitPrompt()
+    },
+
     "chat.message": async (_input, output) => {
       const textPart = output.parts.find((part) => part.type === "text")
       if (!textPart || !isGsdInvocation(textPart.text)) return
