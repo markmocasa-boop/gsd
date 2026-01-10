@@ -67,11 +67,15 @@ function stripJsonComments(text) {
 function loadConfig() {
   const configPath = fs.existsSync(configPathJsonc) ? configPathJsonc : configPathJson
   if (!fs.existsSync(configPath)) {
-    return { config: { "$schema": "https://opencode.ai/config.json" }, configPath }
+    return { config: { "$schema": "https://opencode.ai/config.json" }, configPath, raw: null, parseError: null }
   }
   const raw = readText(configPath)
-  const parsed = JSON.parse(stripJsonComments(raw))
-  return { config: parsed, configPath }
+  try {
+    const parsed = JSON.parse(stripJsonComments(raw))
+    return { config: parsed, configPath, raw, parseError: null }
+  } catch (err) {
+    return { config: null, configPath, raw, parseError: err }
+  }
 }
 
 function buildCommandMap() {
@@ -109,11 +113,19 @@ fs.cpSync(commandsSource, path.join(gsdRoot, "commands", "gsd"), {
   force: true,
 })
 
-const { config, configPath } = loadConfig()
+const { config, configPath, raw, parseError } = loadConfig()
 const gsdCommands = buildCommandMap()
-config.command = { ...(config.command || {}), ...gsdCommands }
+const finalConfig = config || { "$schema": "https://opencode.ai/config.json" }
+finalConfig.command = { ...(finalConfig.command || {}), ...gsdCommands }
 fs.mkdirSync(configDir, { recursive: true })
-fs.writeFileSync(configPath, JSON.stringify(config, null, 2))
+
+if (!config && raw && parseError) {
+  const backupPath = `${configPath}.bak.${Date.now()}`
+  fs.writeFileSync(backupPath, raw)
+  console.warn(`Warning: Failed to parse ${configPath}. Backed up to ${backupPath}.`)
+}
+
+fs.writeFileSync(configPath, JSON.stringify(finalConfig, null, 2))
 
 console.log(`Installed GSD OpenCode plugin to ${configDir}`)
 console.log(`Registered ${Object.keys(gsdCommands).length} commands in ${configPath}`)

@@ -31,8 +31,13 @@ function loadConfig() {
   const configPath = fs.existsSync(configPathJsonc) ? configPathJsonc : configPathJson
   if (!fs.existsSync(configPath)) return null
   const raw = readText(configPath)
-  const parsed = JSON.parse(stripJsonComments(raw))
-  return { config: parsed, configPath }
+  try {
+    const parsed = JSON.parse(stripJsonComments(raw))
+    return { config: parsed, configPath }
+  } catch (err) {
+    console.warn(`Warning: Failed to parse ${configPath}. Skipping command cleanup.`)
+    return null
+  }
 }
 
 if (fs.existsSync(gsdRoot)) {
