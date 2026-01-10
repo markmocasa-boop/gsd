@@ -67,12 +67,12 @@ Arguments: $ARGUMENTS
 
 4. **Display summary table (grouped by parallel_group):**
 
-   **If parallel groups exist:**
+   **If plan-level parallel groups exist:**
    ```
    Background Tasks
    ════════════════════════════════════════
 
-   Parallel Group: phase-11-batch-1736502345
+   Plan-Level Parallel Group: phase-11-batch-1736502345
    ───────────────────────────────────────
 
    Running (2):
@@ -104,6 +104,52 @@ Arguments: $ARGUMENTS
    Resume group: /gsd:status --resume
    ```
 
+   **If task-level parallel groups exist within a plan:**
+   ```
+   Plan Execution: 11-02-PLAN.md
+   ════════════════════════════════════════
+
+   Task Parallel Execution Active
+   Group: plan-11-02-tasks-batch-1736955600
+   Concurrency: 2/3 slots in use
+
+   Group 1 (Running):
+     → Tasks 1, 3: agent_01HXXX (45s elapsed)
+
+   Sequential (Waiting):
+     ⏳ Task 2: waiting for Task 1 (file conflict)
+
+   Group 2 (Queued):
+     ⏳ Tasks 4, 5: waiting for concurrency slot
+     ⚠️ Task 4 checkpoint will be skipped
+
+   Sequential (After Group 2):
+     ⏳ Task 6: depends on Task 5 (file conflict)
+
+   ════════════════════════════════════════
+   Progress: 0/6 tasks complete
+   Parallelization: 2 groups (4 tasks parallelized)
+   Checkpoints: 1 will be skipped
+   ```
+
+   **If both plan-level and task-level parallel execution active:**
+   ```
+   Phase 11 Parallel Execution
+   ════════════════════════════════════════
+   Concurrency: 3/3 slots in use
+
+   Plan-Level:
+     → 11-01: Running
+       └─ Tasks 1,3: parallel (agent_01HAAA)
+       └─ Task 2: sequential (pending)
+     → 11-03: Running (all tasks sequential)
+     ⏳ 11-02: Queued (waiting for 11-01)
+
+   ════════════════════════════════════════
+   Plans: 0/3 complete
+   Active agents: 3 (2 plan-level, 1 task-level)
+   ```
+
    **If no parallel groups (single agents only):**
    ```
    Background Tasks
@@ -123,11 +169,12 @@ Arguments: $ARGUMENTS
    Wait for all: /gsd:status --wait
    ```
 
-5. **Show queue positions for waiting plans:**
-   For plans with status "queued":
+5. **Show queue positions for waiting plans/tasks:**
+   For entries with status "queued":
    - Show queue position
    - Show what they're waiting for (from depends_on field)
-   - Show checkpoint warnings if plan has checkpoints
+   - Show checkpoint warnings if applicable
+   - For task-level: show which tasks are queued together
 
 ## With agent-id argument
 
@@ -258,9 +305,12 @@ Arguments: $ARGUMENTS
 <success_criteria>
 - [ ] Reads agent-history.json for background agents
 - [ ] Groups agents by parallel_group when displaying
+- [ ] Distinguishes plan-level from task-level agents (via granularity field)
 - [ ] Uses TaskOutput to check running agent status
 - [ ] Updates history with current status
 - [ ] Shows summary table with parallel group context
+- [ ] Shows task-level parallel execution within plans
+- [ ] Shows nested plan/task parallel execution when both active
 - [ ] Shows detailed output for specific agent
 - [ ] --wait flag blocks until all complete
 - [ ] --resume flag resumes incomplete agents in parallel group
