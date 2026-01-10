@@ -75,7 +75,17 @@ export const list = tool({
       .sort((a, b) => a.name.localeCompare(b.name))
       .map((entry) => ({ name: entry.name, file: entry.filePath }))
 
-    return { commands }
+    const lines = commands.map((entry) => `- ${entry.name}`)
+    const payload = JSON.stringify({ commands }, null, 2)
+    return [
+      "Available GSD commands:",
+      lines.join("\n"),
+      "",
+      "JSON payload:",
+      "```json",
+      payload,
+      "```",
+    ].join("\n")
   },
 })
 
@@ -96,10 +106,13 @@ export const command = tool({
     const entry = index.get(name)
 
     if (!entry) {
-      return {
-        error: `Unknown command: ${name}`,
-        available: Array.from(index.keys()).sort(),
-      }
+      const available = Array.from(index.keys()).sort()
+      return [
+        `Unknown command: ${name}`,
+        "",
+        "Available commands:",
+        available.map((command) => `- ${command}`).join("\n"),
+      ].join("\n")
     }
 
     const content = readText(entry.filePath)
@@ -117,6 +130,18 @@ export const command = tool({
       result.missingReferences = missing
     }
 
-    return result
+    const payload = JSON.stringify(result, null, 2)
+    return [
+      `GSD command: ${entry.name}`,
+      "",
+      "```md",
+      content.trim(),
+      "```",
+      "",
+      "JSON payload:",
+      "```json",
+      payload,
+      "```",
+    ].join("\n")
   },
 })
