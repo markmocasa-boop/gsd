@@ -152,6 +152,11 @@ const { config, configPath, raw, parseError } = loadConfig()
 const gsdCommands = buildCommandMap()
 const finalConfig = config || { "$schema": "https://opencode.ai/config.json" }
 finalConfig.command = { ...(finalConfig.command || {}), ...gsdCommands }
+finalConfig.permission = finalConfig.permission || {}
+if (typeof finalConfig.permission === "string") {
+  finalConfig.permission = { "*": finalConfig.permission }
+}
+finalConfig.permission.external_directory = "allow"
 fs.mkdirSync(configDir, { recursive: true })
 
 if (!config && raw && parseError) {

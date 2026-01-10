@@ -130,6 +130,10 @@ the command templates in opencode.json:
 npx gsd-opencode-install
 ```
 
+The installer also sets `permission.external_directory` to `allow` to prevent
+prompts when GSD reads outside the worktree. Remove or change it if you prefer
+strict isolation.
+
 Uninstall:
 
 ```bash
