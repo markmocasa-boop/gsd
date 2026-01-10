@@ -267,7 +267,8 @@ Control parallel execution behavior through config.json and plan frontmatter.
     "task_level": true,
     "skip_checkpoints": true,
     "max_concurrent_agents": 3,
-    "min_plans_for_parallel": 2
+    "min_plans_for_parallel": 2,
+    "min_tasks_for_parallel": 3
   }
 }
 ```
@@ -278,21 +279,45 @@ Control parallel execution behavior through config.json and plan frontmatter.
 |--------|---------|-------------|
 | `plan_level` | true | Enable plan-level parallelization |
 | `task_level` | true | Enable task-level parallelization within plans |
-| `skip_checkpoints` | true | Allow checkpoint plans to run in background with skipping |
-| `max_concurrent_agents` | 3 | Global limit on concurrent background agents |
-| `min_plans_for_parallel` | 2 | Minimum plans needed to trigger parallelization |
+| `skip_checkpoints` | true | Allow checkpoint plans/tasks to run in background with skipping |
+| `max_concurrent_agents` | 3 | Global limit on concurrent background agents (shared by plan and task agents) |
+| `min_plans_for_parallel` | 2 | Minimum plans needed to trigger plan-level parallelization |
+| `min_tasks_for_parallel` | 3 | Minimum tasks in plan to trigger task-level parallelization |
 
 **Per-plan override in PLAN.md frontmatter:**
 ```yaml
 ---
 phase: 11
 plan: 01
-parallel: false  # Force this plan to run sequentially
+parallel: false  # Force this plan to run sequentially (plan-level)
+parallel_tasks: false  # Force tasks to run sequentially (task-level)
 skip_checkpoints: false  # Force foreground execution for checkpoints
 ---
 ```
 
-**Decision tree:**
+**Per-task override in PLAN.md:**
+```xml
+<!-- Force specific task to run sequentially even if no file conflicts -->
+<task type="auto" parallel="false">
+  <name>Critical task that must run alone</name>
+  <action>...</action>
+</task>
+
+<!-- Force checkpoint to run in foreground even if skip_checkpoints: true globally -->
+<task type="checkpoint:human-verify" skip_in_background="false">
+  <what-built>...</what-built>
+  <how-to-verify>...</how-to-verify>
+</task>
+```
+
+**Task-level override attributes:**
+
+| Attribute | Values | Description |
+|-----------|--------|-------------|
+| `parallel` | true/false | Override task parallelization (default: based on dependency analysis) |
+| `skip_in_background` | true/false | Whether checkpoint can be skipped in background mode (default: true) |
+
+**Decision tree (plan-level):**
 
 ```
 1. Config says plan_level: false
@@ -317,6 +342,34 @@ skip_checkpoints: false  # Force foreground execution for checkpoints
    → Analyze dependencies and parallelize where safe
 ```
 
+**Decision tree (task-level):**
+
+```
+1. Config says task_level: false
+   → All tasks execute sequentially
+
+2. Plan frontmatter says parallel_tasks: false
+   → All tasks execute sequentially
+
+3. Fewer than min_tasks_for_parallel tasks in plan (default: 3)
+   → Execute sequentially (overhead not worth it)
+
+4. Task has parallel="false" attribute
+   → That specific task runs sequentially
+
+5. Checkpoint task has skip_in_background="false"
+   → That checkpoint runs in foreground
+
+6. Running agents >= max_concurrent_agents
+   → Queue task groups until slot opens
+
+7. No independent groups after dependency analysis
+   → Execute sequentially
+
+8. Otherwise
+   → Analyze task dependencies and parallelize where safe
+```
+
 **Reading config:**
 ```bash
 # Check if config exists and read parallelization settings
@@ -324,9 +377,11 @@ CONFIG=$(cat .planning/config.json 2>/dev/null || echo '{}')
 
 # Extract parallelization settings (defaults if not present)
 PLAN_LEVEL=$(echo "$CONFIG" | jq -r '.parallelization.plan_level // true')
+TASK_LEVEL=$(echo "$CONFIG" | jq -r '.parallelization.task_level // true')
 MAX_CONCURRENT=$(echo "$CONFIG" | jq -r '.parallelization.max_concurrent_agents // 3')
 SKIP_CHECKPOINTS=$(echo "$CONFIG" | jq -r '.parallelization.skip_checkpoints // true')
 MIN_PLANS=$(echo "$CONFIG" | jq -r '.parallelization.min_plans_for_parallel // 2')
+MIN_TASKS=$(echo "$CONFIG" | jq -r '.parallelization.min_tasks_for_parallel // 3')
 ```
 
 **Checking plan-level override:**
@@ -334,6 +389,19 @@ MIN_PLANS=$(echo "$CONFIG" | jq -r '.parallelization.min_plans_for_parallel // 2
 # Extract frontmatter from plan
 PARALLEL=$(grep -A10 "^---" "$PLAN_PATH" | grep "^parallel:" | awk '{print $2}')
 [ "$PARALLEL" = "false" ] && echo "Plan opts out of parallelization"
+
+# Check task-level override
+PARALLEL_TASKS=$(grep -A10 "^---" "$PLAN_PATH" | grep "^parallel_tasks:" | awk '{print $2}')
+[ "$PARALLEL_TASKS" = "false" ] && echo "Plan opts out of task parallelization"
+```
+
+**Checking per-task override:**
+```bash
+# Check if specific task opts out of parallelization
+grep 'parallel="false"' "$PLAN_PATH"
+
+# Check if checkpoint requires foreground execution
+grep 'skip_in_background="false"' "$PLAN_PATH"
 ```
 </parallelization_config>
 
