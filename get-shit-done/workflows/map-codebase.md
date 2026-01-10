@@ -75,6 +75,9 @@ Use Task tool with `subagent_type="Explore"` and `run_in_background=true` for pa
 Launch ALL four tasks back-to-back without waiting for any to finish. After all four are started,
 wait for completion in the collect_results step. Do NOT run them sequentially.
 
+**Execution rule:** In a single response, issue 4 Task tool calls (one per agent) with
+`run_in_background=true`. Do not wait between calls.
+
 **Agent 1: Stack + Integrations (Technology Focus)**
 
 Task tool parameters:
