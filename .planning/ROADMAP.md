@@ -163,7 +163,7 @@ GitHub Issue #37. When Claude Code session ends mid-execution, previously the wo
 **Plans:** 2 plans
 
 Plans:
-- [ ] 11-01: Async Execution Foundation - Create /gsd:execute-async, /gsd:status, extend agent-history schema
+- [x] 11-01: Async Execution Foundation - Create /gsd:execute-async, /gsd:status, extend agent-history schema
 - [ ] 11-02: Parallel Phase Execution - Create /gsd:execute-phase with dependency detection and queue management
 
 Components:
@@ -193,4 +193,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 8. Improve Roadmap System | 1/1 | Complete | 2026-01-05 |
 | 9. Integrate Verify-Work | 1/1 | Complete | 2026-01-09 |
 | 10. Subagent Resume | 2/2 | Complete | 2026-01-09 |
-| 11. Async Parallel Execution | 0/? | Not Started | - |
+| 11. Async Parallel Execution | 1/2 | In Progress | - |
