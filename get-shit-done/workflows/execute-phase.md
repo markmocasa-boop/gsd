@@ -703,6 +703,171 @@ PLAN_START_EPOCH=$(date +%s)
 Store in shell variables for duration calculation at completion.
 </step>
 
+<step name="analyze_task_dependencies">
+**Task-level parallelization analysis for single plan execution.**
+
+This step analyzes tasks within a single plan to identify independent task groups that can be parallelized.
+
+**Entry point:**
+After parse_segments determines execution pattern, if the plan:
+- Has multiple tasks (3+ by default)
+- Does NOT have decision/human-action checkpoints that affect subsequent tasks
+- Has config `parallelization.task_level: true` (default)
+- Does NOT have plan frontmatter `parallel_tasks: false`
+
+**Skip conditions:**
+- Config has `parallelization.task_level: false` → execute sequentially
+- Plan frontmatter has `parallel_tasks: false` → execute sequentially
+- Fewer than `min_tasks_for_parallel` tasks (default: 3) → execute sequentially
+- Plan has decision checkpoints that affect following tasks → execute sequentially
+
+**1. Parse all tasks from PLAN.md:**
+
+```bash
+# Extract task elements
+grep -n '<task' "$PLAN_PATH"
+
+# For each task, extract:
+# - Task name/number
+# - Files modified (from <files> element)
+# - Type (auto, checkpoint:*, etc.)
+# - depends_on attribute if present
+# - parallel="false" attribute if present
+```
+
+**2. Build task dependency graph:**
+
+```
+Task dependencies detected by:
+a) Explicit depends_on attribute: <task depends_on="task-1">
+b) File conflicts: Tasks modifying same files must be sequential
+c) Output references: Task B references output of Task A
+d) Sequential logic: Task describes "after X is done" or "using output from"
+e) Checkpoint position: Checkpoint tasks break parallelization flow
+```
+
+Example analysis:
+```
+Task 1: <files>src/auth.ts</files>
+Task 2: <files>src/auth.ts, src/types.ts</files>  ← depends on Task 1 (file conflict)
+Task 3: <files>src/utils.ts</files>               ← independent
+Task 4: <files>src/config.ts</files> type="checkpoint:human-verify"
+Task 5: <files>src/api.ts</files>                 ← depends on Task 4 (checkpoint barrier)
+Task 6: <files>src/api.ts</files>                 ← depends on Task 5 (file conflict)
+```
+
+**3. Categorize tasks:**
+
+| Category | Criteria | Action |
+|----------|----------|--------|
+| independent | No shared files, no dependencies | Can run in parallel |
+| dependent | Requires another task to complete first | Wait for dependency |
+| checkpoint | Contains human interaction | Special handling per config |
+
+**4. Checkpoint handling at task level:**
+
+By default, checkpoint tasks ARE included in parallelization groups.
+
+In background task agents, checkpoints are handled as:
+- `checkpoint:human-verify`: Skip and log "skipped - background mode"
+- `checkpoint:decision`: Use first option and log choice
+- `checkpoint:human-action`: Skip and log warning
+
+**Per-task override:**
+```xml
+<task type="checkpoint" skip_in_background="false">
+  <!-- This checkpoint MUST run in foreground even if skip_checkpoints: true -->
+</task>
+```
+
+If config `skip_checkpoints: false`, tasks containing checkpoints run in main context.
+If task has `skip_in_background="false"` attribute, that task runs in foreground.
+
+Checkpoint tasks create dependency barriers: tasks after a checkpoint depend on it.
+
+**5. Group independent tasks (respecting checkpoints):**
+
+```
+Example for a 6-task plan with checkpoint at Task 4:
+
+If skip_checkpoints: true (default):
+  Group 1: [Task 1, Task 3] - no dependencies, no file conflicts
+  Sequential: Task 2 (depends on Task 1 output)
+  Group 2: [Task 4-checkpoint, Task 5] - can parallelize (checkpoint skipped)
+  Sequential: Task 6 (depends on Task 5)
+
+If skip_checkpoints: false:
+  Group 1: [Task 1, Task 3] - parallel
+  Sequential: Task 2 (depends on Task 1)
+  Main Context: Task 4 (checkpoint - must run in foreground)
+  Group 2: [Task 5] - after checkpoint
+  Sequential: Task 6
+```
+
+**6. Decision logic:**
+
+```
+if config.parallelization.task_level === false:
+  → Execute all tasks sequentially
+
+if plan.frontmatter.parallel_tasks === false:
+  → Execute all tasks sequentially
+
+if task_count < min_tasks_for_parallel (default: 3):
+  → Execute sequentially (overhead not worth it)
+
+if no independent groups found after analysis:
+  → Execute sequentially
+
+otherwise:
+  → Spawn parallel agents per group
+```
+
+**7. Present analysis:**
+
+<if mode="yolo">
+```
+⚡ Auto-approved: Task-level parallelization
+
+Plan has [N] tasks:
+  Parallel Group 1: [Task 1, Task 3] (no conflicts)
+  Sequential: Task 2 (depends on Task 1)
+  Parallel Group 2: [Task 4, Task 5] (checkpoint skipped)
+  Sequential: Task 6 (depends on Task 5)
+
+Spawning parallel task agents...
+```
+
+Proceed to spawn_task_agents step.
+</if>
+
+<if mode="interactive">
+```
+Plan has [N] tasks
+
+Task dependency analysis:
+  Parallel Group 1: Tasks 1, 3 (no conflicts)
+  Sequential: Task 2 (depends on Task 1)
+  Parallel Group 2: Tasks 4, 5 (Task 4 checkpoint will be skipped)
+  Sequential: Task 6 (depends on Task 5)
+
+Concurrency: [X] slots available (of [max] max)
+
+Parallelize tasks? (yes / sequential / review)
+```
+
+Wait for user confirmation.
+</if>
+
+**8. Route to execution:**
+
+| Analysis Result | Next Step |
+|-----------------|-----------|
+| Independent groups found | spawn_task_agents |
+| All sequential after analysis | execute (normal flow) |
+| User chose "sequential" | execute (normal flow) |
+</step>
+
 <step name="parse_segments">
 **Intelligent segmentation: Parse plan into execution segments.**
 
