@@ -73,7 +73,7 @@ People who want to describe what they want and have it built correctly — witho
 npx get-shit-done-cc
 ```
 
-That's it. Verify with `/gsd:help` inside your Claude Code interface.
+That's it. Launch Claude Code and run `/gsd:help`.
 
 <details>
 <summary><strong>Non-interactive Install (Docker, CI, Scripts)</strong></summary>
