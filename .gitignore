@@ -5,3 +5,7 @@ TO-DOS.md
 CLAUDE.md
 .planning
 /research
+
+# Installed GSD files (duplicates of source)
+.claude/commands/
+.claude/get-shit-done/
