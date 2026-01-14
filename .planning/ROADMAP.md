@@ -41,7 +41,9 @@ Full feature parity port of GSD to support both Claude Code and OpenCode platfor
 **Research:** Unlikely (internal Node.js work using established patterns)
 
 **Dependencies:** Phase 1 (need to understand OpenCode structure first)
-**Status:** Not started
+**Status:** In progress (1/1 plans)
+**Plans:**
+- [ ] 02-01: Multi-Agent Installer
 
 ---
 
@@ -83,7 +85,7 @@ Full feature parity port of GSD to support both Claude Code and OpenCode platfor
 | Phase | Status | Plans | Completed |
 |-------|--------|-------|-----------|
 | 1. OpenCode Research | Complete | 1/1 | 2026-01-14 |
-| 2. Multi-Agent Installer | Not started | — | — |
+| 2. Multi-Agent Installer | In progress | 0/1 | — |
 | 3. Command Adaptation | Not started | — | — |
 | 4. Validation | Not started | — | — |
 
