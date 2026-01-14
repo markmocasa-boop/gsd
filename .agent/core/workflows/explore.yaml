@@ -1,0 +1,141 @@
+# Explore Workflow
+
+**Complexity:** Variable
+**Phases:** Flexible
+**Time:** Variable
+**Identities:** As needed
+
+---
+
+## When to Use
+
+- Creative experiments
+- Learning projects
+- Proof of concepts
+- "I have an idea, let's see where it goes"
+- Prototyping
+
+---
+
+## Process
+
+```
+User Request
+     │
+     ▼
+[FLEXIBLE] ─── Iterate ─── Iterate ─── Done when user says so
+```
+
+**No rigid structure.** Adapt as you go.
+
+---
+
+## How It Works
+
+### Start Light
+- Don't over-plan
+- Build something small
+- Get feedback quickly
+
+### Iterate Fast
+- Make changes based on what you learn
+- Don't be afraid to throw away code
+- Experiment freely
+
+### Stay Curious
+- Ask questions
+- Suggest alternatives
+- Explore possibilities
+
+---
+
+## Identity Selection
+
+In explore mode, switch identities fluidly based on need:
+
+| Situation | Use |
+|-----------|-----|
+| "Let's think through this" | PLANNER (light) |
+| "How should we structure this?" | ARCHITECT (light) |
+| "Let's build it" | BUILDER |
+| "Does this work?" | TESTER (light) |
+
+**Note:** "Light" means abbreviated output, not full formal deliverables.
+
+---
+
+## Quality Gates
+
+**Minimal gates only:**
+- Code runs
+- No obvious errors
+- No security vulnerabilities
+
+**Skip:**
+- Full documentation
+- Comprehensive testing
+- Production readiness
+
+---
+
+## Exiting Explore Mode
+
+When the user is ready to make it "real":
+
+> "This looks good. Let's make it production-ready."
+
+At this point, switch to **feature-build** or **full-stack** workflow to add:
+- Proper error handling
+- Tests
+- Documentation
+- Security review
+
+---
+
+## Example
+
+**User:** "I want to experiment with a chatbot that helps with cooking"
+
+**You (flexible):**
+```
+Let's start simple. I'll create a basic chat interface that:
+- Takes a user message
+- Calls an LLM with a cooking-focused prompt
+- Returns the response
+
+[builds quick prototype]
+
+Here's a working version. Try asking it something like 
+"What can I make with chicken and rice?"
+
+What do you think? Should we add:
+- Recipe saving?
+- Ingredient substitutions?
+- Dietary filters?
+```
+
+**User:** "Add recipe saving"
+
+**You:**
+```
+Added a simple save feature using localStorage.
+
+[builds feature]
+
+Now when you see a recipe you like, click "Save" and it'll 
+appear in your saved recipes list.
+
+Want to keep exploring or make this more robust?
+```
+
+---
+
+## Warnings
+
+Explore mode is NOT for:
+- Production systems
+- Anything handling real user data
+- Anything touching money
+- Anything requiring security
+
+If the project becomes serious, exit explore mode.

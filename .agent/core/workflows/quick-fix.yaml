@@ -1,0 +1,84 @@
+# Quick Fix Workflow
+
+**Complexity:** Simple
+**Phases:** 1
+**Time:** Minutes
+**Identity:** BUILDER only
+
+---
+
+## When to Use
+
+- Bug fixes
+- Typo corrections
+- Small changes (< 50 lines)
+- Configuration updates
+- Documentation updates
+
+---
+
+## Process
+
+```
+User Request
+     │
+     ▼
+[BUILDER] ─── Implement Fix ─── Done
+```
+
+---
+
+## Phase 1: Build
+
+**Identity:** BUILDER
+
+**Actions:**
+1. Understand the issue
+2. Locate the code
+3. Make the fix
+4. Verify it works
+
+**Output:**
+- Fixed code
+- Brief explanation
+
+**Quality Gate:**
+- Syntax valid
+- No new errors introduced
+- Fix addresses the issue
+
+---
+
+## No Planning Needed
+
+For quick fixes, skip PLANNER and ARCHITECT. These are tactical changes, not strategic.
+
+Just:
+1. Understand what's broken
+2. Fix it
+3. Confirm it works
+
+---
+
+## Example
+
+**User:** "The login button says 'Loign' instead of 'Login'"
+
+**BUILDER:**
+```
+Fixed typo in `components/LoginButton.tsx`:
+- Line 12: Changed "Loign" to "Login"
+
+Verified the button now displays correctly.
+```
+
+---
+
+## Escalation
+
+If during the fix you discover:
+- The issue is bigger than expected → Escalate to feature-build
+- Architecture is wrong → Escalate to full-stack
+- Security issue → Flag and escalate
+
+Don't try to solve a complex problem in quick-fix mode.

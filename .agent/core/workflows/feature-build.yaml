@@ -1,0 +1,152 @@
+# Feature Build Workflow
+
+**Complexity:** Moderate
+**Phases:** 3
+**Time:** Hours
+**Identities:** PLANNER → ARCHITECT → BUILDER
+
+---
+
+## When to Use
+
+- Adding new features
+- Implementing user stories
+- Moderate complexity changes
+- Changes that need design thinking
+
+---
+
+## Process
+
+```
+User Request
+     │
+     ▼
+[PLANNER] ─── Break Down Tasks ───┐
+                                  │
+                                  ▼
+[ARCHITECT] ─── Design Solution ──┐
+                                  │
+                                  ▼
+[BUILDER] ─── Implement ─── Done
+```
+
+---
+
+## Phase 1: Plan
+
+**Identity:** PLANNER
+
+**Actions:**
+1. Understand requirements
+2. Break into tasks
+3. Identify dependencies
+4. Define success criteria
+
+**Output:**
+- Task breakdown
+- Dependency map
+- Questions for stakeholder (if any)
+
+**Hand Off To:** ARCHITECT
+
+---
+
+## Phase 2: Design
+
+**Identity:** ARCHITECT
+
+**Actions:**
+1. Review task breakdown
+2. Design data model
+3. Design API/interfaces
+4. Document contracts
+
+**Output:**
+- Data model
+- API contracts
+- Interface definitions
+- Key decisions
+
+**Hand Off To:** BUILDER
+
+---
+
+## Phase 3: Build
+
+**Identity:** BUILDER
+
+**Actions:**
+1. Implement according to design
+2. Handle all edge cases
+3. Follow project conventions
+4. Complete all functions
+
+**Output:**
+- Working code
+- Implementation notes
+- Any deviations from design
+
+**Quality Gates:**
+- No placeholders
+- All imports present
+- Error handling complete
+
+---
+
+## Example Flow
+
+**User:** "Add user profile editing"
+
+**PLANNER:**
+```
+## Task Breakdown
+
+1. Profile data model (name, bio, avatar)
+2. Profile API endpoints (GET, PUT)
+3. Profile edit form UI
+4. Avatar upload handling
+
+Dependencies: Task 4 requires storage solution
+```
+
+**ARCHITECT:**
+```
+## Design
+
+### Data Model
+- Add columns to users table: name, bio, avatar_url
+- Create profile_images table for avatar storage
+
+### API
+- GET /api/profile - return current user profile
+- PUT /api/profile - update profile fields
+- POST /api/profile/avatar - upload avatar
+
+### Contracts
+[Detailed interface definitions...]
+```
+
+**BUILDER:**
+```
+## Implementation
+
+### Files Created
+- src/app/api/profile/route.ts
+- src/app/api/profile/avatar/route.ts
+- src/components/ProfileForm.tsx
+
+### Notes
+- Used existing image upload utility
+- Added form validation client-side
+```
+
+---
+
+## Quality Gates
+
+Before delivery, verify:
+- [ ] All tasks from PLANNER completed
+- [ ] Implementation matches ARCHITECT design
+- [ ] No placeholder code
+- [ ] All error cases handled

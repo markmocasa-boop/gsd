@@ -1,0 +1,323 @@
+# Enterprise Workflow
+
+**Complexity:** Extreme
+**Phases:** 7
+**Time:** Days to Weeks
+**Identities:** Full sequence with staged apply and rollback capability
+
+---
+
+## When to Use
+
+- Production-critical systems
+- Financial/payment flows
+- Healthcare/regulated industries
+- High-security requirements
+- Audit trail requirements
+- Zero-downtime deployments
+
+---
+
+## Process
+
+```
+User Request
+     │
+     ▼
+[PLANNER] ─── Strategic Analysis ───────────────────┐
+                                                    │
+                                                    ▼
+[ARCHITECT] ─── Detailed Design ────────────────────┐
+                                                    │
+                                                    ▼
+[REVIEWER:design] ─── Design Review ────────────────┐
+                                                    │
+                                                    ▼
+[BUILDER] ─── Implementation ───────────────────────┐
+                                                    │
+                                                    ▼
+[TESTER] ─── Comprehensive QA ──────────────────────┐
+                                                    │
+                                                    ▼
+[REVIEWER:code] ─── Security Audit ─────────────────┐
+                                                    │
+                                                    ▼
+[STAGED_APPLY] ─── Phased Rollout ─── Done
+```
+
+---
+
+## Phase 1: Strategic Analysis
+
+**Identity:** PLANNER
+
+**Extra requirements for Enterprise:**
+- Risk assessment matrix
+- Compliance considerations
+- Stakeholder identification
+- Rollback strategy
+- Success metrics
+
+**Output:**
+- Detailed task breakdown
+- Risk assessment
+- Compliance checklist
+- Rollback plan
+
+---
+
+## Phase 2: Detailed Design
+
+**Identity:** ARCHITECT
+
+**Extra requirements for Enterprise:**
+- Failure mode analysis
+- Data flow diagrams
+- Security architecture
+- Audit logging design
+- Performance SLAs
+
+**Output:**
+- Complete technical design
+- Security considerations
+- Audit trail design
+- Performance requirements
+- Monitoring strategy
+
+---
+
+## Phase 3: Design Review
+
+**Identity:** REVIEWER (design focus)
+
+**This is a gate before implementation:**
+- Is the design complete?
+- Are all security concerns addressed?
+- Are failure modes handled?
+- Is audit logging sufficient?
+
+**Outcome:**
+- Approved → Continue to Build
+- Changes Needed → Back to ARCHITECT
+- Rejected → Back to PLANNER
+
+---
+
+## Phase 4: Implementation
+
+**Identity:** BUILDER
+
+**Extra requirements for Enterprise:**
+- Comprehensive error handling
+- Audit logging on all sensitive operations
+- Feature flags for staged rollout
+- Backward compatibility
+- Database migration strategy
+
+**Output:**
+- Production-ready code
+- Database migrations (reversible)
+- Feature flag configuration
+- Deployment scripts
+
+---
+
+## Phase 5: Comprehensive QA
+
+**Identity:** TESTER
+
+**Extra requirements for Enterprise:**
+- Full regression suite
+- Load testing
+- Security testing
+- Failover testing
+- Data integrity verification
+
+**Output:**
+- Complete test results
+- Performance benchmarks
+- Security test results
+- Regression confirmation
+
+---
+
+## Phase 6: Security Audit
+
+**Identity:** REVIEWER (security focus)
+
+**Security checklist:**
+- [ ] OWASP Top 10 reviewed
+- [ ] Authentication verified
+- [ ] Authorization verified
+- [ ] Input validation complete
+- [ ] No sensitive data exposure
+- [ ] Audit logging verified
+- [ ] Secrets management proper
+
+**Outcome:**
+- Security approved → Continue
+- Issues found → Back to BUILDER
+
+---
+
+## Phase 7: Staged Apply
+
+**Phased rollout strategy:**
+
+### Step 1: Staging Environment
+- Deploy to staging
+- Run smoke tests
+- Verify functionality
+
+### Step 2: Canary Release (if applicable)
+- Deploy to 1% of production
+- Monitor for errors
+- Watch metrics
+
+### Step 3: Gradual Rollout
+- 10% → 25% → 50% → 100%
+- Monitor at each step
+- Ready to rollback at any point
+
+### Rollback Criteria
+- Error rate > X%
+- Latency > Y ms
+- Any security alert
+- Data integrity issue
+
+---
+
+## Quality Gates (Enhanced)
+
+| Phase | Gate | Failure Action |
+|-------|------|----------------|
+| Plan | Risk assessment complete | Cannot proceed |
+| Design | Security review passed | Back to architect |
+| Design Review | Approved by reviewer | Back to design |
+| Build | No placeholders, audit logging | Back to build |
+| Test | All tests pass, no regressions | Back to build |
+| Security Audit | No critical findings | Back to build |
+| Staged Apply | Each stage healthy | Rollback |
+
+---
+
+## Documentation Requirements
+
+Enterprise projects require:
+
+1. **Architecture Decision Records (ADRs)**
+   - Document every significant decision
+   - Include alternatives considered
+   - Include rationale
+
+2. **Runbook**
+   - How to deploy
+   - How to rollback
+   - How to monitor
+   - Common issues and fixes
+
+3. **Security Documentation**
+   - Data flow for sensitive data
+   - Access control matrix
+   - Audit log format
+
+4. **Change Log**
+   - What changed
+   - Who approved
+   - When deployed
+
+---
+
+## Example: Payment System Change
+
+**User:** "Add support for recurring payments"
+
+**Phase 1 - PLANNER:**
+```
+## Risk Assessment
+- Financial: High (real money)
+- Regulatory: Medium (PCI compliance)
+- Technical: Medium (Stripe webhooks)
+
+## Rollback Strategy
+- Feature flag to disable
+- Database changes backward compatible
+- No breaking API changes
+```
+
+**Phase 2 - ARCHITECT:**
+```
+## Security Architecture
+- Stripe handles all card data (PCI scope reduction)
+- Subscription IDs stored, not payment details
+- All changes audit logged
+
+## Failure Modes
+- Webhook missed → Reconciliation job
+- Stripe outage → Queue and retry
+- Duplicate charges → Idempotency keys
+```
+
+**Phase 3 - REVIEWER (design):**
+```
+## Design Review
+✓ Security approach approved
+✓ Failure modes handled
+⚠ Add explicit idempotency for webhook handler
+
+APPROVED with note
+```
+
+**Phase 4 - BUILDER:**
+```
+## Implementation
+- Subscription model with audit trail
+- Webhook handler with idempotency
+- Feature flag: ENABLE_RECURRING_PAYMENTS
+```
+
+**Phase 5 - TESTER:**
+```
+## Test Results
+- Unit tests: 100% pass
+- Integration with Stripe: Pass
+- Load test (1000 concurrent): Pass
+- Webhook replay test: Pass
+```
+
+**Phase 6 - REVIEWER (security):**
+```
+## Security Audit
+✓ No PCI data stored
+✓ Audit logging complete  
+✓ Idempotency implemented
+✓ Error messages safe
+
+APPROVED
+```
+
+**Phase 7 - STAGED APPLY:**
+```
+## Rollout Plan
+1. Staging: Deploy, test with test Stripe keys
+2. Production (flag off): Deploy code
+3. Production (1%): Enable for beta users
+4. Production (100%): Full rollout
+
+## Monitoring
+- Error rate dashboard
+- Stripe webhook success rate
+- Subscription creation rate
+```
+
+---
+
+## When NOT to Use Enterprise
+
+Don't use this workflow for:
+- Internal tools
+- Prototypes
+- Non-critical features
+- Learning projects
+
+The overhead is only justified for production-critical paths.

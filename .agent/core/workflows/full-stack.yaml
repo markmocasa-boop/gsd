@@ -1,0 +1,280 @@
+# Full-Stack Workflow
+
+**Complexity:** Complex
+**Phases:** 5
+**Time:** Day(s)
+**Identities:** PLANNER → ARCHITECT → BUILDER(s) → TESTER → REVIEWER
+
+---
+
+## When to Use
+
+- Features spanning frontend + backend + database
+- Complete system implementations
+- Major refactors
+- Anything that needs coordination across layers
+
+---
+
+## Process
+
+```
+User Request
+     │
+     ▼
+[PLANNER] ─── Strategic Planning ───────────────────┐
+                                                    │
+                                                    ▼
+[ARCHITECT] ─── System Design ──────────────────────┐
+                                                    │
+                    ┌───────────────────────────────┤
+                    │                               │
+                    ▼                               ▼
+          [BUILDER:frontend]              [BUILDER:backend]
+                    │                               │
+                    └───────────────┬───────────────┘
+                                    │
+                                    ▼
+                            [TESTER] ─── QA ────────┐
+                                                    │
+                                                    ▼
+                            [REVIEWER] ─── Audit ─── Done
+```
+
+---
+
+## Phase 1: Plan
+
+**Identity:** PLANNER
+
+**Duration:** ~15% of total time
+
+**Actions:**
+1. Analyze full scope
+2. Identify all components (FE, BE, DB)
+3. Map dependencies
+4. Create task breakdown
+5. Define integration points
+
+**Output:**
+- Complete task breakdown
+- Component identification
+- Integration strategy
+- Risk assessment
+
+**Hand Off To:** ARCHITECT
+
+---
+
+## Phase 2: Design
+
+**Identity:** ARCHITECT
+
+**Duration:** ~20% of total time
+
+**Actions:**
+1. Design database schema
+2. Design API contracts
+3. Design component interfaces
+4. Define data flow
+5. Document integration contracts
+
+**Output:**
+- Database schema + migrations
+- API specifications (OpenAPI/contracts)
+- Frontend component structure
+- Sequence diagrams for complex flows
+- Shared types/interfaces
+
+**Hand Off To:** BUILDER(s)
+
+---
+
+## Phase 3: Build (Parallel)
+
+**Identity:** BUILDER (split focus)
+
+**Duration:** ~40% of total time
+
+### Frontend Track
+1. Implement UI components
+2. Implement state management
+3. Implement API integration
+4. Handle loading/error states
+
+### Backend Track
+1. Implement database layer
+2. Implement business logic
+3. Implement API endpoints
+4. Implement middleware
+
+### Integration Points
+- Shared type definitions
+- API contract compliance
+- Error format consistency
+
+**Output:**
+- Working frontend
+- Working backend
+- Database migrations
+- Integration working
+
+**Hand Off To:** TESTER
+
+---
+
+## Phase 4: Test
+
+**Identity:** TESTER
+
+**Duration:** ~15% of total time
+
+**Actions:**
+1. Test frontend in isolation
+2. Test backend in isolation
+3. Test integration end-to-end
+4. Test edge cases
+5. Test error scenarios
+
+**Output:**
+- Test results
+- Bug reports (if any)
+- Performance observations
+- Security observations
+
+**Hand Off To:** 
+- BUILDER if bugs found
+- REVIEWER if all pass
+
+---
+
+## Phase 5: Review
+
+**Identity:** REVIEWER
+
+**Duration:** ~10% of total time
+
+**Actions:**
+1. Code quality review
+2. Security audit
+3. Performance review
+4. Architecture compliance check
+
+**Output:**
+- Review summary
+- Approved / Changes requested
+- Security sign-off
+
+**Hand Off To:**
+- BUILDER if changes needed
+- Done if approved
+
+---
+
+## Example
+
+**User:** "Build a task management feature with boards, lists, and cards"
+
+**Phase 1 - PLANNER:**
+```
+## Task Breakdown
+
+### Database
+- boards table (id, name, user_id, created_at)
+- lists table (id, board_id, name, position)
+- cards table (id, list_id, title, description, position)
+
+### Backend  
+- CRUD for boards
+- CRUD for lists (nested under boards)
+- CRUD for cards (nested under lists)
+- Reordering endpoints
+
+### Frontend
+- Board view component
+- List component (draggable)
+- Card component (draggable)
+- Drag-and-drop integration
+
+### Integration
+- Real-time updates (optional)
+- Optimistic UI updates
+```
+
+**Phase 2 - ARCHITECT:**
+```
+## API Design
+
+POST /api/boards
+GET /api/boards
+GET /api/boards/:id (includes lists and cards)
+PUT /api/boards/:id
+DELETE /api/boards/:id
+
+POST /api/boards/:boardId/lists
+PUT /api/lists/:id
+DELETE /api/lists/:id
+PUT /api/lists/:id/reorder
+
+[...full API spec...]
+
+## Database Schema
+
+[...schema with foreign keys and indexes...]
+
+## Component Structure
+
+<BoardView>
+  <List>
+    <Card />
+    <Card />
+  </List>
+  <List>
+    <Card />
+  </List>
+  <AddList />
+</BoardView>
+```
+
+**Phase 3 - BUILDER:**
+```
+## Backend Implementation
+- Created migration for boards, lists, cards tables
+- Implemented all CRUD endpoints
+- Added position-based reordering
+
+## Frontend Implementation  
+- Created BoardView, List, Card components
+- Integrated react-beautiful-dnd for drag-drop
+- Connected to API with React Query
+```
+
+**Phase 4 - TESTER:**
+```
+## Test Results
+- CRUD operations: All pass
+- Drag and drop: All pass
+- Concurrent editing: FAIL - race condition found
+- Bug report filed for position update issue
+```
+
+**Phase 5 - REVIEWER:**
+```
+## Review
+- Code quality: Good
+- Security: No issues
+- Performance: Consider adding indexes for position queries
+- Status: Approved with minor suggestion
+```
+
+---
+
+## Quality Gates
+
+| Phase | Gate |
+|-------|------|
+| Plan | All components identified |
+| Design | All contracts defined |
+| Build | No placeholders, all imports |
+| Test | All critical paths tested |
+| Review | Security approved |
