@@ -146,6 +146,9 @@ function transformForOpenCode(content) {
   // Remove allowed-tools block (multiline YAML array)
   content = content.replace(/^allowed-tools:\n(  - .+\n)*/m, '');
 
+  // Transform command references from /gsd:command to /gsd/command
+  content = content.replace(/\/gsd:(\S+)/g, '/gsd/$1');
+
   // Clean up empty frontmatter or lines with only whitespace
   content = content.replace(/^---\n\n+---/, '---\n---');
 
