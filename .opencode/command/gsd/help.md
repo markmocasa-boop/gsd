@@ -235,19 +235,6 @@ Create context handoff when pausing work mid-phase.
 
 Usage: `/gsd/pause-work`
 
-### Issue Management
-
-**`/gsd/consider-issues`**
-Review deferred issues with codebase context.
-
-- Analyzes all open issues against current codebase state
-- Identifies resolved issues (can close)
-- Identifies urgent issues (should address now)
-- Identifies natural fits for upcoming phases
-- Offers batch actions (close, insert phase, note for planning)
-
-Usage: `/gsd/consider-issues`
-
 ### Debugging
 
 **`/gsd/debug [issue description]`**
@@ -293,6 +280,16 @@ Usage: `/gsd/check-todos api`
 **`/gsd/help`**
 Show this command reference.
 
+**`/gsd/whats-new`**
+See what's changed since your installed version.
+
+- Shows installed vs latest version comparison
+- Displays changelog entries for versions you've missed
+- Highlights breaking changes
+- Provides update instructions when behind
+
+Usage: `/gsd/whats-new`
+
 ## Files & Structure
 
 ```
@@ -300,7 +297,6 @@ Show this command reference.
 ├── PROJECT.md            # Project vision
 ├── ROADMAP.md            # Current phase breakdown
 ├── STATE.md              # Project memory & context
-├── ISSUES.md             # Deferred enhancements (created when needed)
 ├── config.json           # Workflow mode & gates
 ├── todos/                # Captured ideas and tasks
 │   ├── pending/          # Todos waiting to be worked on
