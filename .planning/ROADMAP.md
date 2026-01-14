@@ -23,7 +23,9 @@ Full feature parity port of GSD to support both Claude Code and OpenCode platfor
 **Research topics:** OpenCode directory conventions, YAML frontmatter schema, agent definition format, tool declarations
 
 **Dependencies:** None
-**Status:** Not started
+**Status:** Complete (1/1 plans)
+**Plans:**
+- [x] 01-01: OpenCode Research & Mapping
 
 ---
 
@@ -80,10 +82,10 @@ Full feature parity port of GSD to support both Claude Code and OpenCode platfor
 
 | Phase | Status | Plans | Completed |
 |-------|--------|-------|-----------|
-| 1. OpenCode Research | Not started | — | — |
+| 1. OpenCode Research | Complete | 1/1 | 2026-01-14 |
 | 2. Multi-Agent Installer | Not started | — | — |
 | 3. Command Adaptation | Not started | — | — |
 | 4. Validation | Not started | — | — |
 
 ---
-*Last updated: 2026-01-14 after roadmap creation*
+*Last updated: 2026-01-14 after Phase 1 completion*
