@@ -198,6 +198,86 @@ Reference agent @execute-plan in command
 - ✓ Spawn patterns are functionally equivalent
 - ⚠ End-to-end parallel test requires multi-plan test project (deferred)
 
+### Detailed Pattern Analysis
+
+**Wave-Based Execution Logic (execute-phase.md workflow):**
+
+The workflow follows this pattern on both platforms:
+
+1. **Discover plans** - List all PLAN.md files in phase directory
+2. **Extract metadata** - Read `wave:` frontmatter from each plan
+3. **Group by wave** - Plans with same wave number grouped together
+4. **Execute waves sequentially** - Wave 1, then Wave 2, etc.
+5. **Parallel execution within wave** - All plans in same wave spawn simultaneously
+
+**Frontmatter fields used:**
+```yaml
+---
+phase: 04-validation
+plan: 01
+type: execute
+wave: 1
+depends_on: []
+autonomous: true
+---
+```
+
+- `wave:` - Pre-computed during plan-phase, determines execution order
+- `depends_on:` - Array of plan IDs this plan requires (informational, waves handle sequencing)
+- `autonomous:` - Boolean indicating if plan has checkpoints
+
+**Spawn mechanisms compared:**
+
+Claude Code (via execute-phase command):
+```
+For each plan in wave:
+  Task(
+    prompt=subagent-task-prompt filled with plan context,
+    subagent_type="general-purpose"
+  )
+```
+
+OpenCode (via agent definitions):
+```
+For each plan in wave:
+  Reference @execute-plan agent
+  Agent loads @~/.config/opencode/gsd/workflows/execute-plan.md
+  Same execution logic as Claude Code
+```
+
+**Key equivalence:**
+- Both use Task tool/agent system for spawning
+- Both read same wave-based grouping from frontmatter
+- Both execute waves sequentially with parallel plans within waves
+- Both delegate full execution logic to subagents
+- Both track agent IDs in `.planning/agent-history.json`
+
+**Agent permission verification:**
+
+The execute-plan agent definition has correct permissions for full plan execution:
+```yaml
+edit: allow    # Needed for creating/modifying code files
+bash: allow    # Needed for running tests, commits, builds
+webfetch: deny # Not needed during execution (only in planning)
+```
+
+This matches Claude Code's Task tool pattern with `subagent_type="general-purpose"`.
+
+**Orchestration pattern:**
+
+Both platforms follow same orchestration model:
+1. Main command/agent discovers and groups plans
+2. Subagents spawned for actual execution
+3. Main waits for completion
+4. Results aggregated after wave completes
+5. No polling loops, no background agents
+
+**Verification:**
+- ✓ Workflow logic is platform-agnostic (same .md file used)
+- ✓ Frontmatter fields have same meaning on both platforms
+- ✓ Agent definitions provide equivalent capabilities to Task tool
+- ✓ No platform-specific branching in wave execution code
+
 ## Platform-Specific Issues Found
 
 ### Known Platform Bugs
