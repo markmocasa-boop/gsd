@@ -376,136 +376,6 @@ EOF
 )"
 ```
 
-Continue to detect_algorithms.
-</step>
-
-<step name="detect_algorithms">
-**Optional algorithm detection with user confirmation.**
-
-After codebase mapping completes, offer algorithm detection:
-
-Use AskUserQuestion:
-- header: "Algorithms"
-- question: "Detect algorithm patterns in the codebase?"
-- options:
-  - "Skip" — No algorithm documentation needed (most projects)
-  - "Detect" — Scan for state estimation, optimization, neural networks, pipelines
-
-**If "Skip":** Continue to offer_next.
-
-**If "Detect":**
-
-1. **Scan for algorithm patterns:**
-
-```bash
-# State estimation patterns
-grep -rl "kalman\|covariance\|predict.*update" --include="*.py" --include="*.ts" --include="*.cpp" . 2>/dev/null | head -10
-
-# Optimization patterns
-grep -rl "gradient\|loss\|optimizer\|minimize\|maximize" --include="*.py" --include="*.ts" . 2>/dev/null | head -10
-
-# Neural network patterns
-grep -rl "forward\|backward\|layer\|activation\|nn\.\|torch\.\|tf\." --include="*.py" --include="*.ts" . 2>/dev/null | head -10
-
-# Pipeline patterns
-grep -rl "pipeline\|stage\|transform\|preprocess\|postprocess" --include="*.py" --include="*.ts" . 2>/dev/null | head -10
-```
-
-2. **Present findings to user:**
-
-```
-Found potential algorithm patterns:
-
-State estimation:
-- src/ekf.py
-- src/ukf.py
-
-Optimization:
-- src/optimizer.py
-
-Which of these should have algorithm documentation?
-(List file paths, or "none")
-```
-
-3. **If user confirms files:**
-
-```bash
-mkdir -p .planning/algorithms
-```
-
-**Spawn N parallel sub-agents (one per algorithm file):**
-
-For each confirmed algorithm file, spawn a Task tool with:
-
-```
-subagent_type: "Explore"
-run_in_background: true
-description: "Document algorithm in [filename]"
-```
-
-Prompt for each agent:
-```
-Analyze the algorithm implementation in [file-path] and create documentation.
-
-**Your task:**
-1. Read and understand the algorithm in [file-path]
-2. Identify: purpose, inputs, outputs, key steps, mathematical foundations
-3. Create documentation following this structure:
-
----
-owns:
-  - [file-path]
----
-
-# [Algorithm Name]
-
-## Purpose
-[What problem it solves, where it's used]
-
-## Inputs
-[Key inputs with types/shapes if applicable]
-
-## Outputs
-[Key outputs with types/shapes if applicable]
-
-## Method
-[High-level description of the algorithm approach]
-
-### Key Steps
-[Numbered list of main algorithmic steps]
-
-## Implementation Notes
-[File structure, key functions, dependencies]
-
----
-
-**Output:** Return ONLY the markdown content for the algorithm doc (no explanation).
-```
-
-**IMPORTANT:** Spawn ALL algorithm agents in a SINGLE message with multiple Task tool calls to maximize parallelism.
-
-4. **Collect results from all agents:**
-
-Use TaskOutput tool to collect results from each background agent.
-
-For each agent result:
-- Write the returned markdown to `.planning/algorithms/[name].md`
-- Name derived from algorithm name in the returned content
-
-5. **Commit algorithm documentation:**
-
-```bash
-git add .planning/algorithms/*.md
-git commit -m "docs: document detected algorithms
-
-Documented algorithm patterns in:
-- [file1]
-- [file2]
-
-Created by parallel Explore agents during /gsd:map-codebase.
-"
-```
-
 Continue to offer_next.
 </step>
 
@@ -543,6 +413,14 @@ Created .planning/codebase/:
 - Re-run mapping: `/gsd:map-codebase`
 - Review specific file: `cat .planning/codebase/STACK.md`
 - Edit any document before proceeding
+
+---
+
+**Algorithm-heavy project?**
+
+To document algorithms (state estimation, ML, optimization, etc.):
+
+`/gsd:map-algorithms`
 
 ---
 ```
