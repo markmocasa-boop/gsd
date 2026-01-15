@@ -66,7 +66,7 @@ Spawn Explore agent to find algorithm patterns in codebase.
 
 Use Task tool:
 ```
-subagent_type: "Explore"
+subagent_type: "general-purpose"
 description: "Detect algorithm patterns in codebase"
 ```
 
@@ -202,21 +202,28 @@ mkdir -p .planning/algorithms
 
 IMPORTANT: Spawn ALL agents in a SINGLE message with multiple Task tool calls to maximize parallelism.
 
+**Before spawning:** Determine the output filename for each algorithm:
+- Convert algorithm name to kebab-case (e.g., "Extended Kalman Filter" → "extended-kalman-filter.md")
+- Full path: `.planning/algorithms/{kebab-name}.md`
+
 For each algorithm to document:
 
 Use Task tool:
 ```
-subagent_type: "Explore"
+subagent_type: "general-purpose"
 run_in_background: true
 description: "Document [algorithm-name] algorithm"
 ```
 
 Prompt template (fill for each algorithm):
 ```
-Analyze the algorithm implementation and create documentation.
+Analyze the algorithm implementation and write documentation directly to a file.
 
 **Files to analyze:**
 [list of file paths for this algorithm]
+
+**Output file:**
+[full path, e.g., .planning/algorithms/extended-kalman-filter.md]
 
 **Technology context:**
 [Stack info if available from load_context step]
@@ -233,9 +240,10 @@ Analyze the algorithm implementation and create documentation.
    - Step-by-step breakdown
    - How spec maps to code (functions, files, constants)
 
-3. Create documentation following this EXACT structure:
+3. **WRITE the documentation directly to the output file** using the Write tool.
 
-```markdown
+Use this EXACT structure:
+
 ---
 owns:
   - [file-path-1]
@@ -294,11 +302,11 @@ Use ASCII art that renders well in markdown.]
 ## Notes
 
 [Invariants, edge cases, validation approaches, limitations]
-```
 
-**CRITICAL:** The Diagram section is REQUIRED. Do not skip it. Create an ASCII diagram showing the algorithm flow.
-
-**Output:** Return ONLY the markdown content for the algorithm doc. No explanation or preamble.
+**CRITICAL:**
+- The Diagram section is REQUIRED. Do not skip it.
+- You MUST use the Write tool to save the file to the output path.
+- After writing, confirm the file was created successfully.
 ```
 
 After spawning all agents, continue to collect_results.
@@ -307,29 +315,41 @@ After spawning all agents, continue to collect_results.
 <step name="collect_results">
 Wait for all subagents to complete.
 
-Use TaskOutput tool to collect results from each background agent.
+Use TaskOutput tool to confirm each agent finished (don't need to parse content - files are already written).
 
-**For each agent result:**
-
-1. Parse the returned markdown content
-2. Extract algorithm name from the `# [Algorithm Name]` header
-3. Convert name to kebab-case for filename (e.g., "Extended Kalman Filter" → "extended-kalman-filter.md")
-4. Write to `.planning/algorithms/[name].md`
+**Verify files were created:**
 
 ```bash
-# Example for each algorithm
-cat > .planning/algorithms/extended-kalman-filter.md << 'EOF'
-[markdown content from agent]
-EOF
+ls -la .planning/algorithms/*.md
 ```
 
-**Validation:**
-- Confirm ## Diagram section exists (REQUIRED)
-- Confirm owns: frontmatter has file paths
-- Confirm ## Method has at least one ### Step
+**For each expected algorithm file, validate content:**
 
-**If validation fails:**
-Log which algorithm needs manual attention.
+```bash
+# Check each file has required sections
+for f in .planning/algorithms/*.md; do
+  echo "=== $f ==="
+  grep -c "^## Diagram" "$f" || echo "MISSING: Diagram section"
+  grep -c "^owns:" "$f" || echo "MISSING: owns frontmatter"
+  grep -c "^### Step" "$f" || echo "MISSING: Method steps"
+done
+```
+
+**Validation checklist:**
+- [ ] All expected files exist
+- [ ] Each file has `owns:` frontmatter
+- [ ] Each file has `## Diagram` section (REQUIRED)
+- [ ] Each file has at least one `### Step` under Method
+
+**If any file is missing:**
+Report which algorithm failed and suggest re-running for that specific algorithm:
+```
+Algorithm [name] failed to generate. Re-run with:
+/gsd:map-algorithms path/to/algorithm/files
+```
+
+**If validation fails (file exists but incomplete):**
+Log which sections are missing - user can edit manually or re-run.
 </step>
 
 <step name="commit_documentation">
