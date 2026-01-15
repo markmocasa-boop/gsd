@@ -433,10 +433,25 @@ Which of these should have algorithm documentation?
 mkdir -p .planning/algorithms
 ```
 
-For each confirmed algorithm, create stub:
+**Spawn N parallel sub-agents (one per algorithm file):**
 
-```bash
-cat > .planning/algorithms/[name].md << 'EOF'
+For each confirmed algorithm file, spawn a Task tool with:
+
+```
+subagent_type: "Explore"
+run_in_background: true
+description: "Document algorithm in [filename]"
+```
+
+Prompt for each agent:
+```
+Analyze the algorithm implementation in [file-path] and create documentation.
+
+**Your task:**
+1. Read and understand the algorithm in [file-path]
+2. Identify: purpose, inputs, outputs, key steps, mathematical foundations
+3. Create documentation following this structure:
+
 ---
 owns:
   - [file-path]
@@ -445,27 +460,49 @@ owns:
 # [Algorithm Name]
 
 ## Purpose
+[What problem it solves, where it's used]
 
-[To be documented]
+## Inputs
+[Key inputs with types/shapes if applicable]
+
+## Outputs
+[Key outputs with types/shapes if applicable]
 
 ## Method
+[High-level description of the algorithm approach]
 
-[To be documented]
+### Key Steps
+[Numbered list of main algorithmic steps]
+
+## Implementation Notes
+[File structure, key functions, dependencies]
 
 ---
-*Stub created by /gsd:map-codebase. Fill in using algorithm template.*
-EOF
+
+**Output:** Return ONLY the markdown content for the algorithm doc (no explanation).
 ```
 
-4. **Commit algorithm stubs:**
+**IMPORTANT:** Spawn ALL algorithm agents in a SINGLE message with multiple Task tool calls to maximize parallelism.
+
+4. **Collect results from all agents:**
+
+Use TaskOutput tool to collect results from each background agent.
+
+For each agent result:
+- Write the returned markdown to `.planning/algorithms/[name].md`
+- Name derived from algorithm name in the returned content
+
+5. **Commit algorithm documentation:**
 
 ```bash
 git add .planning/algorithms/*.md
-git commit -m "docs: create algorithm doc stubs
+git commit -m "docs: document detected algorithms
 
-Detected algorithm patterns in:
+Documented algorithm patterns in:
 - [file1]
 - [file2]
+
+Created by parallel Explore agents during /gsd:map-codebase.
 "
 ```
 
