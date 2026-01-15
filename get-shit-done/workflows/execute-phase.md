@@ -80,6 +80,49 @@ Build plan inventory:
 Skip completed plans. If all complete, report "Phase already executed" and exit.
 </step>
 
+<step name="ensure_metrics">
+**Ensure metrics.json exists (backward compatibility):**
+
+```bash
+if [ ! -f ".planning/metrics.json" ]; then
+    # Delegate to ensure-metrics workflow
+    # This auto-generates metrics.json from ROADMAP.md for existing projects
+fi
+```
+
+See `workflows/ensure-metrics.md` for full implementation.
+</step>
+
+<step name="update_current_phase_metrics">
+**Update metrics.json for new phase:**
+
+```bash
+# Get phase info (PHASE_DIR already set in validate_phase step)
+PHASE_NUM=$(echo "$PHASE_ARG" | grep -oE '^[0-9]+')
+PHASE_NAME=$(grep "^## Phase $PHASE_NUM:" .planning/ROADMAP.md | sed 's/.*: //')
+PHASE_NAME=${PHASE_NAME:-"Phase $PHASE_NUM"}
+PHASES_COMPLETE=$(($PHASE_NUM - 1))
+
+# Count plans in phase using PHASE_DIR
+PLAN_COUNT=$(ls -1 "$PHASE_DIR"/*-PLAN.md 2>/dev/null | wc -l | xargs)
+
+jq --arg num "$PHASE_NUM" \
+   --arg name "$PHASE_NAME" \
+   --arg complete "$PHASES_COMPLETE" \
+   --arg plans "$PLAN_COUNT" \
+   '.current_phase.number = ($num | tonumber) |
+    .current_phase.name = $name |
+    .current_phase.status = "in_progress" |
+    .current_phase.plans_complete = 0 |
+    .current_phase.plans_total = ($plans | tonumber) |
+    .overall_progress.phases_complete = ($complete | tonumber) |
+    .last_updated = now | todate |
+    .overall_progress.percentage = (if .overall_progress.phases_total > 0 then ((.overall_progress.phases_complete / .overall_progress.phases_total) * 100 | floor) else 0 end)' \
+   .planning/metrics.json > .planning/metrics.tmp && \
+   mv .planning/metrics.tmp .planning/metrics.json
+```
+</step>
+
 <step name="group_by_wave">
 Read `wave` from each plan's frontmatter and group by wave number:
 
@@ -227,7 +270,21 @@ Execute each wave in sequence. Autonomous plans within a wave run in parallel.
 
    See `<checkpoint_handling>` for details.
 
-6. **Proceed to next wave**
+6. **Update metrics with completed plans:**
+
+   ```bash
+   # Count completed plans in this phase using PHASE_DIR
+   COMPLETED_PLANS=$(ls -1 "$PHASE_DIR"/*-SUMMARY.md 2>/dev/null | wc -l | xargs)
+
+   jq --arg complete "$COMPLETED_PLANS" \
+      '.current_phase.plans_complete = ($complete | tonumber) |
+       .last_updated = now | todate |
+       .current_phase.status = (if .current_phase.plans_complete == .current_phase.plans_total then "complete" else "in_progress" end)' \
+      .planning/metrics.json > .planning/metrics.tmp && \
+      mv .planning/metrics.tmp .planning/metrics.json
+   ```
+
+7. **Proceed to next wave**
 
 </step>
 

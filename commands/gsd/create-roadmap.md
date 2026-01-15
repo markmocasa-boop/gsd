@@ -81,6 +81,29 @@ The workflow handles:
 - Git commit
 </step>
 
+<step name="update_metrics_from_roadmap">
+**Update metrics.json with roadmap info:**
+
+```bash
+# Ensure metrics.json exists (backward compat for projects created before this feature)
+if [ ! -f ".planning/metrics.json" ]; then
+    cp ~/.claude/get-shit-done/templates/metrics.json .planning/metrics.json
+fi
+
+# Count total phases
+PHASES_TOTAL=$(grep -c "^## Phase" .planning/ROADMAP.md || true)
+PHASES_TOTAL=${PHASES_TOTAL:-0}
+
+jq --arg total "$PHASES_TOTAL" \
+   '.overall_progress.phases_total = ($total | tonumber) |
+    .overall_progress.percentage = 0 |
+    .milestones = [{"name": "v1.0", "status": "planned", "phases": [1]}]' \
+   .planning/metrics.json > .planning/metrics.tmp && \
+   mv .planning/metrics.tmp .planning/metrics.json
+```
+
+</step>
+
 <step name="done">
 ```
 Roadmap created:
@@ -125,5 +148,6 @@ Roadmap created:
 - [ ] STATE.md initialized
 - [ ] REQUIREMENTS.md traceability section updated
 - [ ] Phase directories created
+- [ ] metrics.json updated with phases_total and milestones
 - [ ] Changes committed
 </success_criteria>
