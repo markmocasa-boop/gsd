@@ -1,6 +1,6 @@
 # Algorithm Template
 
-Template for `.planning/algorithms/<name>.md` — living documents that keep algorithm specifications and implementations in sync.
+Template for `.planning/algorithms/<name>.md` — specifications that bridge math and code.
 
 ---
 
@@ -11,13 +11,6 @@ Projects with computational logic requiring precise implementation:
 - **ML/DL:** Architectures, training loops, loss functions
 - **Scientific:** Solvers, simulations, numerical methods
 - **Graphics:** Rendering pipelines, shaders, coordinate transforms
-
-## Workflows
-
-| Workflow | When | Focus |
-|----------|------|-------|
-| **Greenfield** | Spec exists before code | Fill Steps with Pseudocode for code generation |
-| **Brownfield** | Code exists, needs documentation | Fill Steps with `[!implementation]` callouts linking to code |
 
 ## File Template
 
@@ -30,129 +23,99 @@ owns:
 
 # [Algorithm Name]
 
-## Problem
+## Purpose
 
-[What this computes. Where it fits in the system.]
+[What this solves. Where it fits in the system.]
 
 ## I/O
 
 **Inputs:**
-- `name` (type/shape): description [units/frame/space]
+- `name` (type/shape): description [units/frame if applicable]
 
 **Outputs:**
-- `name` (type/shape): description [units/frame/space]
+- `name` (type/shape): description [units/frame if applicable]
 
 ## Conventions
 
-[Domain-specific conventions affecting implementation correctness:
-frames, coordinate systems, sign conventions, tensor layouts, etc.]
+[Domain-specific conventions that affect correctness:
+coordinate frames, rotation conventions, tensor layouts, sign conventions, etc.]
 
-## Pipeline
+## Diagram
 
-[Flow diagram showing step sequence and data dependencies]
+[Required. Visual representation of the algorithm flow.
 
-## Steps
+Choose the style that best fits your algorithm:
+- **Pipeline:** A → B → C → D (sequential transformations)
+- **Architecture:** Layered boxes (neural networks, systems)
+- **Flowchart:** Branches and decisions
+- **Data flow:** Show how variables transform through steps
+- **Math flow:** Equations connected by arrows
 
-### Step N: [Name] → `output_var`
+Use ASCII art, or describe structure clearly for diagram generation.]
 
-**Goal:** [One sentence: what this step produces]
+## Method
 
-**Method:**
-[Core operation - equation, layer spec, transform, or update rule]
+[High-level description of the approach. What techniques are used and why.]
 
-**Variables:**
-- `name` (type/shape): what it represents
+### Step 1: [Name]
 
-**Pseudocode:** (Greenfield - for code generation)
-```
-[Language-agnostic implementation steps]
-```
+[Describe what this step does and how.
 
-> [!implementation] `function_name()` (Brownfield - links to existing code)
-> **File:** `path/to/file`
-> **Inputs:** `var1`, `var2`
-> **Output:** `result` → $symbol$
+Include as needed:
+- Key equations or operations
+- Important intermediate variables
+- Matrix/tensor constructions
+- Solver or decomposition used
+- Implementation hints
+
+Write enough that someone could implement it. Skip boilerplate.]
+
+### Step 2: [Name]
+
+[Continue for each major step...]
 
 ---
 
-[Repeat for each step...]
+## Implementation
 
-## Implementation Mapping
+[How the spec maps to code:
+- File structure and key functions
+- Function → Step mapping
+- Key constants and their rationale
+- Execution patterns or calling conventions]
 
-| Step | Function | File | Responsibility |
-|------|----------|------|----------------|
+## Notes
 
-**Integration point:** `[file where algorithm is called]`
-
-## Invariants
-
-[Properties that must remain true after refactors]
-
-## Validation
-
-[How to verify correctness: tests, tolerances, visual checks]
-
-## Defaults
-
-| Parameter | Value | Rationale |
-|-----------|-------|-----------|
+[Anything else relevant:
+- Invariants that must hold (e.g., "rotation matrix must be SO(3)")
+- Edge cases and how to handle them
+- Validation approaches (tests, tolerances, visual checks)
+- Known limitations or assumptions]
 ```
 
-<frontmatter_guidance>
+<frontmatter>
 **owns:** Implementation files this algorithm covers.
-- `/gsd:plan-phase` auto-loads algorithm docs when planning touches owned files
-- `/gsd:execute-plan` flags sync warnings when owned files are modified
-- Supports glob patterns: `src/filters/*.py`
-</frontmatter_guidance>
+- `/gsd:plan-phase` auto-loads when planning touches owned files
+- `/gsd:execute-plan` flags sync warnings when owned files modified
+- Supports globs: `src/filters/*.py`
+</frontmatter>
 
-<step_structure>
-Each step should enable either code generation OR code documentation:
+<guidance>
+**Diagram is required.** It's the most important element for understanding algorithm flow.
+Choose the style that fits - don't force a pipeline if architecture diagram is clearer.
 
-1. **Goal** - What the step computes (always)
-2. **Method** - Core operation: equation, layer, transform, rule (always)
-3. **Variables** - Intermediates with types/shapes (always)
-4. **Pseudocode** - Language-agnostic implementation (Greenfield)
-5. **[!implementation]** - Links to existing code (Brownfield)
+**Steps should breathe.** Include equations, variables, pseudocode as needed - but don't
+fill slots for the sake of structure. Write what helps implementation.
 
-Use Pseudocode when writing spec before code.
-Use [!implementation] when documenting existing code.
-Use both during iterative development.
-</step_structure>
+**Domain adaptation:**
+| Domain | Diagram Style | Step Focus |
+|--------|---------------|------------|
+| Robotics | Pipeline or state flow | Equations, frames, matrix ops |
+| ML/DL | Architecture layers | Dimensions, activations, forward pass |
+| Graphics | Pipeline with spaces | Coordinate transforms, shader stages |
+| Scientific | Iteration loop | Update rules, convergence criteria |
 
-<domain_adaptation>
-The Method field adapts to domain:
+**Implementation section:** Link spec to code. Table, bullets, or prose - whatever fits.
 
-| Domain | Method Style | Conventions Focus |
-|--------|--------------|-------------------|
-| **Robotics** | Equations, matrix operations | Coordinate frames, units, rotation conventions |
-| **ML/DL** | Layer spec, dimensions, activations | Tensor layouts (NCHW/NHWC), batch dimension |
-| **Graphics** | Transform matrices, shader ops | Coordinate spaces, handedness, depth range |
-| **Scientific** | Update rules, discretization | Time step, boundary conditions, convergence |
-</domain_adaptation>
-
-<guidelines>
-**Greenfield workflow:**
-1. Write Problem, I/O, Conventions first
-2. Define Pipeline showing data flow
-3. Fill Steps with Method + Pseudocode
-4. Generate code from spec
-5. Add [!implementation] callouts after code exists
-6. Fill Implementation Mapping table
-
-**Brownfield workflow:**
-1. Create stub with Problem, I/O from code analysis
-2. Fill Steps with Method + [!implementation] callouts
-3. Fill Implementation Mapping table
-4. Add Pseudocode later if regeneration needed
-
-**Code generation readiness:**
-A step is ready for code generation when:
-- All inputs defined (from I/O or previous steps)
-- Method is concrete (not placeholder)
-- Variables have types/shapes
-- Pseudocode specifies operations and solvers
-
-**Keeping in sync:**
-`/gsd:execute-plan` flags Algorithm Sync in SUMMARY.md when owned files change.
-User decides whether spec needs updating.
-</guidelines>
+**Notes section:** Catch-all for invariants, edge cases, validation. Keep it practical.
+</guidance>
