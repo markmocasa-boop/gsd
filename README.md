@@ -418,6 +418,46 @@ You're never locked in. The system adapts.
 
 ---
 
+## Statusline Integration
+
+Want to see your GSD project progress in Claude Code's statusline?
+
+GSD automatically maintains `.planning/metrics.json` with your current phase and progress. To integrate with your statusline:
+
+```
+/gsd:setup-statusline
+```
+
+This command will help you add GSD metrics to your statusline configuration, matching your existing format and style.
+
+**Manual setup:** If you prefer manual configuration, add this to your statusline script:
+
+```bash
+# GSD project metrics
+gsd_info=""
+if [ -f ".planning/metrics.json" ]; then
+    phase_num=$(jq -r '.current_phase.number' .planning/metrics.json 2>/dev/null)
+    phase_name=$(jq -r '.current_phase.name' .planning/metrics.json 2>/dev/null | cut -c1-15)
+    plans=$(jq -r '"\(.current_phase.plans_complete)/\(.current_phase.plans_total)"' .planning/metrics.json 2>/dev/null)
+    overall_pct=$(jq -r '.overall_progress.percentage' .planning/metrics.json 2>/dev/null)
+
+    if [ -n "$phase_num" ]; then
+        # Choose your preferred display format:
+        # Compact: gsd_info="🎯 P${phase_num}: ${phase_name} 📊 ${plans} | "
+        # Percentage: gsd_info="🎯 P${phase_num}: ${phase_name} ${overall_pct}% | "
+        # Visual bar: gsd_info="🎯 P${phase_num}: ${phase_name} 🧠 ███░░░░░░░ ${overall_pct}% | "
+        gsd_info="🎯 P${phase_num}: ${phase_name} 📊 ${plans} | "
+    fi
+fi
+```
+
+**Available display formats:**
+- Compact: `🎯 P3: Core TUI 📊 2/5 |`
+- Percentage: `🎯 P3: Core TUI 22% |`
+- Visual bar: `🎯 P3: Core TUI 🧠 ███░░░░░░░ 22% |`
+
+---
+
 ## Troubleshooting
 
 **Commands not found after install?**
