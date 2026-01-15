@@ -2,26 +2,27 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-01-14)
+See: .planning/PROJECT.md (updated 2026-01-15)
 
 **Core value:** Full feature parity on OpenCode — every GSD command works identically on both agent platforms.
-**Current focus:** Phase 4 — Validation
+**Current focus:** Planning next milestone
 
 ## Current Position
 
-Phase: 4 of 4 (Validation) — COMPLETE
-Plan: 2 of 2 in current phase
-Status: Phase complete
-Last activity: 2026-01-14 — Completed 04-02-PLAN.md
+Phase: None (between milestones)
+Plan: Not started
+Status: v1.0 shipped, ready to plan next milestone
+Last activity: 2026-01-15 — v1.0 milestone complete
 
-Progress: ██████████ 100%
+Progress: ██████████ 100% (v1.0 complete)
 
 ## Performance Metrics
 
-**Velocity:**
+**v1.0 Milestone:**
 - Total plans completed: 5
 - Average duration: 8 min
 - Total execution time: 41 min
+- Timeline: 30 days (2025-12-15 → 2026-01-15)
 
 **By Phase:**
 
@@ -32,42 +33,36 @@ Progress: ██████████ 100%
 | 3 | 1/1 | 15 min | 15 min |
 | 4 | 2/2 | 6 min | 3 min |
 
-**Recent Trend:**
-- Last 5 plans: 01-01 (12m), 02-01 (8m), 03-01 (15m), 04-01 (2m), 04-02 (4m)
-- Trend: Validation phase completed very quickly with documentation tasks
-
 ## Accumulated Context
 
 ### Decisions
 
-Decisions are logged in PROJECT.md Key Decisions table.
-Recent decisions affecting current work:
+All decisions moved to PROJECT.md Key Decisions table (v1.0 milestone).
 
-- Support only Claude Code + OpenCode (v1 focus)
-- Pure port, no new features
-- **Claude Code as source of truth, transform at install time** (01-01)
-- **No separate directories per platform** (01-01)
-- **Transform at install time, not in source repo** (02-01) — installer detects platform and applies transformations
+Recent decisions from v1.0:
+- Claude Code as source of truth, transform at install time
+- No separate directories per platform
+- Transform at install time, not in source repo
 
-### Key Findings (Phase 1)
+### v1.0 Accomplishments
 
-- OpenCode uses `.opencode/command/` and `.opencode/agent/`
-- Frontmatter: remove `name`, `argument-hint`, `allowed-tools`
-- Tool names mostly identical
-- `$ARGUMENTS` and `@path` work the same
-- OpenCode has explicit agent system (vs Claude Code Task tool)
+- Researched and documented complete OpenCode platform mapping
+- Built multi-platform installer with automatic frontmatter transformation
+- Created OpenCode agent definitions with proper permission models
+- Validated all 26 commands for platform compatibility
+- Documented dual-platform installation and troubleshooting
 
 ### Deferred Issues
 
-None yet.
+None from v1.0. All planned work completed.
 
 ### Blockers/Concerns
 
-- OpenCode agent visibility bug (custom agents may not Tab-cycle)
-- YAML parsing crash with unquoted values in commands
+- Phase 1 missing SUMMARY.md file (minor documentation gap)
+- OpenCode agent visibility bug (platform issue, not GSD)
 
 ## Session Continuity
 
-Last session: 2026-01-14
-Stopped at: Phase 4 complete - all validation and documentation finished
+Last session: 2026-01-15
+Stopped at: v1.0 milestone shipped, planning next milestone
 Resume file: None
