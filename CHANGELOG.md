@@ -6,6 +6,47 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.5.17] - 2026-01-15
+
+### Added
+- New `/gsd:update` command — check for updates, install, and display changelog of what changed (better UX than raw `npx get-shit-done-cc`)
+
+## [1.5.16] - 2026-01-15
+
+### Added
+- New `gsd-researcher` agent (915 lines) with comprehensive research methodology, 4 research modes (ecosystem, feasibility, implementation, comparison), source hierarchy, and verification protocols
+- New `gsd-debugger` agent (990 lines) with scientific debugging methodology, hypothesis testing, and 7+ investigation techniques
+- New `gsd-codebase-mapper` agent for brownfield codebase analysis
+- Research subagent prompt template for context-only spawning
+
+### Changed
+- `/gsd:research-phase` refactored to thin orchestrator — now injects rich context (key insight framing, downstream consumer info, quality gates) to gsd-researcher agent
+- `/gsd:research-project` refactored to spawn 4 parallel gsd-researcher agents with milestone-aware context (greenfield vs v1.1+) and roadmap implications guidance
+- `/gsd:debug` refactored to thin orchestrator (149 lines) — spawns gsd-debugger agent with full debugging expertise
+- `/gsd:new-milestone` now explicitly references MILESTONE-CONTEXT.md
+
+### Deprecated
+- `workflows/research-phase.md` — consolidated into gsd-researcher agent
+- `workflows/research-project.md` — consolidated into gsd-researcher agent
+- `workflows/debug.md` — consolidated into gsd-debugger agent
+- `references/research-pitfalls.md` — consolidated into gsd-researcher agent
+- `references/debugging.md` — consolidated into gsd-debugger agent
+- `references/debug-investigation.md` — consolidated into gsd-debugger agent
+
+## [1.5.15] - 2025-01-15
+
+### Fixed
+- **Agents now install correctly** — The `agents/` folder (gsd-executor, gsd-verifier, gsd-integration-checker, gsd-milestone-auditor) was missing from npm package, now included
+
+### Changed
+- Consolidated `/gsd:plan-fix` into `/gsd:plan-phase --gaps` for simpler workflow
+- UAT file writes now batched instead of per-response for better performance
+
+## [1.5.14] - 2025-01-15
+
+### Fixed
+- Plan-phase now always routes to `/gsd:execute-phase` after planning, even for single-plan phases
+
 ## [1.5.13] - 2026-01-15
 
 ### Fixed
@@ -707,7 +748,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - YOLO mode for autonomous execution
 - Interactive mode with checkpoints
 
-[Unreleased]: https://github.com/glittercowboy/get-shit-done/compare/v1.5.13...HEAD
+[Unreleased]: https://github.com/glittercowboy/get-shit-done/compare/v1.5.17...HEAD
+[1.5.17]: https://github.com/glittercowboy/get-shit-done/releases/tag/v1.5.17
+[1.5.16]: https://github.com/glittercowboy/get-shit-done/releases/tag/v1.5.16
+[1.5.15]: https://github.com/glittercowboy/get-shit-done/releases/tag/v1.5.15
+[1.5.14]: https://github.com/glittercowboy/get-shit-done/releases/tag/v1.5.14
 [1.5.13]: https://github.com/glittercowboy/get-shit-done/releases/tag/v1.5.13
 [1.5.12]: https://github.com/glittercowboy/get-shit-done/releases/tag/v1.5.12
 [1.5.11]: https://github.com/glittercowboy/get-shit-done/releases/tag/v1.5.11
