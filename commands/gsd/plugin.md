@@ -16,6 +16,8 @@ Plugin management for GSD. Install, uninstall, and manage plugins.
 - `/gsd:plugin uninstall <name> --dry-run` - Preview what would be removed
 - `/gsd:plugin list` - List all installed plugins with status
 - `/gsd:plugin info <name>` - Show detailed plugin information
+- `/gsd:plugin enable <name>` - Enable a disabled plugin
+- `/gsd:plugin disable <name>` - Disable a plugin (keeps files)
 </overview>
 
 <process>
@@ -45,6 +47,16 @@ Parse the user's command and execute the appropriate action.
    - Author and repository
    - Commands, agents, and hooks provided
    - Installation date and location (or linked source)
+
+**For enable:**
+1. Extract plugin name
+2. Run: `node ~/.claude/get-shit-done/bin/plugin.js enable <name>`
+3. Report success or warning if already enabled
+
+**For disable:**
+1. Extract plugin name
+2. Run: `node ~/.claude/get-shit-done/bin/plugin.js disable <name>`
+3. Report success or warning if already disabled
 
 **Error handling:**
 If the plugin.js command fails, show the error output to the user.
@@ -115,5 +127,32 @@ Commands:
 Installation:
   Installed: 2026-01-16
   Location: ~/.claude/my-plugin/
+```
+
+Disable a plugin:
+`/gsd:plugin disable my-plugin`
+Output:
+```
+Done! Plugin my-plugin disabled
+```
+
+Enable a disabled plugin:
+`/gsd:plugin enable my-plugin`
+Output:
+```
+Done! Plugin my-plugin enabled
+```
+
+List plugins showing disabled status:
+`/gsd:plugin list`
+Output:
+```
+Installed Plugins:
+
+my-plugin v1.0.0 (disabled)
+  My awesome GSD plugin
+
+another-plugin v2.1.0 (linked)
+  Another plugin for development
 ```
 </examples>

@@ -502,6 +502,8 @@ function showHelp() {
     plugin install <source>   Install a plugin from git URL or local path
     plugin list               List all installed plugins with status
     plugin info <name>        Show detailed plugin information
+    plugin enable <name>      Enable a disabled plugin
+    plugin disable <name>     Disable a plugin (keeps files)
     plugin uninstall <name>   Remove an installed plugin
 
   ${yellow}Examples:${reset}
@@ -529,6 +531,12 @@ function showHelp() {
 
     ${dim}# Preview what would be removed${reset}
     plugin uninstall my-plugin --dry-run
+
+    ${dim}# Enable a disabled plugin${reset}
+    plugin enable my-plugin
+
+    ${dim}# Disable a plugin (keeps files)${reset}
+    plugin disable my-plugin
 
   ${yellow}Options:${reset}
     --help, -h       Show this help message
@@ -572,6 +580,7 @@ function listPlugins() {
         version: manifest.version || 'unknown',
         description: manifest.description || '',
         linked: manifest._installed?.linked === true,
+        enabled: manifest._installed?.enabled !== false, // default true if not set
         date: manifest._installed?.date,
       });
     } catch {
@@ -590,7 +599,8 @@ function listPlugins() {
 
   for (const plugin of plugins) {
     const linkedIndicator = plugin.linked ? ` ${yellow}(linked)${reset}` : '';
-    console.log(`  ${cyan}${plugin.name}${reset} v${plugin.version}${linkedIndicator}`);
+    const disabledIndicator = !plugin.enabled ? ` ${dim}(disabled)${reset}` : '';
+    console.log(`  ${cyan}${plugin.name}${reset} v${plugin.version}${linkedIndicator}${disabledIndicator}`);
     if (plugin.description) {
       console.log(`    ${dim}${plugin.description}${reset}`);
     }
@@ -958,6 +968,12 @@ switch (command) {
     break;
   case 'uninstall':
     uninstallPlugin(source);
+    break;
+  case 'enable':
+    enablePlugin(source);
+    break;
+  case 'disable':
+    disablePlugin(source);
     break;
   default:
     console.error(`  ${red}Error:${reset} Unknown command: ${command}`);
