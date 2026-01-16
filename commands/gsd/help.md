@@ -77,6 +77,18 @@ Map an existing codebase for brownfield projects.
 
 Usage: `/gsd:map-codebase`
 
+**`/gsd:map-algorithms`**
+Document algorithms from code (Code → Math direction).
+
+- Detects algorithm patterns (state estimation, ML, optimization, etc.)
+- Proposes candidates via interactive selection
+- Spawns parallel subagents for documentation
+- Creates `.planning/algorithms/*.md` with diagrams
+- Bidirectional: plan-phase auto-loads docs when touching owned files
+
+Usage: `/gsd:map-algorithms`
+Usage: `/gsd:map-algorithms src/filters/*.py` (specific files)
+
 ### Phase Planning
 
 **`/gsd:discuss-phase <number>`**
@@ -316,6 +328,8 @@ Usage: `/gsd:whats-new`
 │   ├── TESTING.md        # Test setup, patterns
 │   ├── INTEGRATIONS.md   # External services, APIs
 │   └── CONCERNS.md       # Tech debt, known issues
+├── algorithms/           # Algorithm specs (math ↔ code bridge)
+│   └── *.md              # Individual algorithm docs with owns: frontmatter
 └── phases/
     ├── 01-foundation/
     │   ├── 01-01-PLAN.md

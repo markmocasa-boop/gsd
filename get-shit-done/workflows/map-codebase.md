@@ -271,6 +271,14 @@ Created .planning/codebase/:
 - Edit any document before proceeding
 
 ---
+
+**Algorithm-heavy project?**
+
+To document algorithms (state estimation, ML, optimization, etc.):
+
+`/gsd:map-algorithms`
+
+---
 ```
 
 End workflow.
