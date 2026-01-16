@@ -18,6 +18,11 @@ const args = process.argv.slice(2);
 const command = args[0];
 const source = args[1];
 
+// Flags
+const verbose = args.includes('--verbose') || args.includes('-v');
+const force = args.includes('--force') || args.includes('-f');
+const link = args.includes('--link') || args.includes('-l');
+
 /**
  * Expand ~ to home directory
  */
@@ -119,9 +124,16 @@ function validateManifest(manifest, pluginDir) {
     errors.push('Missing required field: author');
   }
 
-  // Validate commands if present
+  // Validate gsd section and referenced directories
   const gsd = manifest.gsd || {};
-  if (gsd.commands && Array.isArray(gsd.commands)) {
+
+  // Check commands directory exists if commands are defined
+  if (gsd.commands && Array.isArray(gsd.commands) && gsd.commands.length > 0) {
+    const commandsDir = path.join(pluginDir, 'commands');
+    if (!fs.existsSync(commandsDir)) {
+      errors.push('Commands defined in manifest but commands/ directory is missing');
+    }
+
     for (const cmd of gsd.commands) {
       // Command name must match pluginName:command format
       if (cmd.name) {
@@ -140,8 +152,59 @@ function validateManifest(manifest, pluginDir) {
         } else {
           const filePath = path.join(pluginDir, cmd.file);
           if (!fs.existsSync(filePath)) {
-            errors.push(`Command file not found: ${cmd.file}`);
+            errors.push(`Referenced file not found: ${cmd.file}`);
           }
+        }
+      }
+    }
+  }
+
+  // Check agents directory exists if agents are defined
+  if (gsd.agents && Array.isArray(gsd.agents) && gsd.agents.length > 0) {
+    const agentsDir = path.join(pluginDir, 'agents');
+    if (!fs.existsSync(agentsDir)) {
+      errors.push('Agents defined in manifest but agents/ directory is missing');
+    }
+
+    for (const agent of gsd.agents) {
+      if (agent.file) {
+        const filePath = path.join(pluginDir, agent.file);
+        if (!fs.existsSync(filePath)) {
+          errors.push(`Referenced agent file not found: ${agent.file}`);
+        }
+      }
+    }
+  }
+
+  // Check workflows directory exists if workflows are defined
+  if (gsd.workflows && Array.isArray(gsd.workflows) && gsd.workflows.length > 0) {
+    const workflowsDir = path.join(pluginDir, 'workflows');
+    if (!fs.existsSync(workflowsDir)) {
+      errors.push('Workflows defined in manifest but workflows/ directory is missing');
+    }
+
+    for (const workflow of gsd.workflows) {
+      if (workflow.file) {
+        const filePath = path.join(pluginDir, workflow.file);
+        if (!fs.existsSync(filePath)) {
+          errors.push(`Referenced workflow file not found: ${workflow.file}`);
+        }
+      }
+    }
+  }
+
+  // Check hooks directory exists if hooks are defined
+  if (gsd.hooks && Array.isArray(gsd.hooks) && gsd.hooks.length > 0) {
+    const hooksDir = path.join(pluginDir, 'hooks');
+    if (!fs.existsSync(hooksDir)) {
+      errors.push('Hooks defined in manifest but hooks/ directory is missing');
+    }
+
+    for (const hook of gsd.hooks) {
+      if (hook.file) {
+        const filePath = path.join(pluginDir, hook.file);
+        if (!fs.existsSync(filePath)) {
+          errors.push(`Referenced hook file not found: ${hook.file}`);
         }
       }
     }
@@ -153,7 +216,8 @@ function validateManifest(manifest, pluginDir) {
 /**
  * Copy directory recursively with path replacement in .md files
  */
-function copyWithPathReplacement(srcDir, destDir, pluginName) {
+function copyWithPathReplacement(srcDir, destDir, pluginName, options = {}) {
+  const { verbose: showVerbose = false, isLink = false } = options;
   fs.mkdirSync(destDir, { recursive: true });
 
   const entries = fs.readdirSync(srcDir, { withFileTypes: true });
@@ -163,7 +227,13 @@ function copyWithPathReplacement(srcDir, destDir, pluginName) {
     const destPath = path.join(destDir, entry.name);
 
     if (entry.isDirectory()) {
-      copyWithPathReplacement(srcPath, destPath, pluginName);
+      copyWithPathReplacement(srcPath, destPath, pluginName, options);
+    } else if (isLink) {
+      // Create symlink instead of copying
+      createSymlink(srcPath, destPath, 'file');
+      if (showVerbose) {
+        console.log(`    ${dim}Linked${reset} ${entry.name} -> ${destPath}`);
+      }
     } else if (entry.name.endsWith('.md')) {
       // Replace relative path references with installed paths
       let content = fs.readFileSync(srcPath, 'utf8');
@@ -173,16 +243,45 @@ function copyWithPathReplacement(srcDir, destDir, pluginName) {
       content = content.replace(/@\.\/references\//g, `@~/.claude/${pluginName}/references/`);
       content = content.replace(/@\.\/hooks\//g, `@~/.claude/${pluginName}/hooks/`);
       fs.writeFileSync(destPath, content);
+      if (showVerbose) {
+        console.log(`    ${dim}Copying${reset} ${entry.name} -> ${destPath}`);
+      }
     } else {
       fs.copyFileSync(srcPath, destPath);
+      if (showVerbose) {
+        console.log(`    ${dim}Copying${reset} ${entry.name} -> ${destPath}`);
+      }
     }
+  }
+}
+
+/**
+ * Create symlink with cross-platform support
+ */
+function createSymlink(src, dest, type) {
+  // Windows needs 'junction' for directories to avoid admin rights
+  const linkType = process.platform === 'win32' && type === 'dir' ? 'junction' : type;
+  try {
+    // Remove existing file/symlink if it exists
+    if (fs.existsSync(dest)) {
+      fs.unlinkSync(dest);
+    }
+    fs.symlinkSync(src, dest, linkType);
+  } catch (err) {
+    if (err.code === 'EPERM' && process.platform === 'win32') {
+      console.error(`  ${red}Error:${reset} Creating symlinks on Windows requires admin rights or Developer Mode`);
+      console.error(`  ${dim}Alternative: Run without --link to copy files instead${reset}`);
+      process.exit(1);
+    }
+    throw err;
   }
 }
 
 /**
  * Install plugin files to Claude config directory
  */
-function installPluginFiles(pluginDir, manifest) {
+function installPluginFiles(pluginDir, manifest, options = {}) {
+  const { verbose: showVerbose = false, isLink = false } = options;
   const configDir = getConfigDir();
   const pluginName = manifest.name;
   const installedFiles = [];
@@ -209,7 +308,10 @@ function installPluginFiles(pluginDir, manifest) {
   for (const mapping of mappings) {
     const srcPath = path.join(pluginDir, mapping.src);
     if (fs.existsSync(srcPath) && fs.statSync(srcPath).isDirectory()) {
-      copyWithPathReplacement(srcPath, mapping.dest, pluginName);
+      if (showVerbose) {
+        console.log(`  ${dim}Processing ${mapping.src}/${reset}`);
+      }
+      copyWithPathReplacement(srcPath, mapping.dest, pluginName, { verbose: showVerbose, isLink });
 
       // Track installed files
       const files = fs.readdirSync(srcPath);
@@ -230,6 +332,8 @@ function installPluginFiles(pluginDir, manifest) {
     _installed: {
       date: new Date().toISOString(),
       files: installedFiles,
+      linked: isLink,
+      source: isLink ? pluginDir : undefined,
     },
   };
   fs.writeFileSync(manifestDest, JSON.stringify(manifestWithTracking, null, 2));
@@ -268,9 +372,60 @@ function showHelp() {
     plugin install ./my-plugin
     plugin install /path/to/my-plugin
 
+    ${dim}# Install with symlinks for development${reset}
+    plugin install ./my-plugin --link
+
+    ${dim}# Force reinstall over existing${reset}
+    plugin install ./my-plugin --force
+
   ${yellow}Options:${reset}
-    --help, -h    Show this help message
+    --help, -h       Show this help message
+    --verbose, -v    Show detailed installation progress
+    --link, -l       Create symlinks instead of copying (for development)
+    --force, -f      Overwrite existing plugin installation
 `);
+}
+
+/**
+ * Check for existing plugin installation and handle conflicts
+ */
+function checkExistingInstallation(pluginName, configDir) {
+  const existingDir = path.join(configDir, pluginName);
+  const existingCommandsDir = path.join(configDir, 'commands', pluginName);
+
+  if (fs.existsSync(existingDir)) {
+    const existingManifest = path.join(existingDir, 'plugin.json');
+    if (fs.existsSync(existingManifest)) {
+      try {
+        const existing = JSON.parse(fs.readFileSync(existingManifest, 'utf8'));
+        if (!force) {
+          console.error(`  ${red}Error:${reset} Plugin ${cyan}${pluginName}${reset} v${existing.version} already installed.`);
+          console.error(`  ${dim}Use --force to overwrite or uninstall first.${reset}`);
+          process.exit(1);
+        }
+        console.log(`  ${yellow}Overwriting${reset} existing ${pluginName} v${existing.version}...`);
+      } catch {
+        // Invalid manifest, proceed with overwrite if --force
+        if (!force) {
+          console.error(`  ${red}Error:${reset} Directory ${cyan}~/.claude/${pluginName}${reset} already exists.`);
+          console.error(`  ${dim}Use --force to overwrite.${reset}`);
+          process.exit(1);
+        }
+      }
+      // Remove existing installation
+      fs.rmSync(existingDir, { recursive: true, force: true });
+    }
+  }
+
+  // Also check commands namespace
+  if (fs.existsSync(existingCommandsDir)) {
+    if (!force) {
+      console.error(`  ${red}Error:${reset} Commands directory ${cyan}~/.claude/commands/${pluginName}${reset} already exists.`);
+      console.error(`  ${dim}Use --force to overwrite.${reset}`);
+      process.exit(1);
+    }
+    fs.rmSync(existingCommandsDir, { recursive: true, force: true });
+  }
 }
 
 /**
@@ -280,6 +435,13 @@ function installPlugin(source) {
   if (!source) {
     console.error(`  ${red}Error:${reset} No source specified`);
     console.log(`  Usage: plugin install <git-url|local-path>`);
+    process.exit(1);
+  }
+
+  // Warn if using --link with git URL
+  if (link && isGitUrl(source)) {
+    console.error(`  ${red}Error:${reset} --link cannot be used with git URLs (no local source to link)`);
+    console.error(`  ${dim}Clone the repository locally first, then install with --link${reset}`);
     process.exit(1);
   }
 
@@ -302,16 +464,16 @@ function installPlugin(source) {
       process.exit(1);
     }
   } else {
-    // Local path
-    pluginDir = path.resolve(expandTilde(source));
+    // Local path - normalize it
+    pluginDir = path.normalize(path.resolve(expandTilde(source)));
 
     if (!fs.existsSync(pluginDir)) {
-      console.error(`  ${red}Error:${reset} Path not found: ${source}`);
+      console.error(`  ${red}Error:${reset} Path does not exist: ${pluginDir}`);
       process.exit(1);
     }
 
     if (!fs.statSync(pluginDir).isDirectory()) {
-      console.error(`  ${red}Error:${reset} Not a directory: ${source}`);
+      console.error(`  ${red}Error:${reset} Not a directory: ${pluginDir}`);
       process.exit(1);
     }
   }
@@ -320,7 +482,7 @@ function installPlugin(source) {
     // Check for plugin.json
     const manifestPath = path.join(pluginDir, 'plugin.json');
     if (!fs.existsSync(manifestPath)) {
-      console.error(`  ${red}Error:${reset} Not a valid GSD plugin (missing plugin.json)`);
+      console.error(`  ${red}Error:${reset} Missing plugin.json in ${pluginDir}`);
       cleanup(tempDir);
       process.exit(1);
     }
@@ -336,7 +498,8 @@ function installPlugin(source) {
       process.exit(1);
     }
 
-    console.log(`\n  Installing plugin: ${cyan}${manifest.name}${reset} v${manifest.version}`);
+    const linkLabel = link ? ` ${dim}(linked)${reset}` : '';
+    console.log(`\n  Installing plugin: ${cyan}${manifest.name}${reset} v${manifest.version}${linkLabel}`);
 
     // Full validation
     const validationErrors = validateManifest(manifest, pluginDir);
@@ -350,21 +513,31 @@ function installPlugin(source) {
     }
     console.log(`  ${green}✓${reset} Validated plugin.json`);
 
+    // Check for existing installation
+    const configDir = getConfigDir();
+    checkExistingInstallation(manifest.name, configDir);
+
     // Install files
-    const installedFiles = installPluginFiles(pluginDir, manifest);
+    const installedFiles = installPluginFiles(pluginDir, manifest, { verbose, isLink: link });
 
     // Get installed commands
     const commands = getInstalledCommands(manifest);
     if (commands.length > 0) {
-      console.log(`  ${green}✓${reset} Installed commands: ${commands.join(', ')}`);
+      const verb = link ? 'Linked' : 'Installed';
+      console.log(`  ${green}✓${reset} ${verb} commands: ${commands.join(', ')}`);
     }
 
-    console.log(`  ${green}✓${reset} Installed ${installedFiles.length} files to ~/.claude/${manifest.name}/`);
+    const verb = link ? 'Linked' : 'Installed';
+    console.log(`  ${green}✓${reset} ${verb} ${installedFiles.length} files to ~/.claude/${manifest.name}/`);
 
     // Clean up temp directory
     cleanup(tempDir);
 
-    console.log(`\n  ${green}Done!${reset} Run ${cyan}/gsd:help${reset} to see new commands.`);
+    if (link) {
+      console.log(`\n  ${green}Done!${reset} Plugin is linked. Changes to source will reflect immediately.`);
+    } else {
+      console.log(`\n  ${green}Done!${reset} Run ${cyan}/gsd:help${reset} to see new commands.`);
+    }
 
   } catch (err) {
     cleanup(tempDir);
