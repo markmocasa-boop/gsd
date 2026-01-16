@@ -353,6 +353,116 @@ function getInstalledCommands(manifest) {
 }
 
 /**
+ * Uninstall a plugin by name
+ */
+function uninstallPlugin(pluginName) {
+  if (!pluginName) {
+    console.error(`  ${red}Error:${reset} Plugin name required. Usage: plugin uninstall <name>`);
+    process.exit(1);
+  }
+
+  const configDir = getConfigDir();
+  const pluginDir = path.join(configDir, pluginName);
+  const manifestPath = path.join(pluginDir, 'plugin.json');
+
+  // Check if plugin is installed
+  if (!fs.existsSync(manifestPath)) {
+    console.error(`  ${red}Error:${reset} Plugin ${cyan}${pluginName}${reset} is not installed`);
+    process.exit(1);
+  }
+
+  // Read manifest
+  let manifest;
+  try {
+    manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+  } catch (parseErr) {
+    console.error(`  ${red}Error:${reset} Corrupted plugin.json. Use --force to remove anyway.`);
+    if (!force) {
+      process.exit(1);
+    }
+    // With --force, remove directory anyway
+    console.log(`  ${yellow}Force removing${reset} plugin directory...`);
+    fs.rmSync(pluginDir, { recursive: true, force: true });
+    // Also try to remove commands dir
+    const commandsDir = path.join(configDir, 'commands', pluginName);
+    if (fs.existsSync(commandsDir)) {
+      fs.rmSync(commandsDir, { recursive: true, force: true });
+    }
+    console.log(`\n  ${green}Done!${reset} Plugin ${pluginName} has been removed (forced).`);
+    return;
+  }
+
+  console.log(`\n  Uninstalling plugin: ${cyan}${manifest.name}${reset} v${manifest.version}`);
+
+  // Track what we removed for reporting
+  const removed = [];
+  const warnings = [];
+
+  // Remove commands directory: ~/.claude/commands/{plugin-name}/
+  const commandsDir = path.join(configDir, 'commands', pluginName);
+  if (fs.existsSync(commandsDir)) {
+    try {
+      fs.rmSync(commandsDir, { recursive: true, force: true });
+      removed.push(`commands/${pluginName}/`);
+    } catch (err) {
+      if (err.code === 'EACCES' || err.code === 'EPERM') {
+        console.error(`  ${red}Error:${reset} Permission denied removing ${commandsDir}. Check file permissions.`);
+        process.exit(1);
+      }
+      throw err;
+    }
+  } else {
+    warnings.push(`Expected commands/${pluginName}/ was not found`);
+  }
+
+  // Remove agent files from ~/.claude/agents/ (only files from this plugin)
+  const agents = manifest.gsd?.agents || [];
+  for (const agent of agents) {
+    const agentFile = path.join(configDir, 'agents', path.basename(agent.file));
+    if (fs.existsSync(agentFile)) {
+      try {
+        fs.unlinkSync(agentFile);
+        removed.push(`agents/${path.basename(agent.file)}`);
+      } catch (err) {
+        if (err.code === 'EACCES' || err.code === 'EPERM') {
+          console.error(`  ${red}Error:${reset} Permission denied removing ${agentFile}. Check file permissions.`);
+          process.exit(1);
+        }
+        throw err;
+      }
+    } else {
+      warnings.push(`Expected agents/${path.basename(agent.file)} was not found`);
+    }
+  }
+
+  // Remove plugin directory: ~/.claude/{plugin-name}/ (entire directory including plugin.json)
+  if (fs.existsSync(pluginDir)) {
+    try {
+      fs.rmSync(pluginDir, { recursive: true, force: true });
+      removed.push(`${pluginName}/`);
+    } catch (err) {
+      if (err.code === 'EACCES' || err.code === 'EPERM') {
+        console.error(`  ${red}Error:${reset} Permission denied removing ${pluginDir}. Check file permissions.`);
+        process.exit(1);
+      }
+      throw err;
+    }
+  }
+
+  // Output results
+  for (const item of removed) {
+    console.log(`  ${green}✓${reset} Removed ${item}`);
+  }
+
+  // Show warnings for missing expected files
+  for (const warning of warnings) {
+    console.log(`  ${yellow}!${reset} ${warning}`);
+  }
+
+  console.log(`\n  ${green}Done!${reset} Plugin ${pluginName} has been uninstalled.`);
+}
+
+/**
  * Show help message
  */
 function showHelp() {
@@ -362,7 +472,7 @@ function showHelp() {
   ${yellow}Usage:${reset}
     plugin install <source>   Install a plugin from git URL or local path
     plugin list               List installed plugins (not yet implemented)
-    plugin uninstall <name>   Remove a plugin (not yet implemented)
+    plugin uninstall <name>   Remove an installed plugin
 
   ${yellow}Examples:${reset}
     ${dim}# Install from git repository${reset}
@@ -378,11 +488,14 @@ function showHelp() {
     ${dim}# Force reinstall over existing${reset}
     plugin install ./my-plugin --force
 
+    ${dim}# Uninstall a plugin${reset}
+    plugin uninstall my-plugin
+
   ${yellow}Options:${reset}
     --help, -h       Show this help message
     --verbose, -v    Show detailed installation progress
     --link, -l       Create symlinks instead of copying (for development)
-    --force, -f      Overwrite existing plugin installation
+    --force, -f      Overwrite existing plugin installation / force removal
 `);
 }
 
@@ -560,7 +673,7 @@ switch (command) {
     console.log(`  ${yellow}Not yet implemented${reset} - coming in Phase 3`);
     break;
   case 'uninstall':
-    console.log(`  ${yellow}Not yet implemented${reset} - coming in Phase 3`);
+    uninstallPlugin(source);
     break;
   default:
     console.error(`  ${red}Error:${reset} Unknown command: ${command}`);
