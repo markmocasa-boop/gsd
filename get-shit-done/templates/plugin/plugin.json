@@ -1,0 +1,39 @@
+{
+  "name": "example-plugin",
+  "version": "1.0.0",
+  "description": "Example GSD plugin demonstrating the manifest format",
+  "author": "Developer Name",
+  "repository": "https://github.com/user/gsd-example-plugin",
+  "license": "MIT",
+  "keywords": ["example", "demo"],
+  "gsd": {
+    "minVersion": "1.4.0",
+    "commands": [
+      {
+        "name": "example:hello",
+        "file": "commands/hello.md",
+        "description": "Say hello from the example plugin"
+      }
+    ],
+    "workflows": [
+      {
+        "name": "example-workflow",
+        "file": "workflows/example.md"
+      }
+    ],
+    "agents": [
+      {
+        "name": "example-agent",
+        "file": "agents/example.md"
+      }
+    ],
+    "hooks": {
+      "post-plan": "hooks/capture-context.md",
+      "post-execute": "hooks/notify-complete.md"
+    },
+    "services": {
+      "docker-compose": "services/docker-compose.yml",
+      "healthCheck": "services/health.sh"
+    }
+  }
+}
