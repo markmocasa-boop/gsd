@@ -90,6 +90,165 @@ function cleanup(tempDir) {
 }
 
 /**
+ * Validate manifest according to plugin-format.md rules
+ */
+function validateManifest(manifest, pluginDir) {
+  const errors = [];
+
+  // Name validation: kebab-case, 3-50 chars, starts with letter
+  const nameRegex = /^[a-z][a-z0-9-]{2,49}$/;
+  if (!manifest.name) {
+    errors.push('Missing required field: name');
+  } else if (!nameRegex.test(manifest.name)) {
+    errors.push(`Invalid plugin name "${manifest.name}" - must be kebab-case, 3-50 chars, start with letter`);
+  }
+
+  // Version validation: semver MAJOR.MINOR.PATCH
+  const versionRegex = /^\d+\.\d+\.\d+$/;
+  if (!manifest.version) {
+    errors.push('Missing required field: version');
+  } else if (!versionRegex.test(manifest.version)) {
+    errors.push(`Invalid version "${manifest.version}" - must be semver (MAJOR.MINOR.PATCH)`);
+  }
+
+  // Required fields
+  if (!manifest.description) {
+    errors.push('Missing required field: description');
+  }
+  if (!manifest.author) {
+    errors.push('Missing required field: author');
+  }
+
+  // Validate commands if present
+  const gsd = manifest.gsd || {};
+  if (gsd.commands && Array.isArray(gsd.commands)) {
+    for (const cmd of gsd.commands) {
+      // Command name must match pluginName:command format
+      if (cmd.name) {
+        const expectedPrefix = manifest.name + ':';
+        if (!cmd.name.startsWith(expectedPrefix)) {
+          errors.push(`Command "${cmd.name}" prefix doesn't match plugin name "${manifest.name}"`);
+        }
+      }
+
+      // File must exist and not use absolute paths or traversal
+      if (cmd.file) {
+        if (path.isAbsolute(cmd.file)) {
+          errors.push(`Command file path must be relative: ${cmd.file}`);
+        } else if (cmd.file.includes('..')) {
+          errors.push(`Command file path cannot use '..': ${cmd.file}`);
+        } else {
+          const filePath = path.join(pluginDir, cmd.file);
+          if (!fs.existsSync(filePath)) {
+            errors.push(`Command file not found: ${cmd.file}`);
+          }
+        }
+      }
+    }
+  }
+
+  return errors;
+}
+
+/**
+ * Copy directory recursively with path replacement in .md files
+ */
+function copyWithPathReplacement(srcDir, destDir, pluginName) {
+  fs.mkdirSync(destDir, { recursive: true });
+
+  const entries = fs.readdirSync(srcDir, { withFileTypes: true });
+
+  for (const entry of entries) {
+    const srcPath = path.join(srcDir, entry.name);
+    const destPath = path.join(destDir, entry.name);
+
+    if (entry.isDirectory()) {
+      copyWithPathReplacement(srcPath, destPath, pluginName);
+    } else if (entry.name.endsWith('.md')) {
+      // Replace relative path references with installed paths
+      let content = fs.readFileSync(srcPath, 'utf8');
+      // Replace @./workflows/ with @~/.claude/{plugin}/workflows/
+      content = content.replace(/@\.\/workflows\//g, `@~/.claude/${pluginName}/workflows/`);
+      content = content.replace(/@\.\/templates\//g, `@~/.claude/${pluginName}/templates/`);
+      content = content.replace(/@\.\/references\//g, `@~/.claude/${pluginName}/references/`);
+      content = content.replace(/@\.\/hooks\//g, `@~/.claude/${pluginName}/hooks/`);
+      fs.writeFileSync(destPath, content);
+    } else {
+      fs.copyFileSync(srcPath, destPath);
+    }
+  }
+}
+
+/**
+ * Install plugin files to Claude config directory
+ */
+function installPluginFiles(pluginDir, manifest) {
+  const configDir = getConfigDir();
+  const pluginName = manifest.name;
+  const installedFiles = [];
+
+  // Installation mapping from plugin-format.md:
+  // commands/*.md -> ~/.claude/commands/{plugin-name}/*.md
+  // agents/*.md -> ~/.claude/agents/*.md (root level)
+  // workflows/*.md -> ~/.claude/{plugin-name}/workflows/*.md
+  // templates/*.md -> ~/.claude/{plugin-name}/templates/*.md
+  // references/*.md -> ~/.claude/{plugin-name}/references/*.md
+  // hooks/*.md -> ~/.claude/{plugin-name}/hooks/*.md
+  // docker/* -> ~/.claude/{plugin-name}/docker/*
+
+  const mappings = [
+    { src: 'commands', dest: path.join(configDir, 'commands', pluginName) },
+    { src: 'agents', dest: path.join(configDir, 'agents') },
+    { src: 'workflows', dest: path.join(configDir, pluginName, 'workflows') },
+    { src: 'templates', dest: path.join(configDir, pluginName, 'templates') },
+    { src: 'references', dest: path.join(configDir, pluginName, 'references') },
+    { src: 'hooks', dest: path.join(configDir, pluginName, 'hooks') },
+    { src: 'docker', dest: path.join(configDir, pluginName, 'docker') },
+  ];
+
+  for (const mapping of mappings) {
+    const srcPath = path.join(pluginDir, mapping.src);
+    if (fs.existsSync(srcPath) && fs.statSync(srcPath).isDirectory()) {
+      copyWithPathReplacement(srcPath, mapping.dest, pluginName);
+
+      // Track installed files
+      const files = fs.readdirSync(srcPath);
+      for (const file of files) {
+        installedFiles.push(path.join(mapping.dest, file));
+      }
+    }
+  }
+
+  // Copy plugin.json to ~/.claude/{plugin-name}/plugin.json for management
+  const pluginMetaDir = path.join(configDir, pluginName);
+  fs.mkdirSync(pluginMetaDir, { recursive: true });
+  const manifestDest = path.join(pluginMetaDir, 'plugin.json');
+
+  // Add installed files list to manifest for uninstall tracking
+  const manifestWithTracking = {
+    ...manifest,
+    _installed: {
+      date: new Date().toISOString(),
+      files: installedFiles,
+    },
+  };
+  fs.writeFileSync(manifestDest, JSON.stringify(manifestWithTracking, null, 2));
+
+  return installedFiles;
+}
+
+/**
+ * Get list of installed commands from manifest
+ */
+function getInstalledCommands(manifest) {
+  const gsd = manifest.gsd || {};
+  if (!gsd.commands || !Array.isArray(gsd.commands)) {
+    return [];
+  }
+  return gsd.commands.map(cmd => cmd.name);
+}
+
+/**
  * Show help message
  */
 function showHelp() {
@@ -177,23 +336,35 @@ function installPlugin(source) {
       process.exit(1);
     }
 
-    // Basic validation (full validation in Task 2)
-    if (!manifest.name || !manifest.version) {
-      console.error(`  ${red}Error:${reset} Invalid plugin.json - missing required fields (name, version)`);
+    console.log(`\n  Installing plugin: ${cyan}${manifest.name}${reset} v${manifest.version}`);
+
+    // Full validation
+    const validationErrors = validateManifest(manifest, pluginDir);
+    if (validationErrors.length > 0) {
+      console.error(`  ${red}Validation errors:${reset}`);
+      for (const err of validationErrors) {
+        console.error(`    - ${err}`);
+      }
       cleanup(tempDir);
       process.exit(1);
     }
+    console.log(`  ${green}✓${reset} Validated plugin.json`);
 
-    console.log(`\n  Installing plugin: ${cyan}${manifest.name}${reset} v${manifest.version}`);
+    // Install files
+    const installedFiles = installPluginFiles(pluginDir, manifest);
 
-    // Placeholder for Task 2: Full validation and file copying
-    // For now, just show success message
-    console.log(`  ${green}Validated plugin.json${reset}`);
+    // Get installed commands
+    const commands = getInstalledCommands(manifest);
+    if (commands.length > 0) {
+      console.log(`  ${green}✓${reset} Installed commands: ${commands.join(', ')}`);
+    }
+
+    console.log(`  ${green}✓${reset} Installed ${installedFiles.length} files to ~/.claude/${manifest.name}/`);
 
     // Clean up temp directory
     cleanup(tempDir);
 
-    console.log(`\n  ${green}Done!${reset} Plugin ready for validation and installation.`);
+    console.log(`\n  ${green}Done!${reset} Run ${cyan}/gsd:help${reset} to see new commands.`);
 
   } catch (err) {
     cleanup(tempDir);
