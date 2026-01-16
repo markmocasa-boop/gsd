@@ -691,6 +691,96 @@ function showPluginInfo(pluginName) {
 }
 
 /**
+ * Enable a disabled plugin
+ */
+function enablePlugin(pluginName) {
+  if (!pluginName) {
+    console.error(`  ${red}Error:${reset} Plugin name required. Usage: plugin enable <name>`);
+    process.exit(1);
+  }
+
+  const configDir = getConfigDir();
+  const pluginDir = path.join(configDir, pluginName);
+  const manifestPath = path.join(pluginDir, 'plugin.json');
+
+  // Check if plugin is installed
+  if (!fs.existsSync(manifestPath)) {
+    console.error(`  ${red}Error:${reset} Plugin ${cyan}${pluginName}${reset} is not installed`);
+    process.exit(1);
+  }
+
+  // Read manifest
+  let manifest;
+  try {
+    manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+  } catch (parseErr) {
+    console.error(`  ${red}Error:${reset} Corrupted plugin.json - ${parseErr.message}`);
+    process.exit(1);
+  }
+
+  // Check if already enabled (default is true if not set)
+  const currentlyEnabled = manifest._installed?.enabled !== false;
+  if (currentlyEnabled) {
+    console.log(`  ${yellow}Warning:${reset} Plugin ${cyan}${pluginName}${reset} is already enabled`);
+    process.exit(0);
+  }
+
+  // Enable the plugin
+  manifest._installed = manifest._installed || {};
+  manifest._installed.enabled = true;
+
+  // Write updated manifest
+  fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
+
+  console.log(`  ${green}Done!${reset} Plugin ${cyan}${pluginName}${reset} enabled`);
+}
+
+/**
+ * Disable a plugin (keeps files but marks as inactive)
+ */
+function disablePlugin(pluginName) {
+  if (!pluginName) {
+    console.error(`  ${red}Error:${reset} Plugin name required. Usage: plugin disable <name>`);
+    process.exit(1);
+  }
+
+  const configDir = getConfigDir();
+  const pluginDir = path.join(configDir, pluginName);
+  const manifestPath = path.join(pluginDir, 'plugin.json');
+
+  // Check if plugin is installed
+  if (!fs.existsSync(manifestPath)) {
+    console.error(`  ${red}Error:${reset} Plugin ${cyan}${pluginName}${reset} is not installed`);
+    process.exit(1);
+  }
+
+  // Read manifest
+  let manifest;
+  try {
+    manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+  } catch (parseErr) {
+    console.error(`  ${red}Error:${reset} Corrupted plugin.json - ${parseErr.message}`);
+    process.exit(1);
+  }
+
+  // Check if already disabled
+  const currentlyEnabled = manifest._installed?.enabled !== false;
+  if (!currentlyEnabled) {
+    console.log(`  ${yellow}Warning:${reset} Plugin ${cyan}${pluginName}${reset} is already disabled`);
+    process.exit(0);
+  }
+
+  // Disable the plugin
+  manifest._installed = manifest._installed || {};
+  manifest._installed.enabled = false;
+
+  // Write updated manifest
+  fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
+
+  console.log(`  ${green}Done!${reset} Plugin ${cyan}${pluginName}${reset} disabled`);
+}
+
+/**
  * Check for existing plugin installation and handle conflicts
  */
 function checkExistingInstallation(pluginName, configDir) {
