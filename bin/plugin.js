@@ -22,6 +22,7 @@ const source = args[1];
 const verbose = args.includes('--verbose') || args.includes('-v');
 const force = args.includes('--force') || args.includes('-f');
 const link = args.includes('--link') || args.includes('-l');
+const dryRun = args.includes('--dry-run');
 
 /**
  * Expand ~ to home directory
@@ -381,6 +382,15 @@ function uninstallPlugin(pluginName) {
       process.exit(1);
     }
     // With --force, remove directory anyway
+    if (dryRun) {
+      console.log(`\n  Would force remove: ${pluginName}/`);
+      const commandsDir = path.join(configDir, 'commands', pluginName);
+      if (fs.existsSync(commandsDir)) {
+        console.log(`  Would force remove: commands/${pluginName}/`);
+      }
+      console.log(`\n  Run without --dry-run to actually uninstall.`);
+      return;
+    }
     console.log(`  ${yellow}Force removing${reset} plugin directory...`);
     fs.rmSync(pluginDir, { recursive: true, force: true });
     // Also try to remove commands dir
@@ -392,57 +402,71 @@ function uninstallPlugin(pluginName) {
     return;
   }
 
-  console.log(`\n  Uninstalling plugin: ${cyan}${manifest.name}${reset} v${manifest.version}`);
+  // Check if this is a linked plugin
+  const isLinked = manifest._installed?.linked === true;
+  const linkedSource = manifest._installed?.source;
 
-  // Track what we removed for reporting
-  const removed = [];
+  // Show header
+  if (dryRun) {
+    console.log(`\n  Would uninstall: ${cyan}${manifest.name}${reset} v${manifest.version}${isLinked ? ` ${dim}(linked)${reset}` : ''}`);
+  } else {
+    console.log(`\n  Uninstalling plugin: ${cyan}${manifest.name}${reset} v${manifest.version}${isLinked ? ` ${dim}(linked)${reset}` : ''}`);
+  }
+
+  // Track what we would remove for reporting
+  const toRemove = [];
   const warnings = [];
 
-  // Remove commands directory: ~/.claude/commands/{plugin-name}/
+  // Check commands directory: ~/.claude/commands/{plugin-name}/
   const commandsDir = path.join(configDir, 'commands', pluginName);
   if (fs.existsSync(commandsDir)) {
-    try {
-      fs.rmSync(commandsDir, { recursive: true, force: true });
-      removed.push(`commands/${pluginName}/`);
-    } catch (err) {
-      if (err.code === 'EACCES' || err.code === 'EPERM') {
-        console.error(`  ${red}Error:${reset} Permission denied removing ${commandsDir}. Check file permissions.`);
-        process.exit(1);
-      }
-      throw err;
-    }
+    toRemove.push({ path: commandsDir, display: `commands/${pluginName}/`, type: 'dir' });
   } else {
     warnings.push(`Expected commands/${pluginName}/ was not found`);
   }
 
-  // Remove agent files from ~/.claude/agents/ (only files from this plugin)
+  // Check agent files from ~/.claude/agents/ (only files from this plugin)
   const agents = manifest.gsd?.agents || [];
   for (const agent of agents) {
     const agentFile = path.join(configDir, 'agents', path.basename(agent.file));
     if (fs.existsSync(agentFile)) {
-      try {
-        fs.unlinkSync(agentFile);
-        removed.push(`agents/${path.basename(agent.file)}`);
-      } catch (err) {
-        if (err.code === 'EACCES' || err.code === 'EPERM') {
-          console.error(`  ${red}Error:${reset} Permission denied removing ${agentFile}. Check file permissions.`);
-          process.exit(1);
-        }
-        throw err;
-      }
+      toRemove.push({ path: agentFile, display: `agents/${path.basename(agent.file)}`, type: 'file' });
     } else {
       warnings.push(`Expected agents/${path.basename(agent.file)} was not found`);
     }
   }
 
-  // Remove plugin directory: ~/.claude/{plugin-name}/ (entire directory including plugin.json)
+  // Check plugin directory: ~/.claude/{plugin-name}/
   if (fs.existsSync(pluginDir)) {
+    toRemove.push({ path: pluginDir, display: `${pluginName}/`, type: 'dir' });
+  }
+
+  // Dry run mode - just show what would be removed
+  if (dryRun) {
+    for (const item of toRemove) {
+      console.log(`  - ~/.claude/${item.display}`);
+    }
+    if (isLinked && linkedSource) {
+      console.log(`\n  ${dim}Note: Source files at ${linkedSource} would not be modified${reset}`);
+    }
+    console.log(`\n  Run without --dry-run to actually uninstall.`);
+    return;
+  }
+
+  // Actually remove files
+  const removed = [];
+
+  for (const item of toRemove) {
     try {
-      fs.rmSync(pluginDir, { recursive: true, force: true });
-      removed.push(`${pluginName}/`);
+      if (item.type === 'dir') {
+        fs.rmSync(item.path, { recursive: true, force: true });
+      } else {
+        fs.unlinkSync(item.path);
+      }
+      removed.push(item.display);
     } catch (err) {
       if (err.code === 'EACCES' || err.code === 'EPERM') {
-        console.error(`  ${red}Error:${reset} Permission denied removing ${pluginDir}. Check file permissions.`);
+        console.error(`  ${red}Error:${reset} Permission denied removing ${item.path}. Check file permissions.`);
         process.exit(1);
       }
       throw err;
@@ -457,6 +481,11 @@ function uninstallPlugin(pluginName) {
   // Show warnings for missing expected files
   for (const warning of warnings) {
     console.log(`  ${yellow}!${reset} ${warning}`);
+  }
+
+  // Show note about linked plugin source
+  if (isLinked && linkedSource) {
+    console.log(`\n  ${dim}Note: Source files at ${linkedSource} were not modified${reset}`);
   }
 
   console.log(`\n  ${green}Done!${reset} Plugin ${pluginName} has been uninstalled.`);
@@ -491,11 +520,15 @@ function showHelp() {
     ${dim}# Uninstall a plugin${reset}
     plugin uninstall my-plugin
 
+    ${dim}# Preview what would be removed${reset}
+    plugin uninstall my-plugin --dry-run
+
   ${yellow}Options:${reset}
     --help, -h       Show this help message
     --verbose, -v    Show detailed installation progress
     --link, -l       Create symlinks instead of copying (for development)
     --force, -f      Overwrite existing plugin installation / force removal
+    --dry-run        Preview what would be removed without removing
 `);
 }
 
