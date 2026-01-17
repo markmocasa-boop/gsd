@@ -283,6 +283,7 @@ Comprehensive reference for GSD workflows, templates, and reference documents.
 | continue-here.md | .continue-here.md | execute-plan | State, Work, Next Action |
 | planner-subagent-prompt.md | (agent prompt) | plan-phase | Planning Context, Quality Gate |
 | debug-subagent-prompt.md | (agent prompt) | debug/diagnose | Symptoms, Mode, Debug File |
+| todo.md | .planning/todos/pending/*.md, .planning/todos/done/*.md | add-todo | Problem, Solution, Metadata |
 | config.json | .planning/config.json | /gsd:new-project | mode, depth, parallelization, gates, safety |
 
 ---
@@ -478,6 +479,32 @@ user_setup:
 
 ---
 
+#### todo.md Frontmatter (.planning/todos/pending/*.md, .planning/todos/done/*.md)
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| created | string | Yes | ISO timestamp when todo was captured |
+| title | string | Yes | 3–10 word action-focused title |
+| area | string | Yes | Area bucket (api, ui, auth, database, testing, docs, planning, tooling, general) |
+| files | list | No | Referenced file paths with optional line numbers |
+
+**Body Sections:**
+```markdown
+## Problem
+
+[problem description with enough context for future work]
+
+## Solution
+
+[approach hints or "TBD"]
+```
+
+**Notes:**
+- Pending todos live in `.planning/todos/pending/`; completed items move to `.planning/todos/done/`.
+- File naming uses `[YYYY-MM-DD]-[slug].md` based on the todo title.
+
+---
+
 ## References
 
 | Reference | Domain | Used By |
@@ -665,6 +692,7 @@ user_setup:
 | VERIFICATION.md | verify-phase | plan-phase --gaps |
 | UAT.md | verify-work | plan-phase --gaps, diagnose-issues |
 | DEBUG.md | gsd-debugger | User, plan-phase --gaps |
+| todo.md | add-todo | check-todos, resume-work, STATE.md |
 
 ### Reference → Usage Mapping
 
