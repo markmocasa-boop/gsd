@@ -6,6 +6,28 @@
 
 ---
 
+## ⚠️ Documentation Output Location
+
+**IMPORTANT:** All documentation files MUST be written to `docs/` (not `.planning/docs/`).
+
+The `.planning/` directory is gitignored and should only be used for project-specific working files during GSD execution. Generated reference documentation belongs in the tracked `docs/` directory:
+
+```
+docs/
+├── GSD_DOCUMENTATION_INDEX.md      # Master navigation
+├── FILE_MANIFEST.md                 # Complete file inventory
+├── agents/
+│   ├── gsd-planner-reference.md     # Deep tier
+│   ├── gsd-executor-reference.md    # Deep tier
+│   └── ...
+├── commands/
+│   ├── core-commands-reference.md
+│   └── secondary-commands-reference.md
+└── support-components-reference.md
+```
+
+---
+
 ## Prerequisites
 
 Before starting, ensure you have:
@@ -119,7 +141,7 @@ Execute:
 3. Count lines: `wc -l <file>`
 4. Scan for @-references: `grep -o "@[^[:space:]]*" <file> | sort -u`
 
-Write output to: `.planning/docs/FILE_MANIFEST.md`
+Write output to: `docs/FILE_MANIFEST.md`
 ```
 
 **Success criteria:**
@@ -399,7 +421,7 @@ After drafting, verify:
 - [ ] Is the goal-backward methodology clear enough to execute?
 - [ ] Are all breaking change scenarios identified?
 
-Write to: `.planning/docs/agents/gsd-planner-reference.md`
+Write to: `docs/agents/gsd-planner-reference.md`
 ```
 
 ---
@@ -460,7 +482,7 @@ Create Deep Reference documentation for agents/gsd-executor.md.
 - [ ] Is deviation handling complete (all types, all severities)?
 - [ ] Are checkpoint resumption paths clear?
 
-Write to: `.planning/docs/agents/gsd-executor-reference.md`
+Write to: `docs/agents/gsd-executor-reference.md`
 ```
 
 ---
@@ -517,7 +539,7 @@ Create Deep Reference documentation for agents/gsd-verifier.md.
 - [ ] Is each verification level's pass/fail criteria explicit?
 - [ ] Is gap → gap closure planning connection clear?
 
-Write to: `.planning/docs/agents/gsd-verifier-reference.md`
+Write to: `docs/agents/gsd-verifier-reference.md`
 ```
 
 ---
@@ -577,7 +599,7 @@ Create Deep Reference documentation for agents/gsd-plan-checker.md.
 - [ ] Are all 6 dimensions fully specified?
 - [ ] Is the revision → planner flow clear?
 
-Write to: `.planning/docs/agents/gsd-plan-checker-reference.md`
+Write to: `docs/agents/gsd-plan-checker-reference.md`
 ```
 
 ---
@@ -628,8 +650,8 @@ These agents score 6-9 and need Standard tier documentation (150-300 tokens each
 Create Standard tier documentation for research agents.
 
 ## Files to Process
-1. agents/gsd-researcher.md — Project-level research
-2. agents/gsd-phase-researcher.md — Phase-specific research
+1. agents/gsd-project-researcher.md — Project-level research (domain ecosystem)
+2. agents/gsd-phase-researcher.md — Phase-specific research (implementation details)
 
 ## Extraction Focus
 
@@ -642,14 +664,14 @@ Create Standard tier documentation for research agents.
 
 **Search patterns:**
 ```bash
-grep -n "mode\|Mode\|level\|Level" agents/gsd-researcher.md
-grep -n "source\|Source\|priority" agents/gsd-researcher.md
-grep -n "RESEARCH\|STACK\|CONTEXT" agents/gsd-researcher.md
+grep -n "mode\|Mode\|level\|Level" agents/gsd-project-researcher.md
+grep -n "source\|Source\|priority" agents/gsd-project-researcher.md
+grep -n "RESEARCH\|STACK\|CONTEXT" agents/gsd-project-researcher.md
 ```
 
-Write to: 
-- `.planning/docs/agents/gsd-researcher-reference.md`
-- `.planning/docs/agents/gsd-phase-researcher-reference.md`
+Write to:
+- `docs/agents/gsd-project-researcher-reference.md`
+- `docs/agents/gsd-phase-researcher-reference.md`
 ```
 
 ---
@@ -683,9 +705,9 @@ Create Standard tier documentation for utility agents.
 - ROADMAP.md schema
 
 Write to:
-- `.planning/docs/agents/gsd-debugger-reference.md`
-- `.planning/docs/agents/gsd-codebase-mapper-reference.md`
-- `.planning/docs/agents/gsd-roadmapper-reference.md`
+- `docs/agents/gsd-debugger-reference.md`
+- `docs/agents/gsd-codebase-mapper-reference.md`
+- `docs/agents/gsd-roadmapper-reference.md`
 ```
 
 ---
@@ -752,7 +774,7 @@ grep -n "Task(" commands/gsd/{command}.md
 grep -n "success_criteria\|Success" commands/gsd/{command}.md
 ```
 
-Write to: `.planning/docs/commands/core-commands-reference.md`
+Write to: `docs/commands/core-commands-reference.md`
 ```
 
 ---
@@ -803,7 +825,7 @@ Create condensed documentation for secondary commands.
 ...
 ```
 
-Write to: `.planning/docs/commands/secondary-commands-reference.md`
+Write to: `docs/commands/secondary-commands-reference.md`
 ```
 
 ---
@@ -882,7 +904,7 @@ Document each with:
 | ... | ... | ... |
 ```
 
-Write to: `.planning/docs/support-components-reference.md`
+Write to: `docs/support-components-reference.md`
 ```
 
 ---
@@ -896,10 +918,10 @@ Create the master documentation index that ties everything together.
 
 ## Input Files
 - GSD_ARCHITECTURE_SCAFFOLDING.md (already exists)
-- .planning/docs/FILE_MANIFEST.md
-- .planning/docs/agents/*.md
-- .planning/docs/commands/*.md
-- .planning/docs/support-components-reference.md
+- docs/FILE_MANIFEST.md
+- docs/agents/*.md
+- docs/commands/*.md
+- docs/support-components-reference.md
 
 ## Output Structure
 
@@ -990,7 +1012,7 @@ For modification tasks, load in this order:
 | Full system change | Above + related refs | ~5,000 |
 ```
 
-Write to: `.planning/docs/GSD_DOCUMENTATION_INDEX.md`
+Write to: `docs/GSD_DOCUMENTATION_INDEX.md`
 ```
 
 ---
@@ -1043,16 +1065,18 @@ Write to: `.planning/docs/GSD_DOCUMENTATION_INDEX.md`
 
 ## Output Directory Structure
 
+**IMPORTANT:** Documentation goes to `docs/` (tracked), NOT `.planning/docs/` (gitignored).
+
 ```
-.planning/docs/
-├── GSD_DOCUMENTATION_INDEX.md      # Master navigation
+docs/
+├── GSD_DOCUMENTATION_INDEX.md       # Master navigation
 ├── FILE_MANIFEST.md                 # Complete file inventory
 ├── agents/
 │   ├── gsd-planner-reference.md     # Deep tier
 │   ├── gsd-executor-reference.md    # Deep tier
 │   ├── gsd-verifier-reference.md    # Deep tier
 │   ├── gsd-plan-checker-reference.md # Deep tier
-│   ├── gsd-researcher-reference.md  # Standard tier
+│   ├── gsd-project-researcher-reference.md  # Standard tier
 │   ├── gsd-phase-researcher-reference.md
 │   ├── gsd-debugger-reference.md
 │   ├── gsd-codebase-mapper-reference.md
@@ -1077,7 +1101,7 @@ After all phases complete, verify:
 ### Coverage Check
 ```bash
 # Count documented vs total files
-wc -l .planning/docs/FILE_MANIFEST.md
+wc -l docs/FILE_MANIFEST.md
 find . -name "*.md" | wc -l
 ```
 
@@ -1100,7 +1124,7 @@ For each Deep Reference doc, verify:
 ### Token Budget Check
 ```bash
 # Estimate tokens (words × 1.3)
-wc -w .planning/docs/**/*.md | tail -1
+wc -w docs/**/*.md | tail -1
 ```
 
 Target: Total documentation < 10,000 tokens for full load.
