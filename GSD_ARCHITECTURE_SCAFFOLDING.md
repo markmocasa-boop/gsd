@@ -31,7 +31,7 @@
 ┌─────────────────────────────────────────────────────────────┐
 │ DISTRIBUTION LAYER                                          │
 │ bin/install.js → ~/.claude/ or ./.claude/                   │
-│ hooks/statusline.sh, gsd-notify.sh, gsd-check-update.sh     │
+│ hooks/statusline.js, hooks/gsd-check-update.js             │
 └─────────────────────────────────────────────────────────────┘
                               │
                               ▼
