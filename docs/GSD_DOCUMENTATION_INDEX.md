@@ -54,6 +54,7 @@ For modification tasks, load documents in this order:
 | [gsd-research-synthesizer](agents/gsd-research-synthesizer-reference.md) | Summary | ~350 | Modifying research output synthesis |
 
 **Documentation Tiers:**
+- **Summary Reference (0-6 complexity):** Essential behaviors, inputs/outputs, quick reference
 - **Deep Reference (10-12 complexity):** Full extraction — modes, constraints, mechanisms, anti-patterns, change impact
 - **Standard Reference (7-9 complexity):** Key behaviors, modes, interactions, quick reference
 

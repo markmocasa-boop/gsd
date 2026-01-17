@@ -1,4 +1,4 @@
-# gsd-research-synthesizer.md — Standard Reference
+# gsd-research-synthesizer.md — Summary Reference
 
 ## Metadata
 | Attribute | Value |
@@ -6,7 +6,7 @@
 | **Type** | Agent |
 | **Location** | `agents/gsd-research-synthesizer.md` |
 | **Size** | 247 lines |
-| **Documentation Tier** | Standard |
+| **Documentation Tier** | Summary |
 | **Complexity Score** | 1+2+2+1 = **6/12** |
 
 ### Complexity Breakdown
