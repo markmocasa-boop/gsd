@@ -1,0 +1,16 @@
+{
+  "name": "hello-world",
+  "version": "1.0.0",
+  "description": "Simple greeting command for GSD",
+  "author": "Developer Name",
+  "gsd": {
+    "minVersion": "1.4.0",
+    "commands": [
+      {
+        "name": "hello-world:greet",
+        "file": "commands/greet.md",
+        "description": "Display a friendly greeting"
+      }
+    ]
+  }
+}

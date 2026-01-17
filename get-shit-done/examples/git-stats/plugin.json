@@ -1,0 +1,22 @@
+{
+  "name": "git-stats",
+  "version": "1.0.0",
+  "description": "Git statistics for GSD projects",
+  "author": "GSD Examples",
+  "license": "MIT",
+  "gsd": {
+    "minVersion": "1.4.0",
+    "commands": [
+      {
+        "name": "git-stats:summary",
+        "file": "commands/summary.md",
+        "description": "Show commit statistics for the current repository"
+      },
+      {
+        "name": "git-stats:contributors",
+        "file": "commands/contributors.md",
+        "description": "List contributors with commit counts"
+      }
+    ]
+  }
+}
