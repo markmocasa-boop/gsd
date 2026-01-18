@@ -36,6 +36,43 @@ Standalone research command (usually use `/gsd:plan-phase` which integrates rese
 
 ---
 
+### /gsd:research-phase vs --skip-research
+
+**When to use /gsd:research-phase (dedicated research):**
+- Complex/unfamiliar domains (3D, audio, ML, games)
+- Phase requires ecosystem knowledge beyond "which library"
+- You want deep research BEFORE planning starts
+- Research output will be reused across multiple plans
+
+**When to use /gsd:plan-phase (includes research):**
+- Standard development (web apps, APIs, CRUD)
+- Domain is familiar, just need implementation patterns
+- Quick research sufficient during planning
+
+**When to use /gsd:plan-phase --skip-research:**
+- Research already done via /gsd:research-phase
+- Returning to plan after interruption
+- Phase is simple/mechanical (no research needed)
+
+**Decision Matrix:**
+
+| Domain Familiarity | Phase Complexity | Recommended Approach |
+|--------------------|------------------|----------------------|
+| High | Low | `plan-phase --skip-research` |
+| High | High | `plan-phase` (auto-research) |
+| Low | Any | `research-phase` then `plan-phase --skip-research` |
+| Unknown | Any | `research-phase` first |
+
+**Research Output Comparison:**
+
+| Command | Output | Depth | Duration |
+|---------|--------|-------|----------|
+| plan-phase (auto) | {phase}-RESEARCH.md | Standard | 5-10 min |
+| research-phase | {phase}-RESEARCH.md | Deep | 15-30 min |
+| discovery (during planning) | DISCOVERY.md | Shallow | 2-5 min |
+
+---
+
 ### /gsd:list-phase-assumptions
 
 Surface Claude's intended approach BEFORE planning begins. Shows assumptions about:
@@ -143,31 +180,86 @@ Archive completed milestone:
 
 ### /gsd:audit-milestone
 
-Verify milestone achieved definition of done before archiving:
-- Read all phase VERIFICATION.md files
-- Aggregate tech debt and deferred gaps
-- Spawn integration checker for cross-phase wiring
-- Check requirements coverage
+Verify milestone achieved its definition of done before archiving.
 
-**Status values:**
-- `passed` — all requirements met
-- `gaps_found` — critical blockers exist
-- `tech_debt` — no blockers but accumulated debt
+**Purpose:** Catches issues that pass phase-level verification but fail at system level — cross-phase wiring gaps, broken E2E flows, unmet requirements.
 
-**Output:** `v{version}-MILESTONE-AUDIT.md` with scores and gap details.
+**Execution Flow:**
+1. Determine milestone scope from ROADMAP.md
+2. Read all phase VERIFICATION.md files
+3. Aggregate tech debt and deferred gaps
+4. Spawn gsd-integration-checker for cross-phase verification
+5. Check requirements coverage from REQUIREMENTS.md
+6. Generate v{version}-MILESTONE-AUDIT.md
+7. Route based on status
+
+**What Integration Checker Verifies:**
+
+| Check | What It Catches |
+|-------|-----------------|
+| Export/Import wiring | Phase 1 exports function, Phase 3 never imports it |
+| API coverage | Route exists but nothing calls it |
+| Auth protection | Dashboard accessible without login |
+| E2E flows | User signup works but login broken |
+
+**Output:** `.planning/v{version}-MILESTONE-AUDIT.md`
+
+**Status Values:**
+- `passed` — All requirements met, integration verified, E2E flows complete
+- `gaps_found` — Critical blockers exist, run `/gsd:plan-milestone-gaps`
+- `tech_debt` — No blockers but accumulated deferred items need review
+
+**Routing:**
+
+| Status | Next Command |
+|--------|--------------|
+| passed | `/gsd:complete-milestone` |
+| gaps_found | `/gsd:plan-milestone-gaps` |
+| tech_debt | Review debt, then `/gsd:complete-milestone` or plan cleanup |
+
+**Usage:** `/gsd:audit-milestone` or `/gsd:audit-milestone 1.0`
 
 ---
 
 ### /gsd:plan-milestone-gaps
 
-Create phases to close gaps identified by audit:
-1. Parse gaps from MILESTONE-AUDIT.md
-2. Prioritize by must/should/nice
-3. Group related gaps into logical phases
-4. Update ROADMAP.md with new phases
-5. Offer `/gsd:plan-phase` for first gap phase
+Create phases to close all gaps identified by milestone audit.
 
-**Grouping rules:** Same affected phase, same subsystem, dependency order, 2-4 tasks per phase.
+**Purpose:** Automates gap closure planning — reads MILESTONE-AUDIT.md, groups gaps into logical phases, updates ROADMAP.md.
+
+**Prerequisites:**
+- `/gsd:audit-milestone` must have run
+- v{version}-MILESTONE-AUDIT.md must exist with gaps_found or tech_debt status
+
+**Execution Flow:**
+1. Load most recent MILESTONE-AUDIT.md
+2. Parse gaps from YAML frontmatter
+3. Prioritize by requirement priority (must > should > nice)
+4. Group related gaps into logical phases
+5. Determine phase numbers (continue from highest existing)
+6. Present gap closure plan for approval
+7. On approval, update ROADMAP.md with new phases
+8. Route to planning first gap phase
+
+**Gap Grouping Rules:**
+- Same affected phase → combine into one fix phase
+- Same subsystem (auth, API, UI) → combine
+- Dependency order (fix stubs before wiring)
+- Keep phases focused: 2-4 tasks each
+
+**Example:**
+```
+Gaps identified:
+- REQ-05 (Dashboard) unsatisfied
+- Integration: Auth → Dashboard missing
+- Flow: "View dashboard" broken
+
+→ Creates Phase 6: "Wire Dashboard to API"
+```
+
+**Output:** Updated ROADMAP.md with gap closure phases
+
+**Usage:** `/gsd:plan-milestone-gaps`
 
 ---
 

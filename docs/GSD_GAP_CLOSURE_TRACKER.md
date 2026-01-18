@@ -2,7 +2,7 @@
 
 > **Created:** 2026-01-18
 > **Last Updated:** 2026-01-18
-> **Current Stage:** 3 of 7 (Complete)
+> **Current Stage:** 4 of 7 (Complete)
 
 ## Task Status Legend
 - [ ] Not started
@@ -33,9 +33,9 @@
 - [x] 3.4 Add discovery-phase.md detailed behavior
 
 ## Stage 4: Secondary Commands Enhancement (P1)
-- [ ] 4.1 Add /gsd:audit-milestone comprehensive documentation
-- [ ] 4.2 Add /gsd:plan-milestone-gaps documentation
-- [ ] 4.3 Clarify /gsd:research-phase vs plan-phase --skip-research
+- [x] 4.1 Add /gsd:audit-milestone comprehensive documentation
+- [x] 4.2 Add /gsd:plan-milestone-gaps documentation
+- [x] 4.3 Clarify /gsd:research-phase vs plan-phase --skip-research
 
 ## Stage 5: Architecture Scaffolding Updates (P1)
 - [ ] 5.1 Add Flow 4: Milestone Completion
@@ -62,5 +62,6 @@
 | 1 | Verify output dir | N/A | Complete | /mnt/user-data/outputs/ writable |
 | 2 | 2.1-2.7 User Journey Corrections | GSD_USER_JOURNEY.md | Complete | All corrections verified present (v1.1) |
 | 3 | 3.1-3.4 | support-components-reference.md | Complete | 4 schemas added |
+| 4 | 4.1-4.3 | secondary-commands-reference.md | Complete | 3 command sections added/expanded |
 
 ---
