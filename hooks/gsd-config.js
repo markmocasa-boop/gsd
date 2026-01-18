@@ -540,7 +540,7 @@ function main() {
       }
     } else if (format !== 'json') {
       // eslint-disable-next-line no-console
-      console.log('\nRun: node ~/.claude/hooks/gsd-config.js upgrade --write');
+      console.log(`\nRun: node "${__filename}" upgrade --write`);
     }
 
     process.exit(0);
@@ -558,4 +558,3 @@ module.exports = {
   getByPath,
   setByPath,
 };
-
