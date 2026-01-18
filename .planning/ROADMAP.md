@@ -62,12 +62,12 @@ Plans:
   3. User can run downstream impact analysis to see what breaks if a column changes
   4. User can trace a quality issue back to its root cause through the lineage graph
   5. System emits and consumes OpenLineage events for interoperability with external tools
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 03-01: TBD
-- [ ] 03-02: TBD
-- [ ] 03-03: TBD
+- [ ] 03-01-PLAN.md — Lineage Schema & Agent Core (database schema, SQLGlot parser, OpenLineage producer, impact analyzer)
+- [ ] 03-02-PLAN.md — AWS Lineage Extraction (Redshift/Athena query extraction, batch processing, scheduled Lambda)
+- [ ] 03-03-PLAN.md — Lineage Frontend (React Flow visualization, table nodes, impact/root cause panels)
 
 ### Phase 4: Visibility & Integration
 **Goal**: Users can monitor data health through dashboards, alerts, and APIs
