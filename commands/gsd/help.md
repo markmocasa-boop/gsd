@@ -129,6 +129,16 @@ Execute all plans in a phase.
 
 Usage: `/gsd:execute-phase 5`
 
+**`/gsd:verify-work [phase-number]`**
+Validate built features through conversational UAT.
+
+- Tests features one at a time with plain text responses
+- Creates {phase}-UAT.md tracking all test results
+- When issues found: automatically diagnoses and plans fixes
+- Prepares fix plans ready for `/gsd:execute-phase`
+
+Usage: `/gsd:verify-work 3`
+
 ### Roadmap Management
 
 **`/gsd:add-phase <description>`**
@@ -184,6 +194,26 @@ Archive completed milestone and prepare for next version.
 - Prepares workspace for next version
 
 Usage: `/gsd:complete-milestone 1.0.0`
+
+**`/gsd:audit-milestone [version]`**
+Audit milestone completion before archiving.
+
+- Verifies requirements coverage across all phases
+- Checks cross-phase integration and wiring
+- Tests end-to-end flows
+- Creates MILESTONE-AUDIT.md with gaps and tech debt
+
+Usage: `/gsd:audit-milestone 1.0.0`
+
+**`/gsd:plan-milestone-gaps`**
+Create phases to close gaps from audit.
+
+- Reads MILESTONE-AUDIT.md for identified gaps
+- Groups gaps into logical fix phases
+- Creates phase entries in ROADMAP.md
+- Offers to plan each new phase
+
+Usage: `/gsd:plan-milestone-gaps`
 
 ### Progress Tracking
 
@@ -273,6 +303,15 @@ See what's changed since your installed version.
 - Provides update instructions when behind
 
 Usage: `/gsd:whats-new`
+
+**`/gsd:update`**
+Update GSD to latest version.
+
+- Checks for available updates
+- Installs latest version if available
+- Displays what changed between versions
+
+Usage: `/gsd:update`
 
 ## Files & Structure
 

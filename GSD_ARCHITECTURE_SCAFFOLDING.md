@@ -69,8 +69,8 @@
 | `/gsd:progress` | Status check + intelligent routing | None | `commands/gsd/progress.md` |
 | `/gsd:discuss-phase` | Capture user vision before planning | None | `commands/gsd/discuss-phase.md` |
 | `/gsd:research-phase` | Phase-specific research | gsd-phase-researcher | `commands/gsd/research-phase.md` |
-| `/gsd:research-project` | Project-level domain research | gsd-project-researcher (×4 parallel), gsd-research-synthesizer | `commands/gsd/research-project.md` |
 | `/gsd:list-phase-assumptions` | Preview Claude's planned approach | None | `commands/gsd/list-phase-assumptions.md` |
+| `/gsd:audit-milestone` | Audit milestone before archiving | gsd-integration-checker | `commands/gsd/audit-milestone.md` |
 | `/gsd:map-codebase` | Brownfield codebase analysis | gsd-codebase-mapper | `commands/gsd/map-codebase.md` |
 | `/gsd:new-milestone` | Start new milestone cycle | gsd-project-researcher (×4), gsd-research-synthesizer, gsd-roadmapper | `commands/gsd/new-milestone.md` |
 | `/gsd:complete-milestone` | Archive milestone, tag release | None | `commands/gsd/complete-milestone.md` |
@@ -91,6 +91,7 @@
 | **gsd-phase-researcher** | Phase-specific implementation research | Phase goal | `{phase}-RESEARCH.md` | `agents/gsd-phase-researcher.md` |
 | **gsd-roadmapper** | Requirement→phase mapping | REQUIREMENTS.md, research/ | ROADMAP.md, STATE.md | `agents/gsd-roadmapper.md` |
 | **gsd-codebase-mapper** | Brownfield analysis | Existing codebase | `codebase/*.md` (7 files) | `agents/gsd-codebase-mapper.md` |
+| **gsd-integration-checker** | Cross-phase integration verification | Phase SUMMARYs, codebase | MILESTONE-AUDIT.md | `agents/gsd-integration-checker.md` |
 
 ### Critical Agent Sections
 
@@ -114,8 +115,13 @@
 | `verify-phase.md` | Goal verification procedure | gsd-verifier | `get-shit-done/workflows/verify-phase.md` |
 | `verify-work.md` | UAT session procedure | /gsd:verify-work | `get-shit-done/workflows/verify-work.md` |
 | `diagnose-issues.md` | Parallel issue diagnosis | /gsd:verify-work | `get-shit-done/workflows/diagnose-issues.md` |
-| `create-roadmap.md` | Roadmap generation | gsd-roadmapper | `get-shit-done/workflows/create-roadmap.md` |
 | `complete-milestone.md` | Milestone archival | /gsd:complete-milestone | `get-shit-done/workflows/complete-milestone.md` |
+| `discuss-phase.md` | Gather phase context | /gsd:discuss-phase | `get-shit-done/workflows/discuss-phase.md` |
+| `discovery-phase.md` | Library/option research | /gsd:plan-phase | `get-shit-done/workflows/discovery-phase.md` |
+| `map-codebase.md` | Brownfield analysis | /gsd:map-codebase | `get-shit-done/workflows/map-codebase.md` |
+| `resume-project.md` | Session restoration | /gsd:resume-work | `get-shit-done/workflows/resume-project.md` |
+| `transition.md` | Phase completion | execute-phase | `get-shit-done/workflows/transition.md` |
+| `list-phase-assumptions.md` | Surface assumptions | /gsd:list-phase-assumptions | `get-shit-done/workflows/list-phase-assumptions.md` |
 
 ---
 
@@ -126,7 +132,7 @@
 | `phase-prompt.md` | PLAN.md | gsd-planner | `get-shit-done/templates/phase-prompt.md` |
 | `planner-subagent-prompt.md` | Planner context | /gsd:plan-phase | `get-shit-done/templates/planner-subagent-prompt.md` |
 | `summary.md` | SUMMARY.md | gsd-executor | `get-shit-done/templates/summary.md` |
-| `verification.md` | VERIFICATION.md | gsd-verifier | `get-shit-done/templates/verification.md` |
+| `verification-report.md` | VERIFICATION.md | gsd-verifier | `get-shit-done/templates/verification-report.md` |
 | `project.md` | PROJECT.md | /gsd:new-project | `get-shit-done/templates/project.md` |
 | `roadmap.md` | ROADMAP.md | gsd-roadmapper | `get-shit-done/templates/roadmap.md` |
 | `requirements.md` | REQUIREMENTS.md | /gsd:new-project | `get-shit-done/templates/requirements.md` |
@@ -142,10 +148,11 @@
 |-----------|--------|---------|--------|
 | `checkpoints.md` | Checkpoint protocols (3 types) | gsd-executor | `get-shit-done/references/checkpoints.md` |
 | `tdd.md` | Test-driven development patterns | gsd-planner, gsd-executor | `get-shit-done/references/tdd.md` |
-| `principles.md` | Core philosophy | Multiple | `get-shit-done/references/principles.md` |
 | `questioning.md` | Requirements elicitation | /gsd:new-project | `get-shit-done/references/questioning.md` |
 | `ui-brand.md` | UI styling conventions | Multiple commands | `get-shit-done/references/ui-brand.md` |
 | `verification-patterns.md` | Stub detection, wiring checks | gsd-verifier | `get-shit-done/references/verification-patterns.md` |
+| `continuation-format.md` | Session handoff format | /gsd:pause-work, /gsd:resume-work | `get-shit-done/references/continuation-format.md` |
+| `git-integration.md` | Git workflow patterns | gsd-executor | `get-shit-done/references/git-integration.md` |
 
 ---
 
@@ -377,7 +384,6 @@ When modifying a component, extract behavioral details from source:
 
 ## Version
 
-- **GSD Version:** 1.5.28
-- **Scaffolding Version:** v3
-- **Updated:** 2026-01-17
-- **Source Commit:** 3d9449cd
+- **GSD Version:** 1.6.3
+- **Scaffolding Version:** v4
+- **Updated:** 2026-01-18

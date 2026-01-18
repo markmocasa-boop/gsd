@@ -813,5 +813,115 @@ user_setup:
 
 ---
 
-*Generated: 2025-01-17*
+## XML Tag Conventions
+
+GSD uses semantic XML containers throughout its specification files. These conventions ensure consistent structure across commands, agents, workflows, and templates.
+
+### Semantic Container Tags
+
+| Tag | Purpose | Used In |
+|-----|---------|---------|
+| `<command>` | Top-level command wrapper | Commands |
+| `<role>` | Agent identity and mindset | Agents |
+| `<objective>` | What to accomplish | Workflows, agents |
+| `<process>` | Step-by-step procedure | Workflows, agents |
+| `<step>` | Individual process step | Workflows, agents |
+| `<task>` | Executable unit of work | PLAN.md files |
+| `<verification>` | How to verify completion | Plans, agents |
+| `<critical_rules>` | Non-negotiable constraints | Agents |
+| `<structured_returns>` | Output format specification | Agents |
+
+### Task Structure Pattern
+
+```xml
+<task type="auto">
+  <name>Task N: Action-oriented name</name>
+  <files>src/path/file.ts</files>
+  <action>What to do, what to avoid and WHY</action>
+  <verify>Command or check to prove completion</verify>
+  <done>Measurable acceptance criteria</done>
+</task>
+```
+
+### Task Types
+
+| Type | Behavior | Use Case |
+|------|----------|----------|
+| `type="auto"` | Claude executes autonomously | Default for most tasks |
+| `type="checkpoint:human-verify"` | User verifies Claude's work | Visual, UX, interactive features |
+| `type="checkpoint:decision"` | User makes implementation choice | Architecture, library selection |
+| `type="checkpoint:human-action"` | User performs unavoidable manual step | Email verification, 3DS, physical setup |
+
+### Anti-Patterns
+
+- **Generic tags:** Avoid `<section>`, `<item>`, `<content>` — use semantic names
+- **Deep nesting:** More than 3 levels indicates structural problems
+- **Mixed content:** Don't mix markdown headers with XML structure in the same section
+
+---
+
+## Error Handling Strategy
+
+GSD uses a layered error handling approach: **task-level verification with checkpoint fallback**.
+
+### Error Flow
+
+```
+Task Execution
+      │
+      ▼
+<verify> block runs
+      │
+      ├─→ PASS → Commit task, continue
+      │
+      └─→ FAIL → Deviation Rules
+              │
+              ├─→ Auto-fix (bugs, critical missing, blockers)
+              │
+              └─→ Checkpoint (architectural decisions)
+                      │
+                      ▼
+              Return to orchestrator → Human decision → Resume
+```
+
+### Error Types by Layer
+
+| Layer | Error Type | Handling |
+|-------|------------|----------|
+| Installation | File/path errors | Console message + `process.exit(1)` |
+| Plan Execution | Task verification fails | Apply deviation rules |
+| Plan Execution | Checkpoint reached | Pause, present to user, resume on approval |
+| Phase Verification | Gaps found | Generate gap closure recommendations |
+| UAT | User reports issue | Log in UAT.md, spawn debugger if requested |
+
+### Deviation Rules (gsd-executor)
+
+1. **Bug discovered:** Auto-fix immediately
+2. **Critical missing:** Auto-add if essential for task completion
+3. **Blocker detected:** Auto-fix if prevents progress
+4. **Architectural decision:** Checkpoint — ask user
+
+---
+
+## Style Guide Reference
+
+GSD follows conventions documented in `GSD-STYLE.md` at the repository root. Key points for LLM agents:
+
+### Banned Language
+
+| Category | Examples | Why |
+|----------|----------|-----|
+| Filler | "Let me", "Just", "Simply", "Basically" | Wastes tokens, adds no information |
+| Sycophancy | "I'd be happy to", "Great!", "Awesome!" | Unprofessional, wastes tokens |
+| Hedging | "I think maybe", "Perhaps we could" | Be direct and confident |
+
+### Voice and Tone
+
+- **Imperative voice:** "Execute tasks", "Create file" (not passive)
+- **Direct statements:** "This creates X" (not "This will create X")
+- **Concrete language:** Specific file paths, exact commands, measurable outcomes
+
+---
+
+*Generated: 2026-01-17*
 *Source: get-shit-done/workflows/, get-shit-done/templates/, get-shit-done/references/*

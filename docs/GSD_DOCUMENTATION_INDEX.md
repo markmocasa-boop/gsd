@@ -5,6 +5,60 @@
 
 ---
 
+## System Overview
+
+**GSD is a Hierarchical Meta-Prompting System with Subagent Orchestration.**
+
+The system solves a core problem: Claude's output quality degrades as context fills (>60% = degradation). GSD spawns fresh 200k context agents for each discrete task. Orchestrators stay lean (10-15% context), agents execute in isolation (40-50% context), and all communication happens via files.
+
+### Architectural Pattern
+
+```
+┌─────────────────────────────────────────────┐
+│ User runs /gsd:command                       │
+└─────────────────────────────────────────────┘
+                    │
+                    ▼
+┌─────────────────────────────────────────────┐
+│ COMMAND LAYER (Orchestrators)                │
+│ Validate → Spawn agents → Read outputs       │
+│ Target: ≤15% context                         │
+└─────────────────────────────────────────────┘
+                    │ Task(prompt, subagent_type)
+                    ▼
+┌─────────────────────────────────────────────┐
+│ AGENT LAYER (Executors)                      │
+│ Fresh 200k context per agent                 │
+│ Load workflows → Execute → Write outputs     │
+│ Target: ≤50% context                         │
+└─────────────────────────────────────────────┘
+                    │
+                    ▼
+┌─────────────────────────────────────────────┐
+│ STATE LAYER                                  │
+│ .planning/ — All state as Markdown+YAML     │
+│ No IPC, no shared memory, files only        │
+└─────────────────────────────────────────────┘
+```
+
+### Core Abstractions
+
+| Concept | What It Is | Key Characteristic |
+|---------|------------|-------------------|
+| **PLAN.md** | Executable prompt with tasks | Plans ARE prompts, not documents to transform |
+| **Wave** | Parallelization unit | Same-wave plans run in parallel |
+| **Checkpoint** | Human-in-the-loop pause | Three types: verify, decision, action |
+| **Goal-Backward** | Verification philosophy | Verify truths (outcomes), not tasks (changes) |
+
+### Key References
+
+| File | Purpose |
+|------|---------|
+| `GSD_ARCHITECTURE_SCAFFOLDING.md` | Full architectural details, registries, invariants |
+| `GSD-STYLE.md` | Contributor style guide (at repository root) |
+
+---
+
 ## Quick Start
 
 For modification tasks, load documents in this order:
@@ -73,9 +127,10 @@ For modification tasks, load documents in this order:
 
 | Document | Coverage | Est. Tokens | When to Load |
 |----------|----------|-------------|--------------|
-| [support-components-reference.md](support-components-reference.md) | Workflows, templates, references | ~1,100 | Modifying workflows, understanding template schemas, using references |
-| [operational-components-reference.md](operational-components-reference.md) | Install flow, statusline, update check | ~450 | Modifying installer or hooks behavior |
+| [support-components-reference.md](support-components-reference.md) | Workflows, templates, references, XML conventions, error handling | ~1,200 | Modifying workflows, understanding template schemas, using references |
+| [operational-components-reference.md](operational-components-reference.md) | Install flow, statusline, update check, security, distribution | ~550 | Modifying installer or hooks behavior |
 | [FILE_MANIFEST.md](FILE_MANIFEST.md) | Complete file inventory | ~500 | Finding file locations, understanding relationships |
+| [GSD-STYLE.md](../GSD-STYLE.md) | Writing conventions, banned language, voice/tone | ~400 | Writing GSD specifications, understanding output style |
 
 ---
 
@@ -294,10 +349,11 @@ executor ──► SUMMARY.md ──► verifier ──► VERIFICATION.md
 | gsd-research-synthesizer-reference.md | 182 | ~350 |
 | core-commands-reference.md | 341 | ~600 |
 | secondary-commands-reference.md | 366 | ~650 |
-| support-components-reference.md | 627 | ~1,100 |
-| operational-components-reference.md | 132 | ~450 |
+| support-components-reference.md | 927 | ~1,600 |
+| operational-components-reference.md | 196 | ~550 |
 | FILE_MANIFEST.md | 265 | ~500 |
-| **Total Documentation** | ~4,854 | ~10,150 |
+| GSD-STYLE.md | ~400 | ~400 |
+| **Total Documentation** | ~5,369 | ~11,400 |
 
 ### Recommended Loading Strategy
 

@@ -125,8 +125,72 @@ Checks for newer `get-shit-done-cc` versions in the background and writes result
 
 ---
 
+## Security Considerations
+
+**Environment Variable Usage:**
+- `CLAUDE_CONFIG_DIR` is used without path validation beyond `path.join()` normalization
+- Recommendation: The installer trusts this variable; ensure it points to a trusted directory
+
+**Regex Path Replacement:**
+- Path replacement uses string replacement with the target prefix
+- Edge case: If `pathPrefix` contains regex special characters, replacement could behave unexpectedly
+- Current mitigation: `path.join()` provides normalization; typical paths don't contain special characters
+
+**File System Trust:**
+- The installer assumes `__dirname/..` contains the expected source directories
+- No verification that source directories exist before copying
+- Failure mode: Silent creation of empty target directories if source is missing
+
+**No Hardcoded Secrets:**
+- The codebase contains no API keys, passwords, or tokens
+- All external service configuration happens in user projects, not in GSD itself
+
+---
+
+## Known Fragile Areas
+
+**Path Prefix Logic (bin/install.js):**
+- The conditional logic for determining path prefix based on config directory is complex
+- Safe modification requires understanding the three cases: global (`~/.claude`), local (`./.claude`), and custom (`--config-dir`)
+- Test all three installation modes after any path-related changes
+
+**Settings.json Merging:**
+- The installer reads existing `settings.json` and merges hooks/statusline configuration
+- Edge cases: Malformed JSON, missing fields, conflicting hook entries
+- The installer attempts graceful handling but may overwrite user customizations
+
+---
+
+## Distribution Pipeline
+
+```
+GitHub Repository (source)
+        │
+        ▼
+npm publish (manual)
+        │
+        ▼
+npmjs.com Registry
+        │
+        ▼
+User: npx get-shit-done-cc [--global|--local]
+        │
+        ▼
+~/.claude/ or ./.claude/ (installed assets)
+```
+
+**Version Lifecycle:**
+1. Developer updates source in GitHub repository
+2. Developer runs `npm publish` to push to registry
+3. User runs `npx get-shit-done-cc` which fetches latest from registry
+4. Installer copies assets to Claude config directory with path replacement
+5. `VERSION` file written enables `/gsd:whats-new` update detection
+
+---
+
 ## Related references
 - `docs/GSD_DOCUMENTATION_INDEX.md` (document map and load guidance)
+- `GSD-STYLE.md` (contributor style guide at repository root)
 - `hooks/statusline.js`
 - `hooks/gsd-check-update.js`
 - `bin/install.js`
