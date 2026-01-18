@@ -64,7 +64,7 @@ Installs GSD into a Claude Code configuration directory (global or project-local
 
 Claude Code settings file structure managed by GSD installer (see `bin/install.js`):
 
-**Location:** `~/.claude/settings.json`
+**Location:** `~/.claude/settings.json` (global installs) or `./.claude/settings.json` (local installs).
 
 **Full Schema:**
 ```json
@@ -76,7 +76,6 @@ Claude Code settings file structure managed by GSD installer (see `bin/install.j
   "hooks": {
     "SessionStart": [
       {
-        "matcher": "",
         "hooks": [
           {
             "type": "command",
@@ -96,7 +95,7 @@ Claude Code settings file structure managed by GSD installer (see `bin/install.j
 | `statusLine.type` | Must be "command" | Yes |
 | `statusLine.command` | Path to statusline script | Yes |
 | `hooks.SessionStart` | Hooks run when Claude Code starts | No |
-| `hooks.SessionStart[].matcher` | Regex to match directory (empty = all) | No |
+| `hooks.SessionStart[].matcher` | Regex to match directory (empty = all) | No (not written by installer) |
 | `hooks.SessionStart[].hooks` | Array of hook commands | No |
 
 **Installer Merge Behavior:**
@@ -105,7 +104,7 @@ When settings.json exists, installer:
 1. Reads existing content
 2. Preserves all non-GSD settings
 3. Updates/adds statusLine configuration
-4. Updates/adds SessionStart hooks
+4. Updates/adds SessionStart hooks (without matcher)
 5. Writes merged result
 
 **Manual Modification:**
@@ -120,6 +119,9 @@ When settings.json exists, installer:
 | No status bar | statusLine missing/broken | Re-run installer |
 | No update notifications | SessionStart hook missing | Re-run installer |
 | Settings overwritten | Manual edit after install | Re-run installer with --force-statusline |
+
+**Notes:**
+- The installer hardcodes `$HOME/.claude` paths in the statusline and update hook commands for all global installs (lines 252-257 in `bin/install.js`). When using a custom config directory via `--config-dir` or `CLAUDE_CONFIG_DIR`, the hooks are copied to the custom directory but the command paths in `settings.json` still reference `$HOME/.claude`, requiring manual adjustment of both commands to point to the actual config directory.
 
 ---
 
