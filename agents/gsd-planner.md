@@ -1091,6 +1091,9 @@ Understand:
 	# Read RESEARCH.md if exists (from /gsd:research-phase)
 	cat "${PHASE_DIR}"/*-RESEARCH.md 2>/dev/null
 
+	# Read CODEBASE-RESEARCH.md if exists (from /gsd:plan-phase with codebase research enabled)
+	cat "${PHASE_DIR}"/*-CODEBASE-RESEARCH.md 2>/dev/null
+
 # Read DISCOVERY.md if exists (from mandatory discovery)
 cat "${PHASE_DIR}"/*-DISCOVERY.md 2>/dev/null
 ```
@@ -1100,6 +1103,8 @@ cat "${PHASE_DIR}"/*-DISCOVERY.md 2>/dev/null
 	**If DECISION-LEDGER.md exists:** Treat it as the authoritative verbatim record of what was agreed. Ensure plan tasks + must_haves reflect the approved decisions (and include verification where relevant).
 
 	**If RESEARCH.md exists:** Use standard_stack, architecture_patterns, dont_hand_roll, common_pitfalls. Research has already identified the right tools.
+
+	**If CODEBASE-RESEARCH.md exists:** Use it to target the right files and follow existing patterns. Treat `## Gaps / Not Checked` as actionable: either add explicit plan tasks/verification to close critical gaps, or carry them forward as open questions (do not ignore).
 	</step>
 
 <step name="break_into_tasks">

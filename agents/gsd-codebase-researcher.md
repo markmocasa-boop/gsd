@@ -68,9 +68,57 @@ Every finding must cite specific files and line numbers:
 - BAD: "Authentication is handled by a service"
 - GOOD: "Authentication: `src/services/AuthService.ts:42` handles login, calls `src/api/auth.ts:15`"
 
+## Output Contract + Explicit Gaps (Required)
+
+To keep research auditable and easy to consolidate, every investigation mode MUST return the same structured report format.
+
+**Why:**
+- Consolidation becomes deterministic (no “freeform prose” to interpret)
+- Findings are reproducible (commands/patterns are recorded)
+- Gaps are explicit (prevents false confidence)
+
+**Return this XML format (always include `<commands>` and `<not_checked>`):**
+
+```xml
+<mode_report mode="File Discovery">
+  <scope>What I examined (dirs, file types, search terms)</scope>
+  <commands>
+    - `rg -n "FooService" src/`
+    - `ls src/**/foo*`
+  </commands>
+  <files>
+    - `src/foo/FooService.ts` — entry point for X
+    - `src/foo/fooRoutes.ts` — wires routes for X
+  </files>
+  <findings>
+    - FooService is constructed in `src/app.ts:42` and used by `src/foo/fooRoutes.ts:18`
+  </findings>
+  <risks>
+    - [med] Changing FooService affects request validation — mitigate by adding contract tests
+  </risks>
+  <open_questions>
+    - Is FooService used in background jobs? (search `FooService` in `jobs/`)
+  </open_questions>
+  <not_checked>
+    - Did not inspect error paths past `FooService.handleError` (only happy path traced)
+  </not_checked>
+  <next_steps>
+    - Grep `FooService` in `jobs/` and `workers/` to confirm no hidden call sites
+  </next_steps>
+</mode_report>
+```
+
+**Rules:**
+- Every finding needs evidence (`path:line`) or command output reference
+- In `<commands>`, include exact Bash commands and/or Grep/Glob patterns used (e.g., `Grep: "FooService" in src/`)
+- `<not_checked>` is REQUIRED (even if small) — list explicit gaps
+- Keep each mode report concise (target ≤ 120 lines)
+
 </philosophy>
 
 <investigation_modes>
+
+**Note:** Each mode produces a `<mode_report>` using the Output Contract above. The “Output” sections below describe how each mode’s findings should appear in the consolidated `*-CODEBASE-RESEARCH.md`.
 
 ## Mode: File Discovery
 
@@ -275,9 +323,10 @@ Task(
   <keywords>{extracted_keywords}</keywords>
 
   Investigate the codebase for files related to this phase.
-  Return structured findings per the File Discovery mode output format.
-  Cite exact file paths and line numbers.
-  Keep output under 100 lines.
+  Return a single <mode_report> XML block using the required Output Contract (include <commands> and <not_checked>).
+  Cite exact file paths and line numbers in <findings>.
+  Keep output concise (≤ 120 lines).
+  Read-only research: do not edit/write any files.
   ",
   subagent_type="general-purpose",
   description="File discovery for Phase {X}"
@@ -292,6 +341,8 @@ Task(
 // ... additional modes as selected
 ```
 
+**For every mode Task:** Require the Output Contract XML, include `<commands>` + `<not_checked>`, and keep it read-only.
+
 ## Step 4: Consolidate Findings
 
 Merge results from all modes into single CODEBASE-RESEARCH.md:
@@ -301,6 +352,9 @@ Merge results from all modes into single CODEBASE-RESEARCH.md:
 3. Aggregate risks into single matrix
 4. Collect all pattern references
 5. Summarize test gaps
+6. Combine commands/patterns run into `## Commands Run` (dedupe)
+7. Combine all `<not_checked>` into `## Gaps / Not Checked` (dedupe, prioritize high-risk gaps)
+8. Merge open questions and next steps (avoid duplicates)
 
 ## Step 5: Write CODEBASE-RESEARCH.md
 
@@ -316,6 +370,14 @@ Write to: `.planning/phases/{phase_dir}/{phase}-CODEBASE-RESEARCH.md`
 ## Summary
 
 {2-3 sentences: what was found, key insights, main risks}
+
+## Scope
+
+{What was examined across all modes (dirs, file types, key terms)}
+
+## Commands Run
+
+{Exact commands / Grep / Glob patterns used (deduped). If none, say “None”.}
 
 ## File Map
 
@@ -348,6 +410,10 @@ Reference these files for implementation:
 
 {From Test Coverage mode, if run}
 
+## Gaps / Not Checked
+
+{Explicit unknowns remaining after research. These should either become plan tasks, verification items, or open questions.}
+
 ## Open Questions
 
 {Things that couldn't be resolved, planner should be aware}
@@ -379,6 +445,10 @@ Reference these files for implementation:
 
 1. [Risk 1] — [severity]
 2. [Risk 2] — [severity]
+
+### Key Gaps / Not Checked
+
+[1-3 bullets of highest-risk unknowns that planning should address]
 
 ### Open Questions
 
@@ -447,6 +517,7 @@ Research is complete when:
 - [ ] File map includes all relevant files with line numbers
 - [ ] Existing patterns documented for each type of new code
 - [ ] Risks identified with severity and mitigation
+- [ ] Commands run and remaining gaps recorded (`## Commands Run`, `## Gaps / Not Checked`)
 - [ ] CODEBASE-RESEARCH.md written to phase directory
 - [ ] Structured return provided to orchestrator
 
