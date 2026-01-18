@@ -2,7 +2,7 @@
 
 > **Created:** 2026-01-18
 > **Last Updated:** 2026-01-18
-> **Current Stage:** 1 of 7
+> **Current Stage:** 2 of 7 (Complete)
 
 ## Task Status Legend
 - [ ] Not started
@@ -18,13 +18,13 @@
 - [x] Verify output file access
 
 ## Stage 2: User Journey Corrections (P0)
-- [ ] 2.1 Add MILESTONE_AUDITING state to state machine
-- [ ] 2.2 Add decision points 14 and 14a for audit-milestone
-- [ ] 2.3 Add Milestone Audit Flow diagram
-- [ ] 2.4 Add execute-phase --gaps-only to phase loop
-- [ ] 2.5 Update "Where Am I?" quick reference with audit states
-- [ ] 2.6 Add session patterns D and E
-- [ ] 2.7 Add Checkpoint Types Reference section
+- [x] 2.1 Add MILESTONE_AUDITING state to state machine
+- [x] 2.2 Add decision points 14 and 14a for audit-milestone
+- [x] 2.3 Add Milestone Audit Flow diagram
+- [x] 2.4 Add execute-phase --gaps-only to phase loop
+- [x] 2.5 Update "Where Am I?" quick reference with audit states
+- [x] 2.6 Add session patterns D and E
+- [x] 2.7 Add Checkpoint Types Reference section
 
 ## Stage 3: Support Components Schemas (P0/P1)
 - [ ] 3.1 Add PLAN.md frontmatter schema
@@ -60,5 +60,6 @@
 | 1 | Setup | GSD_GAP_CLOSURE_TRACKER.md | Complete | Tracker created |
 | 1 | Verify source files | N/A | Complete | All 6 source files accessible |
 | 1 | Verify output dir | N/A | Complete | /mnt/user-data/outputs/ writable |
+| 2 | 2.1-2.7 User Journey Corrections | GSD_USER_JOURNEY.md | Complete | All corrections verified present (v1.1) |
 
 ---
