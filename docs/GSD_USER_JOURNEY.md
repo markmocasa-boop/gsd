@@ -10,7 +10,7 @@
 ## The Complete Lifecycle
 
 ```
-IDEA → new-project → [plan → execute → verify]×N → audit-milestone → complete-milestone → new-milestone → ...
+IDEA → new-project → [discuss → plan → execute → verify]×N → audit-milestone → complete-milestone → new-milestone → ...
 ```
 
 ### Phase-Level Loop (Repeated N Times)
@@ -31,7 +31,7 @@ IDEA → new-project → [plan → execute → verify]×N → audit-milestone �
             │        ↓                                 │
             │   gaps? ─yes→ plan-phase --gaps         │
             │        │           ↓                     │
-            │        │      execute-phase --gaps-only  │
+            │        │      execute-phase {phase}      │
             │        │                                 │
             │        no                                │
             │        ↓                                 │
@@ -82,42 +82,43 @@ Every point where the system pauses for user input:
 | Point | Command | User Provides | System Creates |
 |-------|---------|---------------|----------------|
 | **1** | new-project | Project vision (deep questioning) | PROJECT.md |
-| **2** | new-project | Research? (yes/no) | research/ files |
-| **3** | new-project | Requirements (v1/v2/out) | REQUIREMENTS.md |
-| **4** | new-project | Workflow preferences | config.json |
+| **2** | new-project | Existing code? Map codebase first? | .planning/codebase/ (if mapped) |
+| **3** | new-project | Workflow preferences | config.json |
+| **4** | new-project | Research? (yes/no) | research/ files |
+| **5** | new-project | Requirements (v1/v2/out) | REQUIREMENTS.md |
 
 ### Phase Planning
 
 | Point | Command | User Provides | System Creates |
 |-------|---------|---------------|----------------|
-| **5** | discuss-phase | Implementation decisions | CONTEXT.md |
-| **6** | plan-phase | (auto unless checkpoint) | PLAN.md files |
-| **7** | plan-phase revision | Accept/reject checker feedback | Updated PLAN.md |
+| **6** | discuss-phase | Implementation decisions | CONTEXT.md |
+| **7** | plan-phase | Planning inputs (phase, flags) | PLAN.md files |
+| **8** | plan-phase revision | Accept/reject checker feedback | Updated PLAN.md |
 
 ### Phase Execution
 
 | Point | Command | User Provides | System Creates |
 |-------|---------|---------------|----------------|
-| **8** | execute-phase | Checkpoint responses | Code + SUMMARY.md |
-| **9** | execute-phase | human-verify: Did it work? | Continue/stop |
-| **10** | execute-phase | human-action: Complete step | Continue |
-| **11** | execute-phase | decision: Which option? | Implementation |
+| **9** | execute-phase | Checkpoint responses | Code + SUMMARY.md |
+| **10** | execute-phase | human-verify: Did it work? | Continue/stop |
+| **11** | execute-phase | human-action: Complete step | Continue |
+| **12** | execute-phase | decision: Which option? | Implementation |
 
 ### Phase Verification
 
 | Point | Command | User Provides | System Creates |
 |-------|---------|---------------|----------------|
-| **12** | verify-work (UAT) | Test results (pass/fail/issue) | UAT.md |
-| **13** | verify-work | Approve gap closure plans | Gap PLAN.md files |
+| **13** | verify-work (UAT) | Test results (pass/fail/issue) | {phase}-UAT.md |
+| **14** | verify-work | Provide gap details (plain text) | Gap PLAN.md files |
 
 ### Milestone
 
 | Point | Command | User Provides | System Creates |
 |-------|---------|---------------|----------------|
-| **14** | audit-milestone | Accept audit or plan gaps | MILESTONE-AUDIT.md |
-| **14a** | plan-milestone-gaps | Approve gap closure phases | Gap closure phases in ROADMAP |
-| **15** | complete-milestone | Version number | Archive + git tag |
-| **16** | new-milestone | What's next? (deep questioning) | New ROADMAP.md |
+| **15** | audit-milestone | Accept audit or plan gaps | v{version}-MILESTONE-AUDIT.md |
+| **15a** | plan-milestone-gaps | Approve gap closure phases | Gap closure phases in ROADMAP |
+| **16** | complete-milestone | Version number | Archive + git tag |
+| **17** | new-milestone | What's next? (deep questioning) + version pick | New ROADMAP.md |
 
 ---
 
@@ -132,6 +133,7 @@ User Input
     ↓
 /gsd:new-project
     ├── Deep questioning → PROJECT.md (if new project)
+    ├── Workflow preferences → config.json
     ├── → gsd-project-researcher (×4 parallel)
     │       ├── STACK.md (tech)
     │       ├── FEATURES.md (features)
@@ -140,6 +142,8 @@ User Input
     │           ↓
     └── → gsd-research-synthesizer
             └── SUMMARY.md
+                ↓
+        → Requirements definition → REQUIREMENTS.md
                 ↓
         → gsd-roadmapper
             ├── ROADMAP.md (phases + goals + criteria)
@@ -185,7 +189,7 @@ PLAN.md files (with wave assignments)
                 ↓
         [If gaps → offer /gsd:plan-phase --gaps]
             ↓
-        [If --gaps created → /gsd:execute-phase --gaps-only]
+        [If --gaps created → /gsd:execute-phase {phase} (default)]
 ```
 
 ### UAT Flow
@@ -199,13 +203,17 @@ SUMMARY.md files (accomplishments)
     │       ↓
     └── User response: pass / issue
             ↓
-        → UAT.md
+        → {phase}-UAT.md
             ↓
         [If issues → gsd-debugger (×N parallel)]
             └── Diagnose root causes
                 ↓
             → gsd-planner (--gaps mode)
                 └── Gap closure PLAN.md files
+                ↓
+            → gsd-plan-checker (verifies gap plans)
+                ↓
+            [If plans verified → /gsd:execute-phase {phase} --gaps-only]
 ```
 
 ### Milestone Audit Flow
@@ -221,7 +229,7 @@ VERIFICATION.md files (all phases)
     │       ├── Verify API coverage (routes → consumers)
     │       └── Verify E2E flows (complete paths)
     │           ↓
-    └── MILESTONE-AUDIT.md
+    └── v{version}-MILESTONE-AUDIT.md
             ↓
         Status: passed | gaps_found | tech_debt
             ↓
@@ -244,15 +252,16 @@ VERIFICATION.md files (all phases)
 | ROADMAP.md | .planning/ | Phase structure, goals |
 | REQUIREMENTS.md | .planning/ | Feature requirements |
 | config.json | .planning/ | Workflow preferences |
+| codebase/ | .planning/codebase/ | Codebase map (brownfield projects) |
 | PLAN.md | .planning/phases/XX-*/ | Execution instructions |
 | SUMMARY.md | .planning/phases/XX-*/ | What was accomplished |
 | CONTEXT.md | .planning/phases/XX-*/ | User decisions |
 | RESEARCH.md | .planning/phases/XX-*/ | Implementation guidance |
 | VERIFICATION.md | .planning/phases/XX-*/ | Verification results |
-| UAT.md | .planning/phases/XX-*/ | User acceptance test results |
+| {phase}-UAT.md | .planning/phases/XX-*/ | User acceptance test results |
 | DEBUG.md | .planning/debug/ | Debug session state |
 | .continue-here.md | .planning/ | Mid-task handoff |
-| MILESTONE-AUDIT.md | .planning/ | Milestone audit results |
+| v{version}-MILESTONE-AUDIT.md | .planning/ | Milestone audit results |
 
 ### Resets on `/clear` (Context-Based)
 
@@ -360,9 +369,9 @@ How context fills at each stage:
 | PLAN.md exists, no SUMMARY.md | Phase planned | `/gsd:execute-phase N` |
 | SUMMARY.md exists, no VERIFICATION.md | Execution complete | (auto-triggers verifier) |
 | VERIFICATION.md with gaps | Gaps found | `/gsd:plan-phase N --gaps` |
-| All phases complete, no MILESTONE-AUDIT.md | Audit pending | `/gsd:audit-milestone` |
-| MILESTONE-AUDIT.md with gaps_found | Gaps need closure | `/gsd:plan-milestone-gaps` |
-| MILESTONE-AUDIT.md with passed | Ready to complete | `/gsd:complete-milestone` |
+| All phases complete, no v{version}-MILESTONE-AUDIT.md | Audit pending | `/gsd:audit-milestone` |
+| v{version}-MILESTONE-AUDIT.md with gaps_found | Gaps need closure | `/gsd:plan-milestone-gaps` |
+| v{version}-MILESTONE-AUDIT.md with passed | Ready to complete | `/gsd:complete-milestone` |
 | .continue-here.md exists | Mid-task pause | `/gsd:resume-work` |
 | DEBUG.md with status != resolved | Debug in progress | `/gsd:debug` |
 
@@ -418,8 +427,8 @@ How context fills at each stage:
 /gsd:plan-phase 3 --gaps
     ↓ (creates gap closure plans)
 /clear
-/gsd:execute-phase 3 --gaps-only
-    ↓ (executes only the new gap plans)
+/gsd:execute-phase 3
+    ↓ (executes incomplete plans, including gap plans)
 ```
 
 ### Pattern E: Milestone Gap Closure
@@ -460,9 +469,9 @@ Three checkpoint types pause execution for user input:
 
 ### Changelog from v1.0
 - Added MILESTONE_AUDITING state to state machine
-- Added milestone audit decision points (14, 14a)
+- Added milestone audit decision points (15, 15a)
 - Added Milestone Audit Flow to context flows
-- Added execute-phase --gaps-only to phase loop
+- Clarified gap closure rerun path (execute-phase default; gaps-only from verify-work)
 - Added /gsd:plan-milestone-gaps to quick reference
 - Added Pattern D and E to session patterns
 - Added Checkpoint Types Reference section
