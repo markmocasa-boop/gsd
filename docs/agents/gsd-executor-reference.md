@@ -5,12 +5,12 @@
 |-----------|-------|
 | **Type** | Agent |
 | **Location** | `agents/gsd-executor.md` |
-| **Size** | 754 lines |
+| **Size** | 753 lines |
 | **Documentation Tier** | Deep Reference |
 | **Complexity Score** | 3+3+3+2 = **11** |
 
 ### Complexity Breakdown
-- **Centrality: 3** — Spawned by execute-phase; output (SUMMARY.md, code) consumed by verifier and future phases
+- **Centrality: 3** — Spawned by execute-phase and execute-plan workflows; output (code, SUMMARY.md when applicable) consumed by execute-plan orchestrator, verifier, and future phases
 - **Complexity: 3** — Deviation handling (4 rules), checkpoint protocols (3 types), TDD execution, atomic commits, continuation handling
 - **Failure Impact: 3** — Execution failures = no code shipped, wasted context, project stalled
 - **Novelty: 2** — Execution patterns are GSD-specific but build on familiar concepts
@@ -18,7 +18,7 @@
 ---
 
 ## Purpose
-The GSD Executor executes PLAN.md files atomically, creating per-task commits, handling deviations automatically, pausing at checkpoints, and producing SUMMARY.md files. It transforms plan intent into working code while maintaining execution traceability.
+The GSD Executor executes PLAN.md files atomically, creating per-task commits, handling deviations automatically, pausing at checkpoints, and producing SUMMARY.md files. It transforms plan intent into working code while maintaining execution traceability. When invoked for segmented execution by the execute-plan workflow, it may be instructed to skip commits and SUMMARY/STATE updates and instead report results back to the orchestrator.
 
 **Key innovation:** Automatic deviation handling with clear rules — bugs and blockers are auto-fixed, while architectural changes pause for user decision. Each task is committed atomically for clean git history.
 
@@ -29,7 +29,7 @@ The GSD Executor executes PLAN.md files atomically, creating per-task commits, h
 ### Constraints Enforced
 | Constraint | Rule | Consequence if Violated | Source Section |
 |------------|------|------------------------|----------------|
-| Atomic commits | One commit per task | Lost traceability, can't revert individual tasks | `<task_commit_protocol>` |
+| Atomic commits | One commit per task (unless instructed to skip commits for segmented execution) | Lost traceability, can't revert individual tasks | `<task_commit_protocol>` |
 | No `git add .` | Stage files individually | Unintended files committed | `<task_commit_protocol>` |
 | Checkpoint stops execution | STOP immediately at checkpoint | User interaction bypassed, wrong path taken | `<checkpoint_protocol>` |
 | Deviation rules priority | Rule 4 > Rules 1-3 | Architectural changes made without approval | `<deviation_rules>` |
@@ -69,7 +69,7 @@ The GSD Executor executes PLAN.md files atomically, creating per-task commits, h
   3. Orchestrator handles user interaction
   4. Fresh continuation agent resumes (original agent NOT resumed)
 - **Output:** Partial code changes, checkpoint message with completed tasks table
-- **Key difference:** Pauses at human interaction points
+- **Key difference:** Pauses at human interaction points. Note: execute-phase currently routes checkpoint plans through general-purpose subagents; gsd-executor only handles checkpoints if it is directly spawned for such a plan.
 
 ### Mode C: Continuation
 - **Trigger:** Spawned with `<completed_tasks>` in prompt
@@ -82,6 +82,17 @@ The GSD Executor executes PLAN.md files atomically, creating per-task commits, h
   5. Continue until completion or next checkpoint
 - **Output:** Remaining code changes, full SUMMARY.md
 - **Key difference:** Picks up where previous agent stopped
+
+### Mode D: Segment Execution (Execute-Plan Workflow)
+- **Trigger:** execute-plan splits a plan into autonomous segments between checkpoints
+- **Input:** PLAN.md plus explicit task range/scope for the segment
+- **Process:**
+  1. Execute only the assigned task range
+  2. Apply deviation and auth-gate rules
+  3. Report tasks completed, files changed, deviations, and blockers
+  4. **Do NOT** create SUMMARY.md or commit (orchestrator aggregates later)
+- **Output:** Working tree changes + structured report to orchestrator
+- **Key difference:** Runs as a partial plan executor without commits or SUMMARY/STATE updates
 
 ---
 
@@ -117,7 +128,7 @@ The GSD Executor executes PLAN.md files atomically, creating per-task commits, h
    │   ├── If additional work found → apply deviation rules
    │   ├── Run verification
    │   ├── Confirm done criteria
-   │   ├── Commit task (see task_commit_protocol)
+   │   ├── Commit task (see task_commit_protocol, unless segment execution forbids commits)
    │   └── Track completion for Summary
    └── If type="checkpoint:*":
        └── STOP, return checkpoint message, do NOT continue
@@ -131,6 +142,8 @@ The GSD Executor executes PLAN.md files atomically, creating per-task commits, h
 8. final_commit
    └── Commit SUMMARY.md and STATE.md
 ```
+
+**Segment execution variant:** When instructed to run only a subset of tasks, skip steps 6-8 (SUMMARY/STATE/final commit) and return results to the orchestrator instead.
 
 ### Deviation Handling Matrix
 
@@ -242,18 +255,20 @@ When CLI/API returns auth error during `type="auto"` task:
 |------|---------|--------|
 | Code files | Task implementations | Language-specific |
 | Test files | TDD tests | Language-specific |
-| `.planning/phases/XX-name/{phase}-{plan}-SUMMARY.md` | Execution summary | YAML frontmatter + Markdown |
-| `.planning/STATE.md` | Updated position, decisions | Markdown |
+| `.planning/phases/XX-name/{phase}-{plan}-SUMMARY.md` | Execution summary (when running full plan) | YAML frontmatter + Markdown |
+| `.planning/STATE.md` | Updated position, decisions (when running full plan) | Markdown |
 
 ### Spawned By
 | Command/Agent | Mode | Context Provided |
 |---------------|------|------------------|
-| `/gsd:execute-phase` | Autonomous/Checkpoint | PLAN.md contents, wave context |
+| `/gsd:execute-phase` | Autonomous (checkpoint plans handled by general-purpose) | PLAN.md contents, wave context |
+| execute-plan workflow | Autonomous / segment execution | PLAN.md contents, segment scope when applicable |
 | Continuation spawn | Continuation | PLAN.md, completed_tasks, resume point |
 
 ### Output Consumed By
 | Consumer | What They Use | How |
 |----------|--------------|-----|
+| execute-plan orchestrator | Segment reports (tasks, files, deviations) | Aggregates into SUMMARY/commit |
 | `gsd-verifier` | SUMMARY.md claims, code state | Verifies goal achievement |
 | `gsd-planner` (gap closure) | SUMMARY.md artifacts | Plans fixes |
 | Future phases | SUMMARY.md frontmatter | Dependency graph, tech available |
@@ -307,6 +322,13 @@ When CLI/API returns auth error during `type="auto"` task:
 
 [What user needs to do/provide]
 ```
+
+### SEGMENT REPORT (execute-plan workflow)
+When the execute-plan workflow instructs a segment-only run, report back (format may be prompt-defined) with:
+- Tasks completed
+- Files created/modified
+- Deviations encountered
+- Issues/blockers
 
 ---
 
@@ -370,8 +392,8 @@ When CLI/API returns auth error during `type="auto"` task:
 
 ```
 WHAT:     Executes PLAN.md files with atomic commits and deviation handling
-MODES:    Autonomous, Has Checkpoints, Continuation
-OUTPUT:   Code changes, {phase}-{plan}-SUMMARY.md, updated STATE.md
+MODES:    Autonomous, Has Checkpoints, Continuation, Segment Execution
+OUTPUT:   Code changes, {phase}-{plan}-SUMMARY.md, updated STATE.md (segment runs report results instead)
 
 CORE RULES:
 • One commit per task (never git add . or -A)
@@ -380,6 +402,6 @@ CORE RULES:
 • TDD tasks produce 2-3 commits (RED/GREEN/REFACTOR)
 • Track all deviations for Summary
 
-SPAWNED BY: /gsd:execute-phase, continuation spawn
-CONSUMED BY: gsd-verifier, gsd-planner (gap closure), future phases
+SPAWNED BY: /gsd:execute-phase, execute-plan workflow, continuation spawn
+CONSUMED BY: execute-plan orchestrator, gsd-verifier, gsd-planner (gap closure), future phases
 ```
