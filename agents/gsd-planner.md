@@ -1077,25 +1077,30 @@ Understand:
 
 **Load phase-specific context files (MANDATORY):**
 
-```bash
-# Match both zero-padded (05-*) and unpadded (5-*) folders
-PADDED_PHASE=$(printf "%02d" ${PHASE} 2>/dev/null || echo "${PHASE}")
-PHASE_DIR=$(ls -d .planning/phases/${PADDED_PHASE}-* .planning/phases/${PHASE}-* 2>/dev/null | head -1)
+	```bash
+	# Match both zero-padded (05-*) and unpadded (5-*) folders
+	PADDED_PHASE=$(printf "%02d" ${PHASE} 2>/dev/null || echo "${PHASE}")
+	PHASE_DIR=$(ls -d .planning/phases/${PADDED_PHASE}-* .planning/phases/${PHASE}-* 2>/dev/null | head -1)
+	
+	# Read CONTEXT.md if exists (from /gsd:discuss-phase)
+	cat "${PHASE_DIR}"/*-CONTEXT.md 2>/dev/null
 
-# Read CONTEXT.md if exists (from /gsd:discuss-phase)
-cat "${PHASE_DIR}"/*-CONTEXT.md 2>/dev/null
-
-# Read RESEARCH.md if exists (from /gsd:research-phase)
-cat "${PHASE_DIR}"/*-RESEARCH.md 2>/dev/null
+	# Read DECISION-LEDGER.md if exists (from /gsd:discuss-phase with decision ledger enabled)
+	cat "${PHASE_DIR}"/*-DECISION-LEDGER.md 2>/dev/null
+	
+	# Read RESEARCH.md if exists (from /gsd:research-phase)
+	cat "${PHASE_DIR}"/*-RESEARCH.md 2>/dev/null
 
 # Read DISCOVERY.md if exists (from mandatory discovery)
 cat "${PHASE_DIR}"/*-DISCOVERY.md 2>/dev/null
 ```
 
-**If CONTEXT.md exists:** Honor user's vision, prioritize their essential features, respect stated boundaries. These are locked decisions - do not revisit.
+	**If CONTEXT.md exists:** Honor user's vision, prioritize their essential features, respect stated boundaries. These are locked decisions - do not revisit.
 
-**If RESEARCH.md exists:** Use standard_stack, architecture_patterns, dont_hand_roll, common_pitfalls. Research has already identified the right tools.
-</step>
+	**If DECISION-LEDGER.md exists:** Treat it as the authoritative verbatim record of what was agreed. Ensure plan tasks + must_haves reflect the approved decisions (and include verification where relevant).
+
+	**If RESEARCH.md exists:** Use standard_stack, architecture_patterns, dont_hand_roll, common_pitfalls. Research has already identified the right tools.
+	</step>
 
 <step name="break_into_tasks">
 Decompose phase into tasks. **Think dependencies first, not sequence.**

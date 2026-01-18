@@ -6,6 +6,17 @@ Prevents concurrent GSD execution on the same phase across multiple Claude sessi
 
 Location: `.planning/ACTIVE-SESSIONS.json`
 
+This is runtime state. It should be **untracked** (not committed). Add a project-local ignore:
+
+```bash
+mkdir -p .planning
+cat > .planning/.gitignore <<'EOF'
+ACTIVE-SESSIONS.json
+EOF
+git add .planning/.gitignore
+git commit -m "chore(planning): ignore active session tracking"
+```
+
 ```json
 {
   "sessions": [

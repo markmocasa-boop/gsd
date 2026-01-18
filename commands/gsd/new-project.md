@@ -226,7 +226,13 @@ Do not compress. Capture everything gathered.
 
 ```bash
 mkdir -p .planning
-git add .planning/PROJECT.md
+
+# Runtime session tracking should never be committed
+cat > .planning/.gitignore <<'EOF'
+ACTIVE-SESSIONS.json
+EOF
+
+git add .planning/PROJECT.md .planning/.gitignore
 git commit -m "$(cat <<'EOF'
 docs: initialize project
 
@@ -274,9 +280,9 @@ questions: [
     question: "Enable enhanced workflows?",
     multiSelect: true,
     options: [
-      { label: "Decision Ledger", description: "Track every decision verbatim during discussion" },
-      { label: "Codebase Research", description: "Deep codebase investigation before planning" },
-      { label: "Plan Audit", description: "Quality checks before execution (/gsd:audit-plan)" }
+      { label: "Decision Ledger", description: "Verbatim decisions + sign-off (best for ambiguous/high-stakes requirements)" },
+      { label: "Codebase Research", description: "Phase-specific file/flow mapping (best for unfamiliar/large codebases)" },
+      { label: "Plan Audit", description: "Pre-flight plan QA gate (best for risky phases or untrusted plan quality)" }
     ]
   }
 ]

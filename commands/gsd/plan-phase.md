@@ -331,6 +331,9 @@ Fill prompt and spawn:
 **Phase Context (if exists):**
 @.planning/phases/{phase_dir}/{phase}-CONTEXT.md
 
+**Decision Ledger (if exists):**
+@.planning/phases/{phase_dir}/{phase}-DECISION-LEDGER.md
+
 **Research (if exists):**
 @.planning/phases/{phase_dir}/{phase}-RESEARCH.md
 

@@ -103,10 +103,10 @@ Use AskUserQuestion:
 - question: "Enable enhanced workflows? (current: {list current enabled})"
 - multiSelect: true
 - options:
-  - "Decision Ledger" — `enhancements.decision_ledger` (deeper discuss-phase with sign-off)
-  - "Codebase Research" — `enhancements.codebase_research` (plan-phase pre-research)
-  - "Plan Audit" — `enhancements.plan_audit` (execute-phase audit gate)
-  - "Session Safety" — `enhancements.session_safety` (session conflict + cleanup)
+  - "Decision Ledger" — `enhancements.decision_ledger` (best for ambiguous/high-stakes requirements; verbatim decisions + sign-off)
+  - "Codebase Research" — `enhancements.codebase_research` (best for unfamiliar/large codebases; phase-specific file/flow mapping)
+  - "Plan Audit" — `enhancements.plan_audit` (best for risky phases or untrusted plan quality; blocks on plan blockers)
+  - "Session Safety" — `enhancements.session_safety` (recommended; prevents concurrent phase execution conflicts)
 
 Update `enhancements.*` booleans accordingly (selected = true, not selected = false).
 

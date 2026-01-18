@@ -63,22 +63,59 @@ DECISION_LEDGER=$(node ~/.claude/hooks/gsd-config.js get enhancements.decision_l
 
 Same as standard: validate phase number, check existing CONTEXT.md
 
-### E2. Initialize Decision Ledger
+### E2. Initialize Decision Ledger (File-backed)
 
-Create an in-memory Decision Ledger to track through the interview:
+Create a Decision Ledger markdown file in the phase directory. This file is the source of truth (not “in-memory” notes), so the user can review it later and confirm everything discussed was actually implemented.
+
+**Find or create phase directory + ledger path:**
+
+```bash
+PHASE_ARG="$ARGUMENTS"
+
+# Normalize phase number (8 → 08, preserve decimals like 2.1 → 02.1)
+if echo "$PHASE_ARG" | grep -Eq '^[0-9]+$'; then
+  PHASE=$(printf "%02d" "$PHASE_ARG")
+elif echo "$PHASE_ARG" | grep -Eq '^[0-9]+\.[0-9]+$'; then
+  PHASE=$(printf "%02d.%s" "${PHASE_ARG%.*}" "${PHASE_ARG#*.}")
+else
+  PHASE="$PHASE_ARG"
+fi
+
+PHASE_DIR=$(ls -d .planning/phases/${PHASE}-* 2>/dev/null | head -1)
+if [ -z "$PHASE_DIR" ]; then
+  PHASE_NAME=$(grep "Phase ${PHASE}:" .planning/ROADMAP.md | sed 's/.*Phase [0-9.]*: //' | tr '[:upper:]' '[:lower:]' | tr ' ' '-')
+  mkdir -p ".planning/phases/${PHASE}-${PHASE_NAME}"
+  PHASE_DIR=".planning/phases/${PHASE}-${PHASE_NAME}"
+fi
+
+LEDGER_FILE="${PHASE_DIR}/${PHASE}-DECISION-LEDGER.md"
+CONTEXT_FILE="${PHASE_DIR}/${PHASE}-CONTEXT.md"
+```
+
+**If `LEDGER_FILE` exists:** reuse it (append/update). If user wants a clean slate, overwrite it.
+
+Initialize (or reset) ledger file:
 
 ```markdown
-## Decision Ledger (Draft)
+# Phase {PHASE}: {Name} — Decision Ledger
 
-| # | Decision | Verbatim User Statement | Round |
-|---|----------|------------------------|-------|
-| 1 | ... | "..." | 1 |
+**Status:** Draft
+**Created:** {date}
+
+This file records decisions verbatim during `/gsd:discuss-phase`.
+Use it later as a checklist to confirm the implementation matches what was agreed.
+
+## Decisions
+
+| # | Area | Decision | Verbatim User Statement | Round |
+|---|------|----------|------------------------|-------|
 ```
 
 **Rules:**
 - Capture exact wording, not paraphrased summaries
 - Include context that led to decision
 - Record which round each decision was made
+- Keep the file updated after every round (append new rows, don’t wait until the end)
 
 ### E3. Analyze Phase for Discussion Areas
 
@@ -120,7 +157,7 @@ For each discussion area:
 
 **After each round:**
 1. Summarize "What I heard" in 5-10 bullets
-2. **Update Decision Ledger** with new decisions (verbatim)
+2. **Update `LEDGER_FILE`** with new decisions (verbatim, append table rows)
 3. Ask: "Anything missing or wrong before we continue?"
 
 **Continue until you can answer:**
@@ -134,7 +171,7 @@ For each discussion area:
 
 **REQUIRED before writing CONTEXT.md:**
 
-Present the complete Decision Ledger:
+Present the complete Decision Ledger (from `LEDGER_FILE`):
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -162,9 +199,13 @@ Use AskUserQuestion:
 
 Loop until "Approved".
 
+When approved:
+- Update `LEDGER_FILE` status to **Approved**
+- Keep the table intact (do not rewrite decisions into prose)
+
 ### E6. Write Enhanced CONTEXT.md
 
-Include additional sections from the Decision Ledger:
+Write `CONTEXT_FILE` as the planning-friendly summary, and link to the full ledger file for traceability.
 
 ```markdown
 # Phase {X}: {Name} — Context
@@ -194,6 +235,10 @@ Include additional sections from the Decision Ledger:
 |------|--------|---------|----------|----------|
 | {type} | Yes/No | Yes/No | Yes/No | Yes/No |
 
+## Decision Ledger
+
+See: `{phase}-DECISION-LEDGER.md` (approved verbatim record)
+
 ## Decisions
 
 ### Locked
@@ -222,12 +267,20 @@ Include additional sections from the Decision Ledger:
 
 ### Deferred Ideas
 - {captured for future phases}
+```
 
-## Decision Ledger (Approved)
+### E6.5. Commit Context + Ledger (Recommended)
 
-| # | Decision | Verbatim |
-|---|----------|----------|
-{full ledger}
+Commit both files so they can be referenced later during planning, execution, and verification:
+
+```bash
+git add "$CONTEXT_FILE" "$LEDGER_FILE"
+git commit -m "$(cat <<'EOF'
+docs(${PHASE}): capture phase context + decision ledger
+
+Phase ${PHASE}: decisions recorded and approved
+EOF
+)"
 ```
 
 ### E7. Offer Next Steps
@@ -274,12 +327,12 @@ Generate 3-4 **phase-specific** gray areas, not generic categories.
 - User knows next steps
 
 **Enhanced Flow (decision_ledger: true):**
-- Decision Ledger initialized at start
+- Decision Ledger file created at start (`{phase}-DECISION-LEDGER.md`)
 - All decisions captured verbatim (not summarized)
 - Terminology & Concepts section completed
 - Entry Points enumerated with creation matrix
-- Decision Ledger sign-off obtained before writing
-- CONTEXT.md includes full approved ledger
+- Decision Ledger sign-off obtained before writing (ledger marked Approved)
+- CONTEXT.md links to the approved ledger (traceable record for post-implementation review)
 - User knows next steps
 
 </success_criteria>

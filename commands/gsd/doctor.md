@@ -16,7 +16,7 @@ Detects:
 - Missing or invalid `.planning/config.json`
 - Missing planning artifacts (STATE/ROADMAP/PROJECT)
 - Missing required hooks/scripts in Claude config dir
-- Active/stale sessions in `.planning/ACTIVE-SESSIONS.json`
+- Active/stale sessions in `.planning/ACTIVE-SESSIONS.json` (and whether it’s correctly untracked)
 - Dirty git status that may cause confusing diffs/conflicts
 
 Outputs a concise report with fix commands.
@@ -40,6 +40,7 @@ git --version 2>/dev/null || echo "git: missing"
 ```bash
 ls .planning 2>/dev/null || echo ".planning: missing"
 ls .planning/config.json 2>/dev/null || echo ".planning/config.json: missing"
+ls .planning/.gitignore 2>/dev/null || echo ".planning/.gitignore: missing"
 ls .planning/STATE.md 2>/dev/null || echo ".planning/STATE.md: missing"
 ls .planning/ROADMAP.md 2>/dev/null || echo ".planning/ROADMAP.md: missing"
 ls .planning/PROJECT.md 2>/dev/null || echo ".planning/PROJECT.md: missing"
@@ -83,6 +84,11 @@ node ~/.claude/hooks/gsd-session.js list --format lines 2>/dev/null || true
 
 If sessions exist: warn about potential concurrency conflicts and show the entries.
 
+Also check that session tracking stays untracked:
+```bash
+rg -n "ACTIVE-SESSIONS\\.json" .planning/.gitignore 2>/dev/null || echo "⚠ recommend ignoring .planning/ACTIVE-SESSIONS.json (add to .planning/.gitignore)"
+```
+
 ## 6. Git Status
 
 ```bash
@@ -108,4 +114,3 @@ Based on findings, present 1-3 recommended actions, e.g.:
 - [ ] Detects active sessions and warns
 - [ ] Detects dirty git status and warns
 </success_criteria>
-
