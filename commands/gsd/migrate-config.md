@@ -100,4 +100,3 @@ git commit -m "chore(config): migrate gsd config"
 - [ ] Optional backup created unless disabled
 - [ ] Optional commit supported
 </success_criteria>
-

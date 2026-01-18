@@ -37,7 +37,7 @@ Phase number: $ARGUMENTS (required)
 ## 0. Check Enhancements
 
 ```bash
-DECISION_LEDGER=$(cat .planning/config.json 2>/dev/null | grep -o '"decision_ledger":[^,}]*' | cut -d':' -f2 | tr -d ' ')
+DECISION_LEDGER=$(node ~/.claude/hooks/gsd-config.js get enhancements.decision_ledger --default false --format raw 2>/dev/null)
 ```
 
 **If `decision_ledger` is `true`:** Use Enhanced Flow (Decision Ledger mode)

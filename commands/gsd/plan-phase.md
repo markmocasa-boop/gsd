@@ -106,7 +106,7 @@ fi
 **Check if codebase research is enabled:**
 
 ```bash
-CODEBASE_RESEARCH=$(cat .planning/config.json 2>/dev/null | grep -o '"codebase_research":[^,}]*' | cut -d':' -f2 | tr -d ' ')
+CODEBASE_RESEARCH=$(node ~/.claude/hooks/gsd-config.js get enhancements.codebase_research --default false --format raw 2>/dev/null)
 ```
 
 **If `codebase_research` is `true` AND phase involves code changes (not pure docs/config):**

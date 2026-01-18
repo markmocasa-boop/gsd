@@ -19,7 +19,7 @@ Reference: `@~/.claude/get-shit-done/references/session-management.md`
 
 **Check if session safety is enabled:**
 ```bash
-SESSION_SAFETY=$(cat .planning/config.json 2>/dev/null | grep -o '"session_safety":[^,}]*' | cut -d':' -f2 | tr -d ' ')
+SESSION_SAFETY=$(node ~/.claude/hooks/gsd-config.js get enhancements.session_safety --default true --format raw 2>/dev/null)
 ```
 
 **If `session_safety` is explicitly `false`:** Skip to load_project_state.
@@ -130,7 +130,7 @@ Optional plan audit gate (only if enabled in config).
 
 **Check if plan audit is enabled:**
 ```bash
-PLAN_AUDIT=$(cat .planning/config.json 2>/dev/null | grep -o '"plan_audit":[^,}]*' | cut -d':' -f2 | tr -d ' ')
+PLAN_AUDIT=$(node ~/.claude/hooks/gsd-config.js get enhancements.plan_audit --default false --format raw 2>/dev/null)
 ```
 
 **If `plan_audit` is `true`:**
