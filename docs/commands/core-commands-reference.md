@@ -14,6 +14,10 @@ Initialize a new project through unified flow: questioning → research (optiona
 |----------|----------|---------|---------|
 | (none) | — | Command takes no arguments | — |
 
+### CLI Verification Notes
+- No arguments or flags are defined in `commands/gsd/new-project.md`; documentation matches the CLI signature.
+- Example usage remains `/gsd:new-project` with no options.
+
 ### Execution Flow
 1. **Setup** — Abort if project exists, init git, detect brownfield code
 2. **Brownfield Offer** — If existing code detected, offer `/gsd:map-codebase` first
@@ -87,6 +91,11 @@ Create detailed execution plan for a phase (PLAN.md files) with integrated resea
 | `--skip-research` | No | Skip research entirely | — |
 | `--gaps` | No | Gap closure mode (reads VERIFICATION.md) | — |
 | `--skip-verify` | No | Skip planner → checker verification loop | — |
+
+### CLI Verification Notes
+- `commands/gsd/plan-phase.md` defines `[phase]` as optional and auto-detects the next unplanned phase when omitted.
+- Flags are exactly `--research`, `--skip-research`, `--gaps`, and `--skip-verify` per the CLI argument hint; no additional options are implemented.
+- Example invocations in this doc align with the CLI flags and optional phase argument.
 
 ### Plan-Phase Flags
 
@@ -199,6 +208,10 @@ Execute all plans in a phase using wave-based parallel execution.
 |----------|----------|---------|---------|
 | `<phase-number>` | Yes | Phase to execute | — |
 | `--gaps-only` | No | Execute only gap closure plans | — |
+
+### CLI Verification Notes
+- `commands/gsd/execute-phase.md` requires `<phase-number>` and only implements the `--gaps-only` flag; docs match.
+- Examples that include `/gsd:execute-phase <N> --gaps-only` are valid per the CLI argument hint.
 
 ### Execution Flow
 1. **Validate Phase** — Find phase directory, count PLAN.md files
@@ -319,6 +332,10 @@ Validate built features through conversational UAT (User Acceptance Testing) wit
 | Arg/Flag | Required | Purpose | Default |
 |----------|----------|---------|---------|
 | `[phase]` | No | Phase number to test | Check for active sessions or prompt |
+
+### CLI Verification Notes
+- `commands/gsd/verify-work.md` accepts an optional phase argument and defines no flags; docs match.
+- Example usage `/gsd:verify-work 3` is consistent with the CLI argument hint.
 
 ### Execution Flow
 1. **Check Active Sessions** — Resume or start new
