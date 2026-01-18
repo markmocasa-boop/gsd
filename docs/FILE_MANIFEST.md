@@ -14,16 +14,15 @@ Complete inventory of all GSD system files with metadata for documentation and m
 | CHANGELOG.md | Release notes and version history | 1050 |
 | LICENSE | License terms for GSD | 21 |
 | GSD-STYLE.md | Writing conventions and style guide for GSD docs | 434 |
-| GSD_ARCHITECTURE_SCAFFOLDING.md | Architecture reference, registries, invariants, and key flows | 434 |
-| GSD_DOCUMENTATION_EXECUTION_PLAN.md | Documentation execution plan and coverage strategy | 1220 |
 
 ### Documentation Index & Guides (docs/*.md)
 
 | File | Purpose | Lines |
 |------|---------|-------|
-| docs/GSD_DOCUMENTATION_INDEX.md | Master navigation index for GSD documentation | 398 |
+| docs/GSD_ARCHITECTURE_SCAFFOLDING.md | Architecture reference, registries, invariants, and key flows | 434 |
+| docs/GSD_DOCUMENTATION_INDEX.md | Master navigation index for GSD documentation | 399 |
 | docs/GSD_USER_JOURNEY.md | End-to-end user journey narrative and flow mapping | 469 |
-| docs/FILE_MANIFEST.md | Complete file inventory with metadata | 340 |
+| docs/FILE_MANIFEST.md | Complete file inventory with metadata | 350 |
 
 ### Component References (docs/*-components-reference.md)
 
@@ -259,6 +258,16 @@ Complete inventory of all GSD system files with metadata for documentation and m
 
 ---
 
+## Repository Configuration & Assets
+
+| File | Purpose | Lines |
+|------|---------|-------|
+| .gitignore | Git ignore rules for local development artifacts | 10 |
+| .github/FUNDING.yml | Funding metadata for GitHub Sponsors | 1 |
+| assets/terminal.svg | Terminal logo asset used in documentation | 68 |
+
+---
+
 ## Operational Scripts & Hooks
 
 | File | Purpose | Relationship Notes | Lines |
@@ -274,15 +283,16 @@ Complete inventory of all GSD system files with metadata for documentation and m
 
 | Category | File Count | Total Lines |
 |----------|------------|-------------|
-| Documentation & Guides | 24 | 11,001 |
+| Documentation & Guides | 23 | 9,792 |
 | Agents | 11 | 8,337 |
-| Commands | 24 | 5,387 |
-| Workflows | 12 | 5,615 |
-| Templates | 30 | 5,802 |
+| Commands | 24 | 6,227 |
+| Workflows | 12 | 6,615 |
+| Templates | 30 | 7,153 |
 | References | 7 | 2,450 |
 | Project Metadata & Distribution | 1 | 32 |
+| Repository Configuration & Assets | 3 | 79 |
 | Operational Scripts & Hooks | 4 | 576 |
-| **Total** | **113** | **39,200** |
+| **Total** | **115** | **41,261** |
 
 ---
 
