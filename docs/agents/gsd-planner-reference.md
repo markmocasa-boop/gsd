@@ -5,7 +5,7 @@
 |-----------|-------|
 | **Type** | Agent |
 | **Location** | `agents/gsd-planner.md` |
-| **Size** | 1368 lines |
+| **Size** | 1367 lines |
 | **Documentation Tier** | Deep Reference |
 | **Complexity Score** | 3+3+3+3 = **12** |
 
@@ -58,7 +58,7 @@ The GSD Planner transforms phase goals into executable PLAN.md files that Claude
 
 ### Mode 1: Standard Planning
 - **Trigger:** `/gsd:plan-phase` orchestrator spawns planner (no `--gaps` flag)
-- **Input:** ROADMAP.md with phase goal, STATE.md with project context, optional CONTEXT.md/RESEARCH.md
+- **Input:** ROADMAP.md with phase goal, STATE.md with project context, optional CONTEXT.md/RESEARCH.md, optional REQUIREMENTS.md (if provided by orchestrator)
 - **Process:**
   1. Load project state and codebase context
   2. Apply mandatory discovery protocol (Level 0-3)
@@ -257,6 +257,7 @@ The GSD Planner transforms phase goals into executable PLAN.md files that Claude
 | `.planning/ROADMAP.md` | Phase goal, phase dependencies | What to plan |
 | `.planning/phases/XX-*/CONTEXT.md` | User's vision, essential features | Honor user decisions |
 | `.planning/phases/XX-*/RESEARCH.md` | standard_stack, pitfalls | Use identified tools |
+| `.planning/phases/XX-*/DISCOVERY.md` | Discovery findings | Honor selected tools/constraints |
 | `.planning/phases/*-SUMMARY.md` | Prior work, tech available, patterns | Build on existing work |
 | `.planning/codebase/*.md` | CONVENTIONS, ARCHITECTURE, STACK | Match existing patterns |
 | `.planning/phases/XX-*/VERIFICATION.md` | Gaps to close (gap closure mode) | Create targeted fixes |
@@ -279,7 +280,7 @@ The GSD Planner transforms phase goals into executable PLAN.md files that Claude
 |----------|--------------|-----|
 | `gsd-plan-checker` | PLAN.md files, must_haves | Validates before execution |
 | `gsd-executor` | PLAN.md (objective, tasks, context) | Executes tasks |
-| `execute-phase` | Wave assignments, depends_on | Orchestrates parallel execution |
+| `execute-phase` | Wave assignments, autonomous, gap_closure | Orchestrates parallel execution |
 | `gsd-verifier` | must_haves (truths, artifacts, key_links) | Goal-backward verification |
 
 ---
@@ -410,10 +411,10 @@ Checker can now re-verify updated plans.
 - `gsd-plan-checker` — Expects PLAN.md structure with must_haves in frontmatter
 - `gsd-executor` — Expects task structure with type, files, action, verify, done
 - `gsd-verifier` — Expects must_haves format (truths, artifacts, key_links)
-- `execute-phase` — Expects wave/depends_on in frontmatter
+- `execute-phase` — Expects wave/autonomous/gap_closure in frontmatter
 
 **Breaking Changes to Watch:**
-- Changing PLAN.md frontmatter schema → breaks executor wave reading
+- Changing PLAN.md frontmatter schema → breaks execute-phase wave reading/filtering
 - Changing must_haves structure → breaks verifier gap detection
 - Changing task XML structure → breaks executor task parsing
 - Changing return message format → breaks orchestrator handling
@@ -458,6 +459,6 @@ CORE RULES:
 • Mandatory discovery unless proven unnecessary
 • Vertical slices over horizontal layers
 
-SPAWNED BY: /gsd:plan-phase, /gsd:plan-phase --gaps
+SPAWNED BY: /gsd:plan-phase (standard or revision), /gsd:plan-phase --gaps
 CONSUMED BY: gsd-plan-checker, gsd-executor, gsd-verifier, execute-phase
 ```
