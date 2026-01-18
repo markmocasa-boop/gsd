@@ -42,7 +42,7 @@ Synthesizes research outputs from 4 parallel researcher agents into a cohesive S
 | 3 | Extract key findings | Summaries from each file |
 | 4 | Derive roadmap implications | Phase suggestions with rationale |
 | 5 | Assess confidence | Levels per area + gaps |
-| 6 | Write SUMMARY.md | Using template |
+| 6 | Write SUMMARY.md | Using template `~/.claude/get-shit-done/templates/research-project/SUMMARY.md` |
 | 7 | Commit all research | Single commit with all 5 files |
 | 8 | Return summary | Structured confirmation |
 
@@ -80,7 +80,9 @@ How roadmapper uses each section:
 | **Key Findings** | Technology and feature decisions |
 | **Implications for Roadmap** | Phase structure suggestions |
 | **Research Flags** | Which phases need deeper research |
+| **Confidence Assessment** | Trustworthiness of each research area |
 | **Gaps to Address** | What to flag for validation |
+| **Sources** | Basis for confidence and follow-up verification |
 
 ---
 
@@ -101,8 +103,8 @@ Add research flags:
 
 ## Confidence Assessment
 
-| Area | Level | Based On |
-|------|-------|----------|
+| Area | Confidence | Notes |
+|------|------------|-------|
 | Stack | HIGH/MEDIUM/LOW | Source quality from STACK.md |
 | Features | HIGH/MEDIUM/LOW | Source quality from FEATURES.md |
 | Architecture | HIGH/MEDIUM/LOW | Source quality from ARCHITECTURE.md |
@@ -131,6 +133,7 @@ Add research flags:
 Suggested phases: [N]
 1. **[Phase name]** — [one-liner rationale]
 2. **[Phase name]** — [one-liner rationale]
+3. **[Phase name]** — [one-liner rationale]
 
 ### Research Flags
 Needs research: Phase [X], Phase [Y]
@@ -141,7 +144,7 @@ Overall: [HIGH/MEDIUM/LOW]
 Gaps: [list any gaps]
 
 ### Ready for Requirements
-SUMMARY.md committed. Orchestrator can proceed.
+SUMMARY.md committed. Orchestrator can proceed to requirements definition.
 ```
 
 **SYNTHESIS BLOCKED:**
