@@ -237,7 +237,7 @@ EOF
 
 ## Phase 5: Workflow Preferences
 
-Ask all workflow preferences in a single AskUserQuestion call (3 questions):
+Ask all workflow preferences in a single AskUserQuestion call (4 questions):
 
 ```
 questions: [
@@ -268,11 +268,27 @@ questions: [
       { label: "Parallel (Recommended)", description: "Independent plans run simultaneously" },
       { label: "Sequential", description: "One plan at a time" }
     ]
+  },
+  {
+    header: "Enhancements",
+    question: "Enable enhanced workflows?",
+    multiSelect: true,
+    options: [
+      { label: "Decision Ledger", description: "Track every decision verbatim during discussion" },
+      { label: "Codebase Research", description: "Deep codebase investigation before planning" },
+      { label: "Plan Audit", description: "Quality checks before execution (/gsd:audit-plan)" }
+    ]
   }
 ]
 ```
 
-Create `.planning/config.json` with chosen mode, depth, and parallelization.
+Create `.planning/config.json` with chosen mode, depth, parallelization, and enhancements.
+
+**Enhancements mapping:**
+- "Decision Ledger" selected → `decision_ledger: true`
+- "Codebase Research" selected → `codebase_research: true`
+- "Plan Audit" selected → `plan_audit: true`
+- `session_safety: true` always (default on, low overhead)
 
 **Commit config.json:**
 
@@ -284,6 +300,7 @@ chore: add project config
 Mode: [chosen mode]
 Depth: [chosen depth]
 Parallelization: [enabled/disabled]
+Enhancements: [list enabled enhancements or "defaults only"]
 EOF
 )"
 ```

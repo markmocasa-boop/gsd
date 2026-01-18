@@ -22,5 +22,11 @@
   "safety": {
     "always_confirm_destructive": true,
     "always_confirm_external_services": true
+  },
+  "enhancements": {
+    "decision_ledger": false,
+    "codebase_research": false,
+    "plan_audit": false,
+    "session_safety": true
   }
 }
