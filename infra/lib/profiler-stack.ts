@@ -1,10 +1,13 @@
 import * as cdk from 'aws-cdk-lib';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as ecs from 'aws-cdk-lib/aws-ecs';
+import * as ecr from 'aws-cdk-lib/aws-ecr';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as sfn from 'aws-cdk-lib/aws-stepfunctions';
+import * as tasks from 'aws-cdk-lib/aws-stepfunctions-tasks';
 import * as logs from 'aws-cdk-lib/aws-logs';
+import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 import { Construct } from 'constructs';
 
 export interface ProfilerStackProps extends cdk.StackProps {
@@ -17,9 +20,10 @@ export interface ProfilerStackProps extends cdk.StackProps {
  *
  * Resources:
  * - VPC with public subnets (Fargate tasks need internet access for Supabase/AWS APIs)
- * - ECS Fargate cluster
- * - Task definition placeholder (container added in Plan 01-02 when Docker image exists)
- * - Step Functions state machine for profiler orchestration
+ * - ECS Fargate cluster with profiler container
+ * - ECR repository for profiler Docker image
+ * - Task definition with container and environment configuration
+ * - Step Functions state machine for profiler orchestration with ECS RunTask
  * - IAM roles with appropriate permissions
  * - Security group for outbound HTTPS
  */
@@ -34,6 +38,10 @@ export class ProfilerStack extends cdk.Stack {
   public readonly securityGroup: ec2.SecurityGroup;
   /** Step Functions state machine for orchestration */
   public readonly stateMachine: sfn.StateMachine;
+  /** ECR repository for profiler image */
+  public readonly ecrRepository: ecr.Repository;
+  /** Task definition for profiler */
+  public readonly taskDefinition: ecs.FargateTaskDefinition;
 
   constructor(scope: Construct, id: string, props: ProfilerStackProps) {
     super(scope, id, props);
@@ -75,7 +83,21 @@ export class ProfilerStack extends cdk.Stack {
       containerInsights: true, // Enable CloudWatch Container Insights
     });
 
-    // Task execution role - ECR pull, CloudWatch logs
+    // ECR repository for profiler Docker image
+    this.ecrRepository = new ecr.Repository(this, 'ProfilerRepository', {
+      repositoryName: 'data-profiler',
+      removalPolicy: cdk.RemovalPolicy.DESTROY, // Clean up on stack delete
+      emptyOnDelete: true,
+      imageScanOnPush: true,
+      lifecycleRules: [
+        {
+          maxImageCount: 10, // Keep last 10 images
+          description: 'Keep last 10 images',
+        },
+      ],
+    });
+
+    // Task execution role - ECR pull, CloudWatch logs, Secrets Manager
     this.taskExecutionRole = new iam.Role(this, 'TaskExecutionRole', {
       roleName: 'profiler-task-execution-role',
       assumedBy: new iam.ServicePrincipal('ecs-tasks.amazonaws.com'),
@@ -83,6 +105,18 @@ export class ProfilerStack extends cdk.Stack {
         iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AmazonECSTaskExecutionRolePolicy'),
       ],
     });
+
+    // Grant ECR pull permission
+    this.ecrRepository.grantPull(this.taskExecutionRole);
+
+    // Grant Secrets Manager read for task execution (for container secrets)
+    this.taskExecutionRole.addToPolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: [
+        'secretsmanager:GetSecretValue',
+      ],
+      resources: [`arn:aws:secretsmanager:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:secret:profiler/*`],
+    }));
 
     // Task role - S3, Secrets Manager, data sources access
     this.taskRole = new iam.Role(this, 'TaskRole', {
@@ -92,6 +126,16 @@ export class ProfilerStack extends cdk.Stack {
 
     // Grant task role access to profile results bucket
     props.profileResultsBucket.grantReadWrite(this.taskRole);
+
+    // Grant Bedrock access for Strands agent
+    this.taskRole.addToPolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: [
+        'bedrock:InvokeModel',
+        'bedrock:InvokeModelWithResponseStream',
+      ],
+      resources: [`arn:aws:bedrock:${cdk.Aws.REGION}::foundation-model/anthropic.*`],
+    }));
 
     // Grant Secrets Manager access for connection credentials
     this.taskRole.addToPolicy(new iam.PolicyStatement({
@@ -140,16 +184,6 @@ export class ProfilerStack extends cdk.Stack {
       resources: ['*'], // Needs access to customer data buckets - refine in production
     }));
 
-    // Task definition placeholder (2 vCPU, 8GB RAM)
-    // Container will be added in Plan 01-02 when Docker image is built
-    const taskDefinition = new ecs.FargateTaskDefinition(this, 'ProfilerTaskDef', {
-      family: 'profiler-task',
-      cpu: 2048, // 2 vCPU
-      memoryLimitMiB: 8192, // 8GB RAM
-      executionRole: this.taskExecutionRole,
-      taskRole: this.taskRole,
-    });
-
     // CloudWatch log group for profiler tasks
     const logGroup = new logs.LogGroup(this, 'ProfilerLogGroup', {
       logGroupName: '/ecs/profiler',
@@ -157,40 +191,104 @@ export class ProfilerStack extends cdk.Stack {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
 
-    // Step Functions state machine for profiler orchestration
-    // States: ValidateInput -> RunProfiler -> StoreResults -> Success (or HandleError -> Fail)
+    // Task definition with container (2 vCPU, 8GB RAM)
+    this.taskDefinition = new ecs.FargateTaskDefinition(this, 'ProfilerTaskDef', {
+      family: 'profiler-task',
+      cpu: 2048, // 2 vCPU
+      memoryLimitMiB: 8192, // 8GB RAM
+      executionRole: this.taskExecutionRole,
+      taskRole: this.taskRole,
+    });
 
-    // Define states
+    // Reference Supabase secrets (must be created manually or via separate stack)
+    const supabaseSecret = secretsmanager.Secret.fromSecretNameV2(
+      this,
+      'SupabaseSecret',
+      'profiler/supabase'
+    );
+
+    // Add profiler container to task definition
+    const container = this.taskDefinition.addContainer('profiler', {
+      image: ecs.ContainerImage.fromEcrRepository(this.ecrRepository, 'latest'),
+      containerName: 'profiler',
+      logging: ecs.LogDrivers.awsLogs({
+        streamPrefix: 'profiler',
+        logGroup,
+      }),
+      environment: {
+        S3_BUCKET: props.profileResultsBucket.bucketName,
+      },
+      secrets: {
+        SUPABASE_URL: ecs.Secret.fromSecretsManager(supabaseSecret, 'url'),
+        SUPABASE_KEY: ecs.Secret.fromSecretsManager(supabaseSecret, 'service_key'),
+      },
+      essential: true,
+    });
+
+    // Step Functions state machine for profiler orchestration
+    // States: ValidateInput -> RunProfiler (ECS Task) -> Success (or Fail)
+
+    // Validate input state
     const validateInput = new sfn.Choice(this, 'ValidateInput')
       .when(
-        sfn.Condition.isPresent('$.sourceType'),
+        sfn.Condition.and(
+          sfn.Condition.isPresent('$.sourceType'),
+          sfn.Condition.isPresent('$.database'),
+          sfn.Condition.isPresent('$.table'),
+          sfn.Condition.isPresent('$.runId')
+        ),
         new sfn.Pass(this, 'InputValid', { resultPath: sfn.JsonPath.DISCARD })
       )
       .otherwise(
         new sfn.Fail(this, 'FailInvalidInput', {
           error: 'InvalidInput',
-          cause: 'sourceType is required in the input',
+          cause: 'Required fields: sourceType, database, table, runId',
         })
       );
 
-    // Placeholder for RunProfiler - actual ECS task integration added in 01-02
-    const runProfiler = new sfn.Pass(this, 'RunProfiler', {
-      comment: 'Placeholder for ECS RunTask - container added in Plan 01-02',
-      resultPath: '$.profileResult',
-      result: sfn.Result.fromObject({ status: 'PENDING_CONTAINER' }),
+    // ECS RunTask for profiler execution
+    const runProfiler = new tasks.EcsRunTask(this, 'RunProfiler', {
+      integrationPattern: sfn.IntegrationPattern.RUN_JOB, // Wait for task completion
+      cluster: this.cluster,
+      taskDefinition: this.taskDefinition,
+      launchTarget: new tasks.EcsFargateLaunchTarget({
+        platformVersion: ecs.FargatePlatformVersion.LATEST,
+      }),
+      assignPublicIp: true, // Required for public subnets to access internet
+      securityGroups: [this.securityGroup],
+      subnets: { subnetType: ec2.SubnetType.PUBLIC },
+      containerOverrides: [
+        {
+          containerDefinition: container,
+          environment: [
+            { name: 'SOURCE_TYPE', value: sfn.JsonPath.stringAt('$.sourceType') },
+            { name: 'DATABASE', value: sfn.JsonPath.stringAt('$.database') },
+            { name: 'TABLE', value: sfn.JsonPath.stringAt('$.table') },
+            { name: 'CONNECTION_PARAMS', value: sfn.JsonPath.stringAt('$.connectionParams') },
+            { name: 'RUN_ID', value: sfn.JsonPath.stringAt('$.runId') },
+          ],
+        },
+      ],
+      resultPath: '$.taskResult',
     });
 
-    // Placeholder for StoreResults - actual Lambda integration added in later plan
-    const storeResults = new sfn.Pass(this, 'StoreResults', {
-      comment: 'Placeholder for storing results to Supabase - implemented in later plan',
+    // Add retry logic for transient failures
+    runProfiler.addRetry({
+      errors: ['States.TaskFailed', 'ECS.AmazonECSException'],
+      interval: cdk.Duration.seconds(30),
+      maxAttempts: 2,
+      backoffRate: 2,
     });
 
-    const success = new sfn.Succeed(this, 'Success');
-
-    // Error handling
+    // Add catch for failures
     const handleError = new sfn.Pass(this, 'HandleError', {
-      comment: 'Error handling - SNS notification added in later plan',
-      resultPath: '$.errorHandled',
+      comment: 'Error handling - log error details',
+      parameters: {
+        'error.$': '$.Error',
+        'cause.$': '$.Cause',
+        'runId.$': '$.runId',
+      },
+      resultPath: '$.errorInfo',
     });
 
     const fail = new sfn.Fail(this, 'FailState', {
@@ -198,13 +296,17 @@ export class ProfilerStack extends cdk.Stack {
       cause: 'Profiler execution failed after retries',
     });
 
-    // Chain InputValid -> RunProfiler -> StoreResults -> Success
-    const inputValidState = validateInput.afterwards().next(runProfiler);
-    runProfiler.next(storeResults);
-    storeResults.next(success);
-    handleError.next(fail);
+    runProfiler.addCatch(handleError, {
+      resultPath: '$.errorDetails',
+    });
 
-    // Note: Catch/retry for RunProfiler will be added in 01-02 when ECS task is configured
+    const success = new sfn.Succeed(this, 'Success');
+
+    // Chain: InputValid -> RunProfiler -> Success
+    // Error path: HandleError -> Fail
+    validateInput.afterwards().next(runProfiler);
+    runProfiler.next(success);
+    handleError.next(fail);
 
     this.stateMachine = new sfn.StateMachine(this, 'ProfilerStateMachine', {
       stateMachineName: 'profiler-workflow',
@@ -229,7 +331,7 @@ export class ProfilerStack extends cdk.Stack {
     });
 
     new cdk.CfnOutput(this, 'TaskDefinitionArn', {
-      value: taskDefinition.taskDefinitionArn,
+      value: this.taskDefinition.taskDefinitionArn,
       exportName: 'ProfilerTaskDefinitionArn',
       description: 'ARN of the Fargate task definition',
     });
@@ -244,6 +346,12 @@ export class ProfilerStack extends cdk.Stack {
       value: vpc.vpcId,
       exportName: 'ProfilerVpcId',
       description: 'VPC ID for the profiler infrastructure',
+    });
+
+    new cdk.CfnOutput(this, 'EcrRepositoryUri', {
+      value: this.ecrRepository.repositoryUri,
+      exportName: 'ProfilerEcrRepositoryUri',
+      description: 'URI for the profiler ECR repository',
     });
   }
 }
