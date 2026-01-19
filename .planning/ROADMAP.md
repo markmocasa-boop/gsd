@@ -12,7 +12,7 @@ This enhancement adds user-provided documentation support to `/gsd:map-codebase`
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Document Ingestion Core** - Collect and store user-provided docs during map-codebase
+- [x] **Phase 1: Document Ingestion Core** - Collect and store user-provided docs during map-codebase
 - [ ] **Phase 2: Document Validation** - Validate doc claims against actual codebase
 - [ ] **Phase 3: Workflow Integration** - Make validated docs available to downstream phases
 - [ ] **Phase 4: Documentation and Release** - User-facing docs and release prep
@@ -32,8 +32,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 2 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — Create gsd-doc-ingestor agent
-- [ ] 01-02-PLAN.md — Integrate doc prompting into map-codebase workflow
+- [x] 01-01-PLAN.md — Create gsd-doc-ingestor agent
+- [x] 01-02-PLAN.md — Integrate doc prompting into map-codebase workflow
 
 ### Phase 2: Document Validation
 **Goal**: User-provided docs are validated against actual codebase before integration
@@ -84,7 +84,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Document Ingestion Core | 0/2 | Planned | - |
+| 1. Document Ingestion Core | 2/2 | ✓ Complete | 2026-01-19 |
 | 2. Document Validation | 0/TBD | Not started | - |
 | 3. Workflow Integration | 0/TBD | Not started | - |
 | 4. Documentation and Release | 0/TBD | Not started | - |
