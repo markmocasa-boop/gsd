@@ -52,22 +52,25 @@ Check for .planning/STATE.md - loads context if project already initialized
 1. Prompt for existing documentation (file paths or directories)
 2. If user provides docs: spawn gsd-doc-ingestor agent to process them
 3. If user skips: continue normally
-4. Check if .planning/codebase/ already exists (offer to refresh or skip)
-5. Create .planning/codebase/ directory structure
-6. Spawn 4 parallel gsd-codebase-mapper agents:
+4. Validate document claims against codebase (if docs provided)
+5. Check if .planning/codebase/ already exists (offer to refresh or skip)
+6. Create .planning/codebase/ directory structure
+7. Spawn 4 parallel gsd-codebase-mapper agents:
    - Agent 1: tech focus -> writes STACK.md, INTEGRATIONS.md
    - Agent 2: arch focus -> writes ARCHITECTURE.md, STRUCTURE.md
    - Agent 3: quality focus -> writes CONVENTIONS.md, TESTING.md
    - Agent 4: concerns focus -> writes CONCERNS.md
-7. Wait for agents to complete, collect confirmations (NOT document contents)
-8. Verify all 7 documents exist with line counts
-9. Commit codebase map
-10. Offer next steps (typically: /gsd:new-project or /gsd:plan-phase)
+8. Wait for agents to complete, collect confirmations (NOT document contents)
+9. Verify all 7 documents exist with line counts
+10. Commit codebase map
+11. Offer next steps (typically: /gsd:new-project or /gsd:plan-phase)
 </process>
 
 <success_criteria>
 - [ ] User prompted for existing documentation
 - [ ] User docs processed (if provided) or skipped gracefully
+- [ ] User documentation validated against codebase (if provided)
+- [ ] LOW confidence claims resolved with user (if any found)
 - [ ] .planning/codebase/ directory created
 - [ ] All 7 codebase documents written by mapper agents
 - [ ] USER-CONTEXT.md written (if docs provided)
