@@ -28,20 +28,53 @@ awaiting: user response
 
 ### 1. [Test Name]
 expected: [observable behavior - what user should see]
+verification_type: ui | api | data | file | cli
+automatable: true | false
 result: [pending]
 
 ### 2. [Test Name]
 expected: [observable behavior]
-result: pass
+verification_type: ui
+automatable: true
+result: pass:auto
+auto_method: playwright
+auto_evidence: "Element #login-form found and visible"
 
 ### 3. [Test Name]
 expected: [observable behavior]
+verification_type: ui
+automatable: false
+result: pass
+<!-- Human verification for subjective UI - no auto_evidence -->
+
+### 4. [Test Name]
+expected: [observable behavior]
+verification_type: api
+automatable: true
+result: issue:auto
+auto_method: http
+auto_evidence: "Expected 200 OK but got 401 Unauthorized"
+
+### 5. [Test Name]
+expected: [observable behavior]
+verification_type: ui
+automatable: false
 result: issue
 reported: "[verbatim user response]"
 severity: major
 
-### 4. [Test Name]
+### 6. [Test Name]
 expected: [observable behavior]
+verification_type: data
+automatable: true
+result: pass:auto
+auto_method: supabase
+auto_evidence: "Record found in users table with expected fields"
+
+### 7. [Test Name]
+expected: [observable behavior]
+verification_type: ui
+automatable: false
 result: skipped
 reason: [why skipped]
 
@@ -51,9 +84,12 @@ reason: [why skipped]
 
 total: [N]
 passed: [N]
+passed_auto: [N]
+passed_human: [N]
 issues: [N]
 pending: [N]
 skipped: [N]
+automation_status: full | partial | unavailable | disabled
 
 ## Gaps
 
@@ -86,14 +122,18 @@ skipped: [N]
 - On completion: "[testing complete]"
 
 **Tests:**
-- Each test: OVERWRITE result field when user responds
-- `result` values: [pending], pass, issue, skipped
-- If issue: add `reported` (verbatim) and `severity` (inferred)
+- Each test: OVERWRITE result field when user responds or automation completes
+- `result` values: [pending], pass, pass:auto, issue, issue:auto, skipped
+- `verification_type`: ui, api, data, file, or cli
+- `automatable`: true for mechanical checks, false for subjective judgments
+- If automated: add `auto_method` (tool used) and `auto_evidence` (verification result)
+- If human issue: add `reported` (verbatim) and `severity` (inferred)
 - If skipped: add `reason` if provided
 
 **Summary:**
 - OVERWRITE counts after each response
-- Tracks: total, passed, issues, pending, skipped
+- Tracks: total, passed, passed_auto, passed_human, issues, pending, skipped
+- `automation_status`: full (all automatable passed), partial (some automated), unavailable (no tools available), disabled (config off)
 
 **Gaps:**
 - APPEND only when issue found (YAML format)
@@ -139,11 +179,24 @@ skipped: [N]
 **Creation:** When /gsd:verify-work starts new session
 - Extract tests from SUMMARY.md files
 - Set status to "testing"
+- Categorize each test for automation potential (automatable: true/false, verification_type)
 - Current Test points to test 1
 - All tests have result: [pending]
 
-**During testing:**
-- Present test from Current Test section
+**Automation phase (if enabled):**
+- Check config.agent_acceptance_testing.auto_enabled
+- Detect available verification tools (Playwright, database MCPs, HTTP tools, etc.)
+- For each test with automatable: true:
+  - Select appropriate tool based on verification_type
+  - Execute verification and record auto_method used
+  - Record pass:auto or issue:auto with auto_evidence
+  - On error or no tool available: fall back to [pending] for human verification
+- Update automation_status in Summary
+
+**During human testing:**
+- Skip tests with result: pass:auto
+- For tests with result: issue:auto: present with evidence, allow "override" to pass
+- Present remaining test from Current Test section
 - User responds with pass confirmation or issue description
 - Update test result (pass/issue/skipped)
 - Update Summary counts
@@ -197,37 +250,77 @@ updated: 2025-01-15T10:45:00Z
 
 ### 1. View Comments on Post
 expected: Comments section expands, shows count and comment list
-result: pass
+verification_type: ui
+automatable: true
+result: pass:auto
+auto_method: playwright
+auto_evidence: "Element [data-testid='comments-section'] visible with 3 comments"
 
 ### 2. Create Top-Level Comment
 expected: Submit comment via rich text editor, appears in list with author info
-result: issue
-reported: "works but doesn't show until I refresh the page"
-severity: major
+verification_type: ui
+automatable: true
+result: issue:auto
+auto_method: playwright
+auto_evidence: "Form submitted but comment not found in list after 5s wait"
 
 ### 3. Reply to a Comment
 expected: Click Reply, inline composer appears, submit shows nested reply
-result: pass
+verification_type: ui
+automatable: true
+result: pass:auto
+auto_method: playwright
+auto_evidence: "Reply button clicked, composer visible, reply submitted and nested under parent"
 
 ### 4. Visual Nesting
 expected: 3+ level thread shows indentation, left borders, caps at reasonable depth
+verification_type: ui
+automatable: false
 result: pass
+<!-- Human verified - subjective visual design -->
 
 ### 5. Delete Own Comment
 expected: Click delete on own comment, removed or shows [deleted] if has replies
-result: pass
+verification_type: ui
+automatable: true
+result: pass:auto
+auto_method: playwright
+auto_evidence: "Delete clicked, confirmation accepted, comment replaced with [deleted]"
 
 ### 6. Comment Count
 expected: Post shows accurate count, increments when adding comment
-result: pass
+verification_type: ui
+automatable: true
+result: pass:auto
+auto_method: playwright
+auto_evidence: "Count element shows '4', incremented from '3' after adding comment"
+
+### 7. API Returns Comments
+expected: GET /api/comments returns array of comment objects with id, text, author
+verification_type: api
+automatable: true
+result: pass:auto
+auto_method: http
+auto_evidence: "Response 200 OK, body contains array with 4 comment objects"
+
+### 8. Comment Persisted to Database
+expected: New comment record exists in comments table with correct post_id
+verification_type: data
+automatable: true
+result: pass:auto
+auto_method: supabase
+auto_evidence: "SELECT returned 1 row matching post_id and user_id"
 
 ## Summary
 
-total: 6
-passed: 5
+total: 8
+passed: 7
+passed_auto: 6
+passed_human: 1
 issues: 1
 pending: 0
 skipped: 0
+automation_status: partial
 
 ## Gaps
 

@@ -337,6 +337,54 @@ Set during `/gsd:new-project`:
 
 Change anytime by editing `.planning/config.json`
 
+## Automated Verification
+
+`/gsd:verify-work` supports optional automated testing using available tools and MCPs.
+
+**Configuration** (in `.planning/config.json`):
+
+```json
+{
+  "agent_acceptance_testing": {
+    "auto_enabled": false,
+    "fallback_to_human": true
+  }
+}
+```
+
+| Setting | Description | Default |
+|---------|-------------|---------|
+| `auto_enabled` | Enable automated verification | `false` |
+| `fallback_to_human` | Fall back to human if no tools available | `true` |
+
+**How it works:**
+
+1. Tests are categorized by verification type based on keywords in expected behavior
+2. Available tools are detected (Playwright, database MCPs, HTTP tools, etc.)
+3. Automatable tests run using appropriate tools for their verification type
+4. Falls back to human verification when no tool available for a test type
+5. Subjective tests (design, UX, clarity) always require human verification
+6. Automated issues can be overridden if they're false positives
+
+**Verification types:**
+
+| Type | Keywords | Tools Used |
+|------|----------|------------|
+| ui | visible, click, page, form, navigate | Playwright MCP |
+| api | returns, response, endpoint, HTTP | WebFetch, HTTP tools |
+| data | database, record, table, persisted | Database MCPs (Supabase, etc.) |
+| file | file exists, created file, output | Read, Glob |
+| cli | command outputs, terminal, exit code | Bash |
+
+**Automatable vs human-required:**
+- `automatable: true` — Mechanical interactions (click, type, submit) and structural checks (element exists, component at location)
+- `automatable: false` — Subjective judgments: "looks good", "feels right", "matches design"
+
+**Tool detection:**
+- Probes for available tools at runtime
+- Falls back gracefully when tools unavailable
+- Records which tool (`auto_method`) was used for each test
+
 ## Common Workflows
 
 **Starting a new project:**

@@ -96,13 +96,178 @@ Focus on USER-OBSERVABLE outcomes, not implementation details.
 For each deliverable, create a test:
 - name: Brief test name
 - expected: What the user should see/experience (specific, observable)
+- verification_type: ui, api, data, file, or cli
+- automatable: true for mechanical checks, false for subjective judgments
 
-Examples:
-- Accomplishment: "Added comment threading with infinite nesting"
-  → Test: "Reply to a Comment"
-  → Expected: "Clicking Reply opens inline composer below comment. Submitting shows reply nested under parent with visual indentation."
+**Verification types:**
+
+| Type | Keywords | Example |
+|------|----------|---------|
+| ui | visible, click, button, page, form, input, navigate | "Login button redirects to dashboard" |
+| api | returns, response, endpoint, HTTP, status code | "GET /api/users returns 200" |
+| data | database, record, table, persisted, stored | "User saved to users table" |
+| file | file exists, created, written to, output | "Config file created at ~/.app/config" |
+| cli | command outputs, terminal, exit code | "build command exits 0" |
+
+**Automatable vs human-required:**
+- `automatable: true` — Mechanical interactions and structural checks (click works, element exists, form submits, component at location X)
+- `automatable: false` — Subjective quality judgments: "looks", "feels", "design", "intuitive", "matches mockup"
 
 Skip internal/non-observable items (refactors, type changes, etc.).
+</step>
+
+<step name="check_automation_config">
+**Check if automated verification is enabled:**
+
+Read `.planning/config.json` and extract `agent_acceptance_testing` section:
+
+```javascript
+{
+  "agent_acceptance_testing": {
+    "auto_enabled": false,      // Master switch
+    "fallback_to_human": true   // Graceful degradation
+  }
+}
+```
+
+**If `auto_enabled` is false or missing:**
+- Set `AUTOMATION_ENABLED = false`
+- Skip to `create_uat_file` (manual-only flow)
+- Set `automation_status: disabled` in Summary
+
+**If `auto_enabled` is true:**
+- Set `AUTOMATION_ENABLED = true`
+- Capture `fallback_to_human` setting
+- Proceed to `detect_automation_tools`
+</step>
+
+<step name="detect_automation_tools">
+**Detect available verification tools:**
+
+Probe for available tools by verification type. Record which tools are available:
+
+```
+AVAILABLE_TOOLS = {}
+```
+
+**UI verification (Playwright):**
+```
+Try: mcp__plugin_playwright_playwright__browser_navigate(url: "about:blank")
+If succeeds: AVAILABLE_TOOLS.ui = "playwright", close browser
+If fails: AVAILABLE_TOOLS.ui = null
+```
+
+**API verification (HTTP tools):**
+- WebFetch tool is always available for basic HTTP checks
+- Set `AVAILABLE_TOOLS.api = "webfetch"`
+
+**Data verification (Database MCPs):**
+```
+Probe for available database MCPs:
+- Supabase MCP: Try listing tables or a simple query
+- Other database MCPs: Similar probes
+
+If any available: AVAILABLE_TOOLS.data = "[mcp_name]"
+If none: AVAILABLE_TOOLS.data = null
+```
+
+**File verification:**
+- Read/Glob tools are always available
+- Set `AVAILABLE_TOOLS.file = "read"`
+
+**CLI verification:**
+- Bash tool is always available
+- Set `AVAILABLE_TOOLS.cli = "bash"`
+
+**After probing:**
+
+Count how many verification types have tools available.
+
+**If no tools available for any automatable tests:**
+- **If `fallback_to_human: true`:**
+  - Display: "No automated verification tools available. Using manual verification."
+  - Set `automation_status: unavailable` in Summary
+  - Proceed to `create_uat_file` (manual-only flow)
+- **If `fallback_to_human: false`:**
+  - Display error: "Automated verification enabled but no tools available. Configure MCPs or set `fallback_to_human: true`."
+  - Exit workflow
+
+**If some tools available:**
+- Proceed to `run_automated_tests` with `AVAILABLE_TOOLS`
+</step>
+
+<step name="run_automated_tests">
+**Execute automated verification for eligible tests:**
+
+For each test with `automatable: true`, check if a tool is available for its `verification_type`:
+
+**Based on verification_type and AVAILABLE_TOOLS:**
+
+| Type | Tool | Verification approach |
+|------|------|----------------------|
+| ui | playwright | Navigate to app, take snapshot, verify elements/interactions |
+| api | webfetch | Make HTTP request, verify response status and body |
+| data | supabase/db-mcp | Execute query, verify record exists with expected values |
+| file | read/glob | Check file existence, read contents, verify expected content |
+| cli | bash | Run command, capture output, verify expected result |
+
+**For each test:**
+1. Check if `AVAILABLE_TOOLS[verification_type]` exists
+2. If tool available:
+   - Attempt verification using the appropriate tool
+   - **On success:** Set `result: pass:auto`, `auto_method: "[tool]"`, `auto_evidence: "[what was verified]"`
+   - **On failure:** Set `result: issue:auto`, `auto_method: "[tool]"`, `auto_evidence: "[what failed]"`
+   - **On error (tool error, timeout, etc.):** Keep `result: [pending]` for human verification
+3. If no tool available for this type:
+   - Keep `result: [pending]` for human verification
+
+**Verification approaches by type:**
+
+**ui (Playwright):**
+- Navigate to app URL (inferred from project or test context)
+- Take snapshot, search for described elements
+- For interactions: click, verify state change
+- For forms: fill fields, submit, verify result
+
+**api (WebFetch/HTTP):**
+- Make request to endpoint mentioned in expected behavior
+- Verify response status code
+- Verify response body contains expected data
+
+**data (Database MCP):**
+- Execute query based on expected behavior
+- Verify record exists with expected values
+- Example: "SELECT * FROM users WHERE email = 'test@example.com'"
+
+**file (Read/Glob):**
+- Check file existence with Glob
+- Read file contents with Read
+- Verify expected content present
+
+**cli (Bash):**
+- Execute command from expected behavior
+- Capture stdout/stderr
+- Verify expected output or exit code
+
+**After all automated tests:**
+- Count results: `passed_auto`, `issue_auto`, `pending_for_human`
+- Update Summary with automation counts
+- Display automated results table:
+
+```
+## Automated Results
+
+| Test | Type | Method | Result | Evidence |
+|------|------|--------|--------|----------|
+| 1. Login visible | ui | playwright | pass:auto | Element #login-form found |
+| 2. API returns user | api | webfetch | pass:auto | 200 OK, user object in body |
+| 3. User in database | data | supabase | pass:auto | Record found with matching email |
+| 4. Config file created | file | read | issue:auto | File exists but missing 'debug' key |
+
+{N} tests require human verification.
+```
+
+Clean up any open resources (close browser, etc.) and proceed to `create_uat_file`.
 </step>
 
 <step name="create_uat_file">
@@ -112,7 +277,7 @@ Skip internal/non-observable items (refactors, type changes, etc.).
 mkdir -p "$PHASE_DIR"
 ```
 
-Build test list from extracted deliverables.
+Build test list from extracted deliverables, including automation metadata.
 
 Create file:
 
@@ -138,11 +303,19 @@ awaiting: user response
 
 ### 1. [Test Name]
 expected: [observable behavior]
-result: [pending]
+verification_type: [ui | api | data | file | cli]
+automatable: true | false
+result: [pending] | pass:auto | issue:auto
+auto_method: "[tool used, if automated]"
+auto_evidence: "[if automated]"
 
 ### 2. [Test Name]
 expected: [observable behavior]
-result: [pending]
+verification_type: [ui | api | data | file | cli]
+automatable: true | false
+result: [pending] | pass:auto | issue:auto
+auto_method: "[tool used, if automated]"
+auto_evidence: "[if automated]"
 
 ...
 
@@ -150,14 +323,23 @@ result: [pending]
 
 total: [N]
 passed: 0
+passed_auto: [N from run_automated_tests, or 0]
+passed_human: 0
 issues: 0
 pending: [N]
 skipped: 0
+automation_status: [full | partial | unavailable | disabled]
 
 ## Gaps
 
 [none yet]
 ```
+
+**Determine automation_status:**
+- `disabled`: `auto_enabled` was false in config
+- `unavailable`: `auto_enabled` was true but no tools available for any test types
+- `partial`: Some tests automated, some require human (or no tool for their type)
+- `full`: All automatable tests passed (only human-required tests remain)
 
 Write to `.planning/phases/XX-name/{phase}-UAT.md`
 
@@ -169,7 +351,30 @@ Proceed to `present_test`.
 
 Read Current Test section from UAT file.
 
-Display using checkpoint box format:
+**Skip tests with `result: pass:auto`** - these were verified automatically.
+
+**For tests with `result: issue:auto`:**
+Present with automated evidence and allow override:
+
+```
+╔══════════════════════════════════════════════════════════════╗
+║  CHECKPOINT: Automated Issue Detected                        ║
+╚══════════════════════════════════════════════════════════════╝
+
+**Test {number}: {name}**
+
+{expected}
+
+**Automated Evidence:**
+{auto_evidence}
+
+──────────────────────────────────────────────────────────────
+→ Type "override" if this actually works, or confirm the issue
+──────────────────────────────────────────────────────────────
+```
+
+**For tests with `result: [pending]`:**
+Display standard checkpoint box:
 
 ```
 ╔══════════════════════════════════════════════════════════════╗
@@ -191,6 +396,23 @@ Wait for user response (plain text, no AskUserQuestion).
 <step name="process_response">
 **Process user response and update file:**
 
+**If current test has `result: issue:auto` and response is "override":**
+- User confirms the automated issue was a false positive
+- Change result from `issue:auto` to `pass`
+- Keep auto_method and auto_evidence for record
+- Increment passed_human, decrement issues
+
+Update Tests section:
+```
+### {N}. {name}
+expected: {expected}
+automatable: {preserved}
+verification_type: {preserved}
+result: pass
+auto_method: {preserved}
+auto_evidence: "{preserved} [OVERRIDDEN by user]"
+```
+
 **If response indicates pass:**
 - Empty response, "yes", "y", "ok", "pass", "next", "approved", "✓"
 
@@ -198,8 +420,12 @@ Update Tests section:
 ```
 ### {N}. {name}
 expected: {expected}
+automatable: {preserved}
+verification_type: {preserved}
 result: pass
 ```
+
+Increment `passed_human` count.
 
 **If response indicates skip:**
 - "skip", "can't test", "n/a"
@@ -208,6 +434,8 @@ Update Tests section:
 ```
 ### {N}. {name}
 expected: {expected}
+automatable: {preserved}
+verification_type: {preserved}
 result: skipped
 reason: [user's reason if provided]
 ```
@@ -226,6 +454,8 @@ Update Tests section:
 ```
 ### {N}. {name}
 expected: {expected}
+automatable: {preserved}
+verification_type: {preserved}
 result: issue
 reported: "{verbatim user response}"
 severity: {inferred}
@@ -244,10 +474,10 @@ Append to Gaps section (structured YAML for plan-phase --gaps):
 
 **After any response:**
 
-Update Summary counts.
+Update Summary counts (total passed = passed_auto + passed_human).
 Update frontmatter.updated timestamp.
 
-If more tests remain → Update Current Test, go to `present_test`
+If more tests remain (pending or issue:auto not yet reviewed) → Update Current Test, go to `present_test`
 If no more tests → Go to `complete_session`
 </step>
 
@@ -550,9 +780,15 @@ Default to **major** if unclear. User can correct if needed.
 
 <success_criteria>
 - [ ] UAT file created with all tests from SUMMARY.md
-- [ ] Tests presented one at a time with expected behavior
-- [ ] User responses processed as pass/issue/skip
+- [ ] Tests categorized for automation potential (automatable, verification_type)
+- [ ] If auto_enabled: config checked and available tools detected
+- [ ] If tools available: automated tests executed with auto_method and auto_evidence
+- [ ] Tests with pass:auto skipped in human verification
+- [ ] Tests with issue:auto presented with evidence, override supported
+- [ ] Human tests presented one at a time with expected behavior
+- [ ] User responses processed as pass/issue/skip/override
 - [ ] Severity inferred from description (never asked)
+- [ ] Summary includes passed_auto, passed_human, automation_status
 - [ ] Batched writes: on issue, every 5 passes, or completion
 - [ ] Committed on completion
 - [ ] If issues: parallel debug agents diagnose root causes
