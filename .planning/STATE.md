@@ -5,34 +5,35 @@
 See: .planning/PROJECT.md (updated 2025-01-18)
 
 **Core value:** AI agents that automatically profile data assets, recommend quality rules based on patterns, and validate data with actionable alerts
-**Current focus:** Phase 2 - Data Quality & AI Recommendations
+**Current focus:** Phase 3 - Column-Level Lineage
 
 ## Current Position
 
-Phase: 2 of 4 (Data Quality & AI Recommendations)
-Plan: 3b of 4 in current phase
+Phase: 3 of 4 (Column-Level Lineage)
+Plan: 1 of 3 in current phase
 Status: In progress
-Last activity: 2026-01-18 - Completed 02-03b-PLAN.md
+Last activity: 2026-01-19 - Completed 03-01-PLAN.md
 
-Progress: [███████░░░] 70%
+Progress: [████████░░] 80%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 7
-- Average duration: 10.1 min
-- Total execution time: 1.18 hours
+- Total plans completed: 8
+- Average duration: 9.5 min
+- Total execution time: 1.27 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-foundation | 3/3 | 37 min | 12.3 min |
-| 02-dq-recommendations | 4/5 | 33 min | 8.3 min |
+| 02-dq-recommendations | 4/4 | 33 min | 8.3 min |
+| 03-column-lineage | 1/3 | 5 min | 5.0 min |
 
 **Recent Trend:**
-- Last 5 plans: 02-01 (8 min), 02-02 (10 min), 02-03a (7 min), 02-03b (8 min)
-- Trend: Stable (frontend patterns well-established)
+- Last 5 plans: 02-02 (10 min), 02-03a (7 min), 02-03b (8 min), 03-01 (5 min)
+- Trend: Accelerating (agent patterns well-established from Phase 1-2)
 
 *Updated after each plan completion*
 
@@ -78,6 +79,11 @@ Recent decisions affecting current work:
 - [02-03b]: 30s polling for alert badge count (balance responsiveness vs load)
 - [02-03b]: Alert status workflow: open -> acknowledged -> resolved (with snooze)
 - [02-03b]: Quality score thresholds: green >80%, yellow 60-80%, red <60%
+- [03-01]: PostgreSQL recursive CTEs for graph traversal (vs Neo4j for simplicity)
+- [03-01]: OpenLineage transformation types: DIRECT (IDENTITY, TRANSFORMATION, AGGREGATION), INDIRECT (JOIN, GROUP_BY, FILTER, etc.)
+- [03-01]: sql_hash field for edge deduplication when re-processing queries
+- [03-01]: LineageAgentProxy lazy loading (consistent with profiler/dq_recommender)
+- [03-01]: Temperature 0.3 for lineage agent (balance consistency and flexibility)
 
 ### Pending Todos
 
@@ -89,6 +95,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-01-18T21:47:32Z
-Stopped at: Completed 02-03b-PLAN.md
+Last session: 2026-01-19T01:22:35Z
+Stopped at: Completed 03-01-PLAN.md
 Resume file: None
