@@ -6,6 +6,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- `/gsd:map-codebase` now prompts for existing documentation to include in planning context
+
 ## [1.6.4] - 2026-01-17
 
 ### Fixed
