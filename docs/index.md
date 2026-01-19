@@ -10,7 +10,7 @@ title: Home
 Stop wrestling with context rot. Stop watching Claude lose track of what it's building. GSD is a context engineering layer that makes Claude Code reliable—so you can describe what you want and have it built correctly, consistently, and at scale.
 
 <div class="terminal-preview">
-  <img src="/assets/terminal.svg" alt="GSD installation in terminal">
+  {% include terminal.html %}
 </div>
 
 ```bash
