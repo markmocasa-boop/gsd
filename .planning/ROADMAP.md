@@ -12,7 +12,7 @@ This roadmap delivers the Data Lineage & Quality module through four phases, sta
 
 - [x] **Phase 1: Foundation & Data Profiling** - Infrastructure, connectors, and Data Profiler agent
 - [x] **Phase 2: Data Quality & AI Recommendations** - DQ checks, AI rule generation, validation workflow
-- [ ] **Phase 3: Column-Level Lineage** - Data flow tracking with transformation visibility
+- [x] **Phase 3: Column-Level Lineage** - Data flow tracking with transformation visibility
 - [ ] **Phase 4: Visibility & Integration** - Dashboard, alerts, API, historical trends
 
 ## Phase Details
@@ -65,9 +65,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 03-01-PLAN.md — Lineage Schema & Agent Core (database schema, SQLGlot parser, OpenLineage producer, impact analyzer)
-- [ ] 03-02-PLAN.md — AWS Lineage Extraction (Redshift/Athena query extraction, batch processing, scheduled Lambda)
-- [ ] 03-03-PLAN.md — Lineage Frontend (React Flow visualization, table nodes, impact/root cause panels)
+- [x] 03-01-PLAN.md — Lineage Schema & Agent Core (database schema, SQLGlot parser, OpenLineage producer, impact analyzer)
+- [x] 03-02-PLAN.md — AWS Lineage Extraction (Redshift/Athena query extraction, batch processing, scheduled Lambda)
+- [x] 03-03-PLAN.md — Lineage Frontend (React Flow visualization, table nodes, impact/root cause panels)
 
 ### Phase 4: Visibility & Integration
 **Goal**: Users can monitor data health through dashboards, alerts, and APIs
@@ -94,5 +94,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 (decimal phases insert between
 |-------|----------------|--------|-----------|
 | 1. Foundation & Data Profiling | 3/3 | Complete | 2025-01-18 |
 | 2. Data Quality & AI Recommendations | 4/4 | Complete | 2025-01-18 |
-| 3. Column-Level Lineage | 0/3 | Not started | - |
+| 3. Column-Level Lineage | 3/3 | Complete | 2025-01-19 |
 | 4. Visibility & Integration | 0/2 | Not started | - |

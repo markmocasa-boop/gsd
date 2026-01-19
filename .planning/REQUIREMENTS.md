@@ -30,10 +30,10 @@
 
 ### Lineage
 
-- [ ] **LIN-01**: User can view column-to-column data flow across connected sources
-- [ ] **LIN-02**: System tracks and displays transformation logic (how data changes, not just where it flows)
-- [ ] **LIN-03**: User can see downstream impact analysis (what breaks if this column changes)
-- [ ] **LIN-04**: User can trace quality issues back to root cause through lineage
+- [x] **LIN-01**: User can view column-to-column data flow across connected sources
+- [x] **LIN-02**: System tracks and displays transformation logic (how data changes, not just where it flows)
+- [x] **LIN-03**: User can see downstream impact analysis (what breaks if this column changes)
+- [x] **LIN-04**: User can trace quality issues back to root cause through lineage
 
 ### Visibility
 
@@ -45,7 +45,7 @@
 ### Integrations
 
 - [ ] **INT-01**: Developers can access metadata and quality results via REST API
-- [ ] **INT-02**: System emits and consumes OpenLineage events for interoperability
+- [x] **INT-02**: System emits and consumes OpenLineage events for interoperability
 - [x] **INT-03**: Quality validations integrate with AWS Step Functions pipelines
 - [x] **INT-04**: System connects to Athena and Redshift for data scanning
 
@@ -89,16 +89,16 @@
 | AI-02 | Phase 2 | Complete |
 | AI-03 | Phase 2 | Complete |
 | AI-04 | Phase 2 | Complete |
-| LIN-01 | Phase 3 | Pending |
-| LIN-02 | Phase 3 | Pending |
-| LIN-03 | Phase 3 | Pending |
-| LIN-04 | Phase 3 | Pending |
+| LIN-01 | Phase 3 | Complete |
+| LIN-02 | Phase 3 | Complete |
+| LIN-03 | Phase 3 | Complete |
+| LIN-04 | Phase 3 | Complete |
 | VIS-01 | Phase 4 | Pending |
 | VIS-02 | Phase 4 | Pending |
 | VIS-03 | Phase 4 | Pending |
 | VIS-04 | Phase 4 | Pending |
 | INT-01 | Phase 4 | Pending |
-| INT-02 | Phase 3 | Pending |
+| INT-02 | Phase 3 | Complete |
 | INT-03 | Phase 2 | Complete |
 | INT-04 | Phase 1 | Complete |
 

@@ -6,6 +6,7 @@ import { ProfilerStack } from '../lib/profiler-stack';
 import { DQRecommenderStack } from '../lib/dq-recommender-stack';
 import { ValidatorStack } from '../lib/validator-stack';
 import { AlertingStack } from '../lib/alerting-stack';
+import { LineageStack } from '../lib/lineage-stack';
 
 const app = new cdk.App();
 
@@ -79,3 +80,13 @@ const alertingStack = new AlertingStack(app, 'DataFoundationsAlertingStack', {
 
 // Explicit dependency: AlertingStack depends on ValidatorStack
 alertingStack.addDependency(validatorStack);
+
+// LineageStack: Lineage extraction and OpenLineage consumer (Lambda, EventBridge, API Gateway)
+const lineageStack = new LineageStack(app, 'DataFoundationsLineageStack', {
+  env,
+  description: 'Data Foundations - Lineage extraction and OpenLineage consumer (Lambda, EventBridge)',
+  tags: {
+    Project: 'DataFoundations',
+    Component: 'LineageStack',
+  },
+});
