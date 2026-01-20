@@ -9,3 +9,8 @@ commands.html
 
 # Local test installs
 .claude/
+
+# 11ty website
+/site/dist/
+/site/.cache/
+/site/.11ty-cache/

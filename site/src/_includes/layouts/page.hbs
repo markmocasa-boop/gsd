@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>{{#if title}}{{title}} · {{/if}}{{site.title}}</title>
+
+    <meta name="description" content="{{#if description}}{{description}}{{else}}{{site.description}}{{/if}}">
+
+    <meta property="og:title" content="{{#if title}}{{title}}{{else}}{{site.title}}{{/if}}">
+    <meta property="og:description" content="{{#if description}}{{description}}{{else}}{{site.description}}{{/if}}">
+    <meta property="og:type" content="website">
+
+    <link rel="icon" href="{{site.pathPrefix}}assets/img/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="{{site.pathPrefix}}assets/css/styles.css">
+
+    <script defer src="{{site.pathPrefix}}assets/js/main.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#content">Skip To Content</a>
+
+    {{> partials/header }}
+
+    <main id="content">
+      <div class="container page">
+        {{{ content }}}
+      </div>
+    </main>
+
+    {{> partials/footer }}
+  </body>
+</html>

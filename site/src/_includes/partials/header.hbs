@@ -1,0 +1,24 @@
+<header class="site-header" data-header>
+  <div class="container header-inner">
+    <a class="brand" href="{{site.pathPrefix}}">
+      <span class="brand-mark" aria-hidden="true">GSD</span>
+      <span class="brand-name">Get Shit Done</span>
+    </a>
+
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav" data-nav-toggle>
+      <span class="sr-only">Open Menu</span>
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </button>
+
+    <nav class="site-nav" id="site-nav" aria-label="Primary" data-site-nav>
+      <ul class="nav-list">
+        {{#each site.nav}}
+          <li class="nav-item"><a class="nav-link" href="{{this.url}}">{{this.label}}</a></li>
+        {{/each}}
+        <li class="nav-item"><a class="nav-link cta" href="{{site.repoUrl}}" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>

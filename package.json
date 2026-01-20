@@ -5,6 +5,12 @@
   "bin": {
     "get-shit-done-cc": "bin/install.js"
   },
+ "scripts": {
+    "presite:dev": "node site/scripts/prepare.js",
+    "site:dev": "eleventy --config=site/.eleventy.cjs --input=site/src --output=site/dist --serve",
+    "presite:build": "node site/scripts/prepare.js",
+    "site:build": "eleventy --config=site/.eleventy.cjs --input=site/src --output=site/dist"
+  },
   "files": [
     "bin",
     "commands",
@@ -26,6 +32,12 @@
     "type": "git",
     "url": "git+https://github.com/glittercowboy/get-shit-done.git"
   },
+  "devDependencies": {
+    "@11ty/eleventy": "^2.0.1",
+    "handlebars": "^4.7.8",
+    "markdown-it": "^14.1.0",
+    "markdown-it-anchor": "^8.6.7"
+  },  
   "homepage": "https://github.com/glittercowboy/get-shit-done",
   "bugs": {
     "url": "https://github.com/glittercowboy/get-shit-done/issues"
