@@ -166,6 +166,55 @@ If you prefer not to use that flag, add this to your project's `.claude/settings
 
 ## How It Works
 
+### GSD Workflow Overview
+
+```mermaid
+graph TD
+    subgraph Initialization
+        B1["/gsd:map-codebase (Optional)"] --> S1
+        S1["/gsd:new-project (First Milestone)"] --> PC
+        S2["/gsd:new-milestone (Subsequent)"] --> PC
+        PC["Define Vision, Requirements & Roadmap"] --> PhaseLoop
+    end
+
+    subgraph Phase_Execution_Loop
+        direction TB
+        D["/gsd:discuss-phase"] --> R["/gsd:research-phase (Optional)"]
+        R --> P["/gsd:plan-phase"]
+        P --> E["/gsd:execute-phase"]
+        E --> V["/gsd:verify-work (UAT)"]
+        V -- Repeat for all phases --> D
+    end
+
+    subgraph Quality_Gate_and_Archive
+        V --> Audit["/gsd:audit-milestone"]
+        Audit -->|Gaps Found| GapFix["/gsd:plan-milestone-gaps"]
+        GapFix -->|Execute Fixes| E
+        Audit -->|Audit Passed| Complete["/gsd:complete-milestone"]
+    end
+
+    subgraph Permanent_History
+        Complete -.-> Archive[".planning/milestones/ Archive"]
+        Complete -.-> History[".planning/phases/ Execution History"]
+    end
+
+    Complete -->|Starts Next Cycle| S2
+
+    subgraph Utilities_and_Session
+        U1["/gsd:progress - GPS: Shows current status & routes to next step"]
+        U2["/gsd:resume-work - Restore: Instantly reloads session context"]
+        U3["/gsd:debug - Investigation: Scientific root-cause discovery"]
+        U4["/gsd:add-todo - Inbox: Capture ideas without stopping flow"]
+    end
+
+    style S1 fill:#e1f5fe,stroke:#01579b
+    style R fill:#fff9c4,stroke:#fbc02d,stroke-dasharray: 5 5
+    style Audit fill:#f8bbd0,stroke:#c2185b
+    style Complete fill:#f96,stroke:#333,stroke-width:2px
+    style Archive fill:#eee,stroke:#999
+    style History fill:#eee,stroke:#999
+```
+
 > **Already have code?** Run `/gsd:map-codebase` first. It prompts for any existing documentation you have (architecture notes, API specs, etc.) and spawns parallel agents to analyze your stack, architecture, conventions, and concerns. Then `/gsd:new-project` knows your codebase — questions focus on what you're adding, and planning automatically loads your patterns and documentation.
 
 ### 1. Initialize Project
