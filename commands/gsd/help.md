@@ -79,7 +79,7 @@ Usage: `/gsd:map-codebase`
 **`/gsd:analyze-codebase`**
 Bootstrap codebase intelligence for existing projects.
 
-- Scans all JS/TS files and extracts exports/imports
+- Scans all JS/TS and Python files, extracts exports/imports
 - Detects naming conventions, directory patterns, file suffixes
 - Creates `.planning/intel/` with index, conventions, and summary
 - Works standalone (no `/gsd:new-project` required)

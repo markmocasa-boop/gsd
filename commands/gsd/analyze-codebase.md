@@ -48,7 +48,9 @@ mkdir -p .planning/intel
 
 ## Step 2: Find all indexable files
 
-Use Glob tool with pattern: `**/*.{js,ts,jsx,tsx,mjs,cjs}`
+Use Glob tool with patterns for both JavaScript/TypeScript and Python:
+- JavaScript/TypeScript: `**/*.{js,ts,jsx,tsx,mjs,cjs}`
+- Python: `**/*.{py,pyx}`
 
 Exclude directories (skip any path containing):
 - node_modules
@@ -59,6 +61,15 @@ Exclude directories (skip any path containing):
 - coverage
 - .next
 - __pycache__
+- .venv
+- venv
+- env
+- .eggs
+- *.egg-info
+- .tox
+- .pytest_cache
+- .mypy_cache
+- site-packages
 
 Filter results to remove excluded paths before processing.
 
@@ -78,6 +89,8 @@ For each file found:
 1. Read file content using Read tool
 
 2. Extract exports using these patterns:
+
+   **JavaScript/TypeScript (.js, .ts, .jsx, .tsx, .mjs, .cjs):**
    - Named exports: `export\s*\{([^}]+)\}`
    - Declaration exports: `export\s+(?:const|let|var|function\*?|async\s+function|class)\s+(\w+)`
    - Default exports: `export\s+default\s+(?:function\s*\*?\s*|class\s+)?(\w+)?`
@@ -85,10 +98,28 @@ For each file found:
    - CommonJS single: `module\.exports\s*=\s*(\w+)\s*[;\n]`
    - TypeScript: `export\s+(?:type|interface)\s+(\w+)`
 
+   **Python (.py, .pyx):**
+   - Explicit __all__: `__all__\s*=\s*\[([^\]]+)\]` - extract quoted strings from list
+   - Top-level functions: `^def\s+(\w+)\s*\(` (must start at column 0, exclude _private)
+   - Top-level async functions: `^async\s+def\s+(\w+)\s*\(`
+   - Top-level classes: `^class\s+(\w+)[\s:(]`
+   - Module constants: `^([A-Z][A-Z0-9_]*)\s*=` (SCREAMING_SNAKE at column 0)
+
+   For Python, if `__all__` is defined, use only those exports. Otherwise, include all public top-level definitions (names not starting with `_`).
+
 3. Extract imports using these patterns:
+
+   **JavaScript/TypeScript:**
    - ES6: `import\s+(?:\{[^}]*\}|\*\s+as\s+\w+|\w+)\s+from\s+['"]([^'"]+)['"]`
    - Side-effect: `import\s+['"]([^'"]+)['"]` (not preceded by 'from')
    - CommonJS: `require\s*\(\s*['"]([^'"]+)['"]\s*\)`
+
+   **Python:**
+   - Module import: `^import\s+([\w.]+)` - captures `import os`, `import foo.bar`
+   - From import: `^from\s+([\w.]+)\s+import` - captures `from os import path`
+   - Relative import: `^from\s+(\.+[\w.]*)\s+import` - captures `from . import`, `from ..utils import`
+
+   For Python relative imports (starting with `.`), resolve to absolute path based on current file location.
 
 4. Store in index:
    ```javascript
@@ -110,8 +141,15 @@ Analyze the collected index for patterns.
 - SCREAMING_SNAKE: `^[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+$` or single `^[A-Z][A-Z0-9]*$`
 - Skip 'default' when counting (it's a keyword, not naming convention)
 
+**Python-specific conventions (PEP 8):**
+- Functions/methods: snake_case expected
+- Classes: PascalCase expected
+- Constants: SCREAMING_SNAKE expected
+- Analyze separately by type (functions vs classes vs constants) for Python files
+
 **Directory patterns** (use lookup table):
 ```
+# JavaScript/TypeScript
 components -> UI components
 hooks -> React/custom hooks
 utils, lib -> Utility functions
@@ -126,10 +164,26 @@ config -> Configuration
 constants -> Constants
 pages -> Page components
 views -> View templates
+
+# Python
+views -> Views (Django/Flask)
+serializers -> Serializers (DRF)
+forms -> Forms (Django)
+tasks -> Async tasks (Celery)
+migrations -> Database migrations
+fixtures -> Test fixtures
+management -> Management commands (Django)
+templatetags -> Template tags (Django)
+schemas -> Pydantic/marshmallow schemas
+routers -> API routers (FastAPI)
+crud -> CRUD operations
+core -> Core/shared modules
+db -> Database layer
 ```
 
 **Suffix patterns** (require 5+ occurrences):
 ```
+# JavaScript/TypeScript
 .test.*, .spec.* -> Test files
 .service.* -> Service layer
 .controller.* -> Controllers
@@ -150,6 +204,22 @@ views -> View templates
 .schema.* -> Schema definitions
 .mock.*, .mocks.* -> Mock data
 .fixture.*, .fixtures.* -> Test fixtures
+
+# Python
+_test.py, test_*.py -> Test files
+_models.py, models.py -> Data models
+_views.py, views.py -> Views
+_serializers.py, serializers.py -> Serializers (DRF)
+_forms.py, forms.py -> Forms
+_tasks.py, tasks.py -> Async tasks (Celery)
+_admin.py, admin.py -> Admin config
+_urls.py, urls.py -> URL routing
+_schemas.py, schemas.py -> Schema definitions
+_crud.py, crud.py -> CRUD operations
+_deps.py, deps.py, dependencies.py -> Dependency injection
+_routers.py, routers.py -> API routers
+conftest.py -> Pytest fixtures
+__init__.py -> Package init
 ```
 
 ## Step 5: Write index.json
@@ -163,6 +233,11 @@ Write to `.planning/intel/index.json`:
     "/absolute/path/to/file.js": {
       "exports": ["functionA", "ClassB"],
       "imports": ["react", "./utils"],
+      "indexed": 1737360330000
+    },
+    "/absolute/path/to/module.py": {
+      "exports": ["process_data", "DataHandler", "DEFAULT_TIMEOUT"],
+      "imports": ["os", "typing", "app.services.auth"],
       "indexed": 1737360330000
     }
   }
@@ -401,6 +476,7 @@ Next: Intel hooks will continue incremental updates as you code.
 <success_criteria>
 - [ ] .planning/intel/ directory created
 - [ ] All JS/TS files scanned (excluding node_modules, dist, build, .git, vendor, coverage)
+- [ ] All Python files scanned (excluding __pycache__, .venv, venv, site-packages, .eggs)
 - [ ] index.json populated with exports and imports for each file
 - [ ] conventions.json has detected patterns (naming, directories, suffixes)
 - [ ] summary.md is concise (< 500 tokens)
