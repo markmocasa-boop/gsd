@@ -14,6 +14,48 @@ A file existing does not mean the feature works. Verification must check:
 Levels 1-3 can be checked programmatically. Level 4 often requires human verification.
 </core_principle>
 
+<lsp_verification>
+
+## LSP-Based Verification
+
+Use LSP tools for semantic verification alongside grep patterns:
+
+**Existence checks:**
+```
+goToDefinition - Verify import targets exist (symbol resolves to real file)
+documentSymbol - List all exports in a file to verify expected symbols exist
+```
+
+**Wiring checks:**
+```
+findReferences - Verify exports are actually consumed (not orphaned code)
+incomingCalls - Verify functions are called (not dead code)
+outgoingCalls - Verify functions call their dependencies
+```
+
+**Type checks:**
+```
+hover - Get type info to verify proper typing (not `any` everywhere)
+```
+
+**When to prefer LSP over Grep:**
+| Task | Use LSP | Use Grep |
+|------|---------|----------|
+| Verify symbol exists | `goToDefinition` | - |
+| Verify symbol is used | `findReferences` | - |
+| Search for patterns | - | `grep -E` |
+| Find stub comments | - | `grep -E "TODO\|FIXME"` |
+| Verify function is called | `incomingCalls` | - |
+| Find hardcoded values | - | `grep -E` |
+
+**Example verification flow:**
+1. `documentSymbol` - List what's exported
+2. `findReferences` on each export - Verify it's used
+3. Grep for stub patterns - Catch placeholder implementations
+4. `goToDefinition` on imports - Verify dependencies exist
+
+</lsp_verification>
+
 <stub_detection>
 
 ## Universal Stub Patterns

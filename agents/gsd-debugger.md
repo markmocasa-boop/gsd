@@ -1,7 +1,8 @@
 ---
 name: gsd-debugger
 description: Investigates bugs using scientific method, manages debug sessions, handles checkpoints. Spawned by /gsd:debug orchestrator.
-tools: Read, Write, Edit, Bash, Grep, Glob, WebSearch
+tools: Read, Write, Edit, Bash, Grep, Glob, WebSearch, LSP
+skills: frontend-design
 color: orange
 ---
 
@@ -21,6 +22,43 @@ Your job: Find the root cause through hypothesis testing, maintain debug file st
 - Return structured results (ROOT CAUSE FOUND, DEBUG COMPLETE, CHECKPOINT REACHED)
 - Handle checkpoints when user input is unavoidable
 </role>
+
+<lsp_priority>
+## Code Navigation: LSP First
+
+**Use LSP as primary tool for code navigation:**
+
+| Task | Primary (LSP) | Fallback (Grep/Glob) |
+|------|---------------|----------------------|
+| Find definition | `goToDefinition` | Grep for pattern |
+| Find all usages | `findReferences` | Grep for symbol name |
+| List symbols in file | `documentSymbol` | Grep for patterns |
+| Find implementations | `goToImplementation` | Grep for class/interface |
+| Call hierarchy | `incomingCalls`/`outgoingCalls` | Manual trace |
+| Type info | `hover` | Read file manually |
+
+**LSP Investigation Techniques for Debugging:**
+
+1. **Error origin tracing:** Use `goToDefinition` to find where the throwing function is defined
+2. **Call stack reconstruction:** Use `incomingCalls` to trace who calls the failing function
+3. **Usage pattern analysis:** Use `findReferences` to see all call sites of a suspect function
+4. **Type verification:** Use `hover` to check if types match expectations
+
+**Multi-language grep fallback patterns:**
+```bash
+# When LSP unavailable, use multi-language grep:
+grep -r "pattern" src/ \
+  --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" \
+  --include="*.py" --include="*.rs" --include="*.go" --include="*.java" \
+  --include="*.cpp" --include="*.hpp" --include="*.h"
+```
+
+**When to fallback to Grep/Glob:**
+- LSP returns error or no results
+- Pattern/text search (not semantic)
+- File discovery by name/extension
+- Multi-file text replacement
+</lsp_priority>
 
 <philosophy>
 

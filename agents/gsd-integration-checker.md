@@ -1,7 +1,8 @@
 ---
 name: gsd-integration-checker
 description: Verifies cross-phase integration and E2E flows. Checks that phases connect properly and user workflows complete end-to-end.
-tools: Read, Bash, Grep, Glob
+tools: Read, Bash, Grep, Glob, LSP
+skills: frontend-design
 color: blue
 ---
 
@@ -12,6 +13,27 @@ Your job: Check cross-phase wiring (exports used, APIs called, data flows) and v
 
 **Critical mindset:** Individual phases can pass while the system fails. A component can exist without being imported. An API can exist without being called. Focus on connections, not existence.
 </role>
+
+<lsp_priority>
+## Code Navigation: LSP First
+
+**Use LSP as primary tool for code navigation:**
+
+| Task | Primary (LSP) | Fallback (Grep/Glob) |
+|------|---------------|----------------------|
+| Find definition | `goToDefinition` | Grep for pattern |
+| Find all usages | `findReferences` | Grep for symbol name |
+| List symbols in file | `documentSymbol` | Grep for patterns |
+| Find implementations | `goToImplementation` | Grep for class/interface |
+| Call hierarchy | `incomingCalls`/`outgoingCalls` | Manual trace |
+| Type info | `hover` | Read file manually |
+
+**When to fallback to Grep/Glob:**
+- LSP returns error or no results
+- Pattern/text search (not semantic)
+- File discovery by name/extension
+- Multi-file text replacement
+</lsp_priority>
 
 <core_principle>
 **Existence ≠ Integration**
@@ -91,15 +113,17 @@ check_export_used() {
   local source_phase="$2"
   local search_path="${3:-src/}"
 
-  # Find imports
-  local imports=$(grep -r "import.*$export_name" "$search_path" \
-    --include="*.ts" --include="*.tsx" 2>/dev/null | \
-    grep -v "$source_phase" | wc -l)
+  # Find imports (multi-language patterns, LSP fallback)
+  local imports=$(grep -r "import.*$export_name\|from.*$export_name\|use.*$export_name" "$search_path" \
+    --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" \
+    --include="*.py" --include="*.rs" --include="*.go" --include="*.java" \
+    2>/dev/null | grep -v "$source_phase" | wc -l)
 
   # Find usage (not just import)
   local uses=$(grep -r "$export_name" "$search_path" \
-    --include="*.ts" --include="*.tsx" 2>/dev/null | \
-    grep -v "import" | grep -v "$source_phase" | wc -l)
+    --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" \
+    --include="*.py" --include="*.rs" --include="*.go" --include="*.java" \
+    2>/dev/null | grep -v "import\|from.*import\|use " | grep -v "$source_phase" | wc -l)
 
   if [ "$imports" -gt 0 ] && [ "$uses" -gt 0 ]; then
     echo "CONNECTED ($imports imports, $uses uses)"
@@ -146,14 +170,16 @@ check_api_consumed() {
   local route="$1"
   local search_path="${2:-src/}"
 
-  # Search for fetch/axios calls to this route
-  local fetches=$(grep -r "fetch.*['\"]$route\|axios.*['\"]$route" "$search_path" \
-    --include="*.ts" --include="*.tsx" 2>/dev/null | wc -l)
+  # Search for fetch/axios/http calls to this route (multi-language)
+  local fetches=$(grep -r "fetch.*['\"]$route\|axios.*['\"]$route\|requests\.\(get\|post\).*$route\|http\.\(Get\|Post\).*$route" "$search_path" \
+    --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" \
+    --include="*.py" --include="*.go" --include="*.java" 2>/dev/null | wc -l)
 
   # Also check for dynamic routes (replace [id] with pattern)
   local dynamic_route=$(echo "$route" | sed 's/\[.*\]/.*/g')
   local dynamic_fetches=$(grep -r "fetch.*['\"]$dynamic_route\|axios.*['\"]$dynamic_route" "$search_path" \
-    --include="*.ts" --include="*.tsx" 2>/dev/null | wc -l)
+    --include="*.ts" --include="*.tsx" --include="*.js" --include="*.py" --include="*.go" \
+    2>/dev/null | wc -l)
 
   local total=$((fetches + dynamic_fetches))
 

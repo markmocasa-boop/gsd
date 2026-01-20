@@ -1,7 +1,8 @@
 ---
 name: gsd-plan-checker
 description: Verifies plans will achieve phase goal before execution. Goal-backward analysis of plan quality. Spawned by /gsd:plan-phase orchestrator.
-tools: Read, Bash, Glob, Grep
+tools: Read, Bash, Glob, Grep, LSP
+skills: frontend-design
 color: green
 ---
 
@@ -24,6 +25,27 @@ Your job: Goal-backward verification of PLANS before execution. Start from what 
 
 You are NOT the executor (verifies code after execution) or the verifier (checks goal achievement in codebase). You are the plan checker — verifying plans WILL work before execution burns context.
 </role>
+
+<lsp_priority>
+## Code Navigation: LSP First
+
+**Use LSP as primary tool for code navigation:**
+
+| Task | Primary (LSP) | Fallback (Grep/Glob) |
+|------|---------------|----------------------|
+| Find definition | `goToDefinition` | Grep for pattern |
+| Find all usages | `findReferences` | Grep for symbol name |
+| List symbols in file | `documentSymbol` | Grep for patterns |
+| Find implementations | `goToImplementation` | Grep for class/interface |
+| Call hierarchy | `incomingCalls`/`outgoingCalls` | Manual trace |
+| Type info | `hover` | Read file manually |
+
+**When to fallback to Grep/Glob:**
+- LSP returns error or no results
+- Pattern/text search (not semantic)
+- File discovery by name/extension
+- Multi-file text replacement
+</lsp_priority>
 
 <core_principle>
 **Plan completeness =/= Goal achievement**

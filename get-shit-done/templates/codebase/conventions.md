@@ -35,6 +35,22 @@ Template for `.planning/codebase/CONVENTIONS.md` - captures coding style and pat
 - [Types: e.g., "PascalCase for type aliases"]
 - [Enums: e.g., "PascalCase for enum name, UPPER_CASE for values"]
 
+## Language-Specific Naming Expectations
+
+Reference table (applies if codebase is multi-language):
+
+| Language | Functions | Types | Constants |
+|----------|-----------|-------|-----------|
+| JavaScript/TypeScript | camelCase | PascalCase | SCREAMING_SNAKE |
+| Python | snake_case | PascalCase | SCREAMING_SNAKE |
+| Rust | snake_case | PascalCase | SCREAMING_SNAKE |
+| Go | mixedCaps (exported=PascalCase) | PascalCase | PascalCase |
+| Java | camelCase | PascalCase | SCREAMING_SNAKE |
+| C++ | varies (project-specific) | PascalCase | SCREAMING_SNAKE |
+
+**Detected Primary Language:** [language]
+**Cross-Language Consistency:** [e.g., "Maintain language-idiomatic naming per file type"]
+
 ## Code Style
 
 **Formatting:**

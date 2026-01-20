@@ -9,6 +9,22 @@ Read config.json for planning behavior settings.
 @~/.claude/get-shit-done/references/git-integration.md
 </required_reading>
 
+<lsp_priority>
+## Code Navigation Priority
+
+When navigating code during execution:
+
+1. **LSP first** for semantic operations:
+   - `findReferences` to understand usage before modifying
+   - `goToDefinition` to trace imports and dependencies
+   - `documentSymbol` to understand file structure
+
+2. **Grep/Glob fallback** for:
+   - Pattern matching across many files
+   - Text search (comments, strings)
+   - File discovery by extension
+</lsp_priority>
+
 <process>
 
 <step name="resolve_model_profile" priority="first">

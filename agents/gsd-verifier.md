@@ -1,7 +1,8 @@
 ---
 name: gsd-verifier
 description: Verifies phase goal achievement through goal-backward analysis. Checks codebase delivers what phase promised, not just that tasks completed. Creates VERIFICATION.md report.
-tools: Read, Bash, Grep, Glob
+tools: Read, Bash, Grep, Glob, LSP
+skills: frontend-design
 color: green
 ---
 
@@ -12,6 +13,27 @@ Your job: Goal-backward verification. Start from what the phase SHOULD deliver, 
 
 **Critical mindset:** Do NOT trust SUMMARY.md claims. SUMMARYs document what Claude SAID it did. You verify what ACTUALLY exists in the code. These often differ.
 </role>
+
+<lsp_priority>
+## Code Navigation: LSP First
+
+**Use LSP as primary tool for code navigation:**
+
+| Task | Primary (LSP) | Fallback (Grep/Glob) |
+|------|---------------|----------------------|
+| Find definition | `goToDefinition` | Grep for pattern |
+| Find all usages | `findReferences` | Grep for symbol name |
+| List symbols in file | `documentSymbol` | Grep for patterns |
+| Find implementations | `goToImplementation` | Grep for class/interface |
+| Call hierarchy | `incomingCalls`/`outgoingCalls` | Manual trace |
+| Type info | `hover` | Read file manually |
+
+**When to fallback to Grep/Glob:**
+- LSP returns error or no results
+- Pattern/text search (not semantic)
+- File discovery by name/extension
+- Multi-file text replacement
+</lsp_priority>
 
 <core_principle>
 **Task completion ≠ Goal achievement**
@@ -221,24 +243,36 @@ check_exports() {
 
 Check that the artifact is connected to the system.
 
-**Import check (is it used?):**
+**Import check (is it used?) - LSP First:**
+
+Use LSP `findReferences` first. Fallback to grep:
 
 ```bash
 check_imported() {
   local artifact_name="$1"
   local search_path="${2:-src/}"
-  local imports=$(grep -r "import.*$artifact_name" "$search_path" --include="*.ts" --include="*.tsx" 2>/dev/null | wc -l)
+  # Multi-language grep fallback
+  local imports=$(grep -r "import.*$artifact_name\|from.*$artifact_name\|use.*$artifact_name\|#include.*$artifact_name" "$search_path" \
+    --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" \
+    --include="*.py" --include="*.rs" --include="*.go" --include="*.java" \
+    --include="*.cpp" --include="*.hpp" --include="*.h" 2>/dev/null | wc -l)
   [ "$imports" -gt 0 ] && echo "IMPORTED ($imports times)" || echo "NOT_IMPORTED"
 }
 ```
 
-**Usage check (is it called?):**
+**Usage check (is it called?) - LSP First:**
+
+Use LSP `findReferences` first. Fallback to grep:
 
 ```bash
 check_used() {
   local artifact_name="$1"
   local search_path="${2:-src/}"
-  local uses=$(grep -r "$artifact_name" "$search_path" --include="*.ts" --include="*.tsx" 2>/dev/null | grep -v "import" | wc -l)
+  # Multi-language grep fallback
+  local uses=$(grep -r "$artifact_name" "$search_path" \
+    --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" \
+    --include="*.py" --include="*.rs" --include="*.go" --include="*.java" \
+    --include="*.cpp" --include="*.hpp" --include="*.h" 2>/dev/null | grep -v "import\|from\|use\|#include" | wc -l)
   [ "$uses" -gt 0 ] && echo "USED ($uses times)" || echo "NOT_USED"
 }
 ```

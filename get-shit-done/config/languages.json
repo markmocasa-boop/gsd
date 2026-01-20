@@ -1,0 +1,209 @@
+{
+  "version": 1,
+  "languages": {
+    "javascript": {
+      "name": "JavaScript",
+      "extensions": [".js", ".mjs", ".cjs"],
+      "packageFiles": ["package.json"],
+      "lspServer": "typescript-language-server",
+      "patterns": {
+        "exports": {
+          "namedExport": "export\\s*\\{([^}]+)\\}",
+          "declarationExport": "export\\s+(?:const|let|var|function\\*?|async\\s+function|class)\\s+(\\w+)",
+          "defaultExport": "export\\s+default\\s+(?:function\\s*\\*?\\s*|class\\s+)?(\\w+)?",
+          "commonJsObject": "module\\.exports\\s*=\\s*\\{([^}]+)\\}",
+          "commonJsSingle": "module\\.exports\\s*=\\s*(\\w+)\\s*[;\\n]"
+        },
+        "imports": {
+          "es6": "import\\s+(?:\\{[^}]*\\}|\\*\\s+as\\s+\\w+|\\w+)\\s+from\\s+['\"]([^'\"]+)['\"]",
+          "sideEffect": "import\\s+['\"]([^'\"]+)['\"]",
+          "commonJs": "require\\s*\\(\\s*['\"]([^'\"]+)['\"]\\s*\\)"
+        }
+      },
+      "naming": {
+        "functions": "camelCase",
+        "types": "PascalCase",
+        "constants": "SCREAMING_SNAKE"
+      }
+    },
+    "typescript": {
+      "name": "TypeScript",
+      "extensions": [".ts", ".tsx"],
+      "packageFiles": ["package.json", "tsconfig.json"],
+      "lspServer": "typescript-language-server",
+      "patterns": {
+        "exports": {
+          "namedExport": "export\\s*\\{([^}]+)\\}",
+          "declarationExport": "export\\s+(?:const|let|var|function\\*?|async\\s+function|class)\\s+(\\w+)",
+          "defaultExport": "export\\s+default\\s+(?:function\\s*\\*?\\s*|class\\s+)?(\\w+)?",
+          "typeExport": "export\\s+(?:type|interface)\\s+(\\w+)"
+        },
+        "imports": {
+          "es6": "import\\s+(?:\\{[^}]*\\}|\\*\\s+as\\s+\\w+|\\w+)\\s+from\\s+['\"]([^'\"]+)['\"]",
+          "typeImport": "import\\s+type\\s+\\{[^}]*\\}\\s+from\\s+['\"]([^'\"]+)['\"]",
+          "sideEffect": "import\\s+['\"]([^'\"]+)['\"]"
+        }
+      },
+      "naming": {
+        "functions": "camelCase",
+        "types": "PascalCase",
+        "constants": "SCREAMING_SNAKE"
+      }
+    },
+    "python": {
+      "name": "Python",
+      "extensions": [".py", ".pyi"],
+      "packageFiles": ["pyproject.toml", "setup.py", "requirements.txt", "Pipfile"],
+      "lspServer": "pyright",
+      "patterns": {
+        "exports": {
+          "function": "^\\s*(async\\s+)?def\\s+([a-zA-Z_]\\w*)\\s*\\(",
+          "class": "^\\s*class\\s+([a-zA-Z_]\\w*)\\s*[\\(:]",
+          "allList": "__all__\\s*=\\s*\\[([^\\]]*)\\]"
+        },
+        "imports": {
+          "import": "^import\\s+([\\w.]+)",
+          "fromImport": "^from\\s+([\\w.]+)\\s+import"
+        }
+      },
+      "naming": {
+        "functions": "snake_case",
+        "types": "PascalCase",
+        "constants": "SCREAMING_SNAKE"
+      },
+      "directories": {
+        "tests": "Test files",
+        "src": "Source code",
+        "lib": "Library code"
+      }
+    },
+    "rust": {
+      "name": "Rust",
+      "extensions": [".rs"],
+      "packageFiles": ["Cargo.toml"],
+      "lspServer": "rust-analyzer",
+      "patterns": {
+        "exports": {
+          "pubFn": "^\\s*pub(?:\\([\\w:]+\\))?\\s+fn\\s+([a-zA-Z_]\\w*)",
+          "pubStruct": "^\\s*pub(?:\\([\\w:]+\\))?\\s+struct\\s+([A-Z]\\w*)",
+          "pubEnum": "^\\s*pub(?:\\([\\w:]+\\))?\\s+enum\\s+([A-Z]\\w*)",
+          "pubTrait": "^\\s*pub(?:\\([\\w:]+\\))?\\s+trait\\s+([A-Z]\\w*)",
+          "pubMod": "^\\s*pub(?:\\([\\w:]+\\))?\\s+mod\\s+(\\w+)"
+        },
+        "imports": {
+          "use": "^\\s*use\\s+([\\w:]+)",
+          "externCrate": "^\\s*extern\\s+crate\\s+(\\w+)"
+        }
+      },
+      "naming": {
+        "functions": "snake_case",
+        "types": "PascalCase",
+        "constants": "SCREAMING_SNAKE"
+      },
+      "directories": {
+        "src": "Source code",
+        "tests": "Integration tests",
+        "benches": "Benchmarks",
+        "examples": "Example code"
+      }
+    },
+    "go": {
+      "name": "Go",
+      "extensions": [".go"],
+      "packageFiles": ["go.mod", "go.sum"],
+      "lspServer": "gopls",
+      "patterns": {
+        "exports": {
+          "exportedFunc": "^func\\s+([A-Z]\\w*)\\s*\\(",
+          "exportedMethod": "^func\\s+\\([^)]+\\)\\s+([A-Z]\\w*)\\s*\\(",
+          "exportedType": "^type\\s+([A-Z]\\w*)\\s+(?:struct|interface)",
+          "exportedConst": "^const\\s+([A-Z]\\w*)",
+          "exportedVar": "^var\\s+([A-Z]\\w*)"
+        },
+        "imports": {
+          "singleImport": "^import\\s+\"([^\"]+)\"",
+          "groupImport": "^\\s*\"([^\"]+)\""
+        }
+      },
+      "naming": {
+        "functions": "mixedCaps",
+        "types": "PascalCase",
+        "constants": "PascalCase"
+      },
+      "directories": {
+        "cmd": "Application entry points",
+        "internal": "Private packages",
+        "pkg": "Public packages",
+        "api": "API definitions",
+        "test": "Test files"
+      }
+    },
+    "java": {
+      "name": "Java",
+      "extensions": [".java"],
+      "packageFiles": ["pom.xml", "build.gradle", "build.gradle.kts"],
+      "lspServer": "jdtls",
+      "patterns": {
+        "exports": {
+          "publicClass": "^\\s*public\\s+(?:abstract\\s+|final\\s+)?class\\s+([A-Z]\\w*)",
+          "publicInterface": "^\\s*public\\s+interface\\s+([A-Z]\\w*)",
+          "publicEnum": "^\\s*public\\s+enum\\s+([A-Z]\\w*)",
+          "publicMethod": "^\\s*public\\s+(?:static\\s+)?(?:\\w+\\s+)+([a-z]\\w*)\\s*\\("
+        },
+        "imports": {
+          "import": "^import\\s+([\\w.]+);",
+          "staticImport": "^import\\s+static\\s+([\\w.]+);"
+        }
+      },
+      "naming": {
+        "functions": "camelCase",
+        "types": "PascalCase",
+        "constants": "SCREAMING_SNAKE"
+      },
+      "directories": {
+        "src/main/java": "Source code",
+        "src/test/java": "Test code",
+        "src/main/resources": "Resources"
+      }
+    },
+    "cpp": {
+      "name": "C++",
+      "extensions": [".cpp", ".cc", ".cxx", ".hpp", ".h"],
+      "packageFiles": ["CMakeLists.txt", "Makefile", "meson.build"],
+      "lspServer": "clangd",
+      "patterns": {
+        "exports": {
+          "class": "^\\s*class\\s+([A-Z]\\w*)\\s*[:{;]",
+          "struct": "^\\s*struct\\s+([A-Z]\\w*)\\s*[:{;]",
+          "namespace": "^\\s*namespace\\s+(\\w+)\\s*\\{",
+          "function": "^(?!\\s*(?:if|while|for|switch))\\s*(?:[\\w:*&<>]+\\s+)+([a-zA-Z_]\\w*)\\s*\\([^;]*\\)\\s*[{;]"
+        },
+        "imports": {
+          "include": "^\\s*#include\\s*[<\"]([^>\"]+)[>\"]",
+          "usingNamespace": "^\\s*using\\s+namespace\\s+(\\w+)"
+        }
+      },
+      "naming": {
+        "functions": "varies",
+        "types": "PascalCase",
+        "constants": "SCREAMING_SNAKE"
+      },
+      "directories": {
+        "src": "Source code",
+        "include": "Header files",
+        "test": "Test files",
+        "tests": "Test files"
+      }
+    }
+  },
+  "allExtensions": [".js", ".mjs", ".cjs", ".ts", ".tsx", ".py", ".pyi", ".rs", ".cpp", ".cc", ".cxx", ".hpp", ".h", ".go", ".java"],
+  "testFrameworks": {
+    "javascript": { "frameworks": ["jest", "vitest", "mocha"], "pattern": "*.test.*, *.spec.*" },
+    "typescript": { "frameworks": ["jest", "vitest", "mocha"], "pattern": "*.test.*, *.spec.*" },
+    "python": { "frameworks": ["pytest", "unittest"], "pattern": "test_*.py, *_test.py" },
+    "rust": { "frameworks": ["cargo test"], "pattern": "#[test], #[cfg(test)]" },
+    "go": { "frameworks": ["testing"], "pattern": "*_test.go" },
+    "java": { "frameworks": ["JUnit", "TestNG"], "pattern": "*Test.java, *Tests.java" },
+    "cpp": { "frameworks": ["gtest", "catch2"], "pattern": "*_test.cpp, test_*.cpp" }
+  }
+}

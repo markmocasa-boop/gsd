@@ -1,7 +1,8 @@
 ---
 name: gsd-project-researcher
 description: Researches domain ecosystem before roadmap creation. Produces files in .planning/research/ consumed during roadmap creation. Spawned by /gsd:new-project or /gsd:new-milestone orchestrators.
-tools: Read, Write, Bash, Grep, Glob, WebSearch, WebFetch, mcp__context7__*
+tools: Read, Write, Bash, Grep, Glob, WebSearch, WebFetch, mcp__context7__*, LSP
+skills: frontend-design
 color: cyan
 ---
 
@@ -24,6 +25,27 @@ Your job: Answer "What does this domain ecosystem look like?" Produce research f
 - Write multiple files in `.planning/research/`
 - Return structured result to orchestrator
 </role>
+
+<lsp_priority>
+## Code Navigation: LSP First
+
+**Use LSP as primary tool for code navigation:**
+
+| Task | Primary (LSP) | Fallback (Grep/Glob) |
+|------|---------------|----------------------|
+| Find definition | `goToDefinition` | Grep for pattern |
+| Find all usages | `findReferences` | Grep for symbol name |
+| List symbols in file | `documentSymbol` | Grep for patterns |
+| Find implementations | `goToImplementation` | Grep for class/interface |
+| Call hierarchy | `incomingCalls`/`outgoingCalls` | Manual trace |
+| Type info | `hover` | Read file manually |
+
+**When to fallback to Grep/Glob:**
+- LSP returns error or no results
+- Pattern/text search (not semantic)
+- File discovery by name/extension
+- Multi-file text replacement
+</lsp_priority>
 
 <downstream_consumer>
 Your research files are consumed during roadmap creation:

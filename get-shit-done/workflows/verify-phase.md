@@ -22,6 +22,22 @@ Then verify each level against the actual codebase.
 @~/.claude/get-shit-done/templates/verification-report.md
 </required_reading>
 
+<lsp_priority>
+## Verification Code Navigation
+
+When verifying code exists and works:
+
+1. **LSP for existence checks:**
+   - `goToDefinition` - verify import targets exist
+   - `findReferences` - verify exports are consumed
+   - `documentSymbol` - verify expected symbols exist
+
+2. **Grep for pattern verification:**
+   - Verify text patterns in config files
+   - Search for error message strings
+   - Find all test files matching pattern
+</lsp_priority>
+
 <process>
 
 <step name="load_context" priority="first">

@@ -1,7 +1,8 @@
 ---
 name: gsd-codebase-mapper
 description: Explores codebase and writes structured analysis documents. Spawned by map-codebase with a focus area (tech, arch, quality, concerns). Writes documents directly to reduce orchestrator context load.
-tools: Read, Bash, Grep, Glob, Write
+tools: Read, Bash, Grep, Glob, Write, LSP
+skills: frontend-design
 color: cyan
 ---
 
@@ -16,6 +17,27 @@ You are spawned by `/gsd:map-codebase` with one of four focus areas:
 
 Your job: Explore thoroughly, then write document(s) directly. Return confirmation only.
 </role>
+
+<lsp_priority>
+## Code Navigation: LSP First
+
+**Use LSP as primary tool for code navigation:**
+
+| Task | Primary (LSP) | Fallback (Grep/Glob) |
+|------|---------------|----------------------|
+| Find definition | `goToDefinition` | Grep for pattern |
+| Find all usages | `findReferences` | Grep for symbol name |
+| List symbols in file | `documentSymbol` | Grep for patterns |
+| Find implementations | `goToImplementation` | Grep for class/interface |
+| Call hierarchy | `incomingCalls`/`outgoingCalls` | Manual trace |
+| Type info | `hover` | Read file manually |
+
+**When to fallback to Grep/Glob:**
+- LSP returns error or no results
+- Pattern/text search (not semantic)
+- File discovery by name/extension
+- Multi-file text replacement
+</lsp_priority>
 
 <why_this_matters>
 **These documents are consumed by other GSD commands:**
@@ -81,53 +103,67 @@ Explore the codebase thoroughly for your focus area.
 
 **For tech focus:**
 ```bash
-# Package manifests
-ls package.json requirements.txt Cargo.toml go.mod pyproject.toml 2>/dev/null
-cat package.json 2>/dev/null | head -100
+# Package manifests (multi-language)
+ls package.json requirements.txt Cargo.toml go.mod go.sum pyproject.toml setup.py pom.xml build.gradle CMakeLists.txt 2>/dev/null
+cat package.json Cargo.toml go.mod pyproject.toml 2>/dev/null | head -100
 
 # Config files
-ls -la *.config.* .env* tsconfig.json .nvmrc .python-version 2>/dev/null
+ls -la *.config.* .env* tsconfig.json .nvmrc .python-version rustfmt.toml .rustfmt.toml 2>/dev/null
 
-# Find SDK/API imports
-grep -r "import.*stripe\|import.*supabase\|import.*aws\|import.*@" src/ --include="*.ts" --include="*.tsx" 2>/dev/null | head -50
+# Find SDK/API imports (multi-language)
+grep -r "import.*stripe\|import.*supabase\|import.*aws\|import.*@\|use.*::\|from.*import" src/ \
+  --include="*.ts" --include="*.tsx" --include="*.js" --include="*.py" --include="*.rs" \
+  --include="*.go" --include="*.java" 2>/dev/null | head -50
 ```
 
 **For arch focus:**
 ```bash
-# Directory structure
-find . -type d -not -path '*/node_modules/*' -not -path '*/.git/*' | head -50
+# Directory structure (exclude language-specific build dirs)
+find . -type d -not -path '*/node_modules/*' -not -path '*/.git/*' -not -path '*/target/*' \
+  -not -path '*/__pycache__/*' -not -path '*/venv/*' -not -path '*/.venv/*' | head -50
 
-# Entry points
-ls src/index.* src/main.* src/app.* src/server.* app/page.* 2>/dev/null
+# Entry points (multi-language)
+ls src/index.* src/main.* src/app.* src/server.* app/page.* cmd/*/main.go src/lib.rs src/main.rs 2>/dev/null
 
-# Import patterns to understand layers
-grep -r "^import" src/ --include="*.ts" --include="*.tsx" 2>/dev/null | head -100
+# Import patterns to understand layers (multi-language with LSP fallback)
+grep -r "^import\|^from.*import\|^use \|^#include" src/ \
+  --include="*.ts" --include="*.tsx" --include="*.js" --include="*.py" \
+  --include="*.rs" --include="*.go" --include="*.java" --include="*.cpp" --include="*.hpp" \
+  2>/dev/null | head -100
 ```
 
 **For quality focus:**
 ```bash
-# Linting/formatting config
-ls .eslintrc* .prettierrc* eslint.config.* biome.json 2>/dev/null
-cat .prettierrc 2>/dev/null
+# Linting/formatting config (multi-language)
+ls .eslintrc* .prettierrc* eslint.config.* biome.json rustfmt.toml .rustfmt.toml \
+  pyproject.toml setup.cfg .flake8 .pylintrc .golangci.yml 2>/dev/null
+cat .prettierrc pyproject.toml 2>/dev/null | head -50
 
-# Test files and config
-ls jest.config.* vitest.config.* 2>/dev/null
-find . -name "*.test.*" -o -name "*.spec.*" | head -30
+# Test files and config (multi-language)
+ls jest.config.* vitest.config.* pytest.ini conftest.py 2>/dev/null
+find . \( -name "*.test.*" -o -name "*.spec.*" -o -name "test_*.py" -o -name "*_test.go" -o -name "*Test.java" \) \
+  -not -path '*/node_modules/*' -not -path '*/target/*' | head -30
 
-# Sample source files for convention analysis
-ls src/**/*.ts 2>/dev/null | head -10
+# Sample source files for convention analysis (multi-language)
+ls src/**/*.ts src/**/*.py src/**/*.rs src/**/*.go 2>/dev/null | head -10
 ```
 
 **For concerns focus:**
 ```bash
-# TODO/FIXME comments
-grep -rn "TODO\|FIXME\|HACK\|XXX" src/ --include="*.ts" --include="*.tsx" 2>/dev/null | head -50
+# TODO/FIXME comments (multi-language)
+grep -rn "TODO\|FIXME\|HACK\|XXX" src/ \
+  --include="*.ts" --include="*.tsx" --include="*.js" --include="*.py" \
+  --include="*.rs" --include="*.go" --include="*.java" --include="*.cpp" \
+  2>/dev/null | head -50
 
-# Large files (potential complexity)
-find src/ -name "*.ts" -o -name "*.tsx" | xargs wc -l 2>/dev/null | sort -rn | head -20
+# Large files (potential complexity - multi-language)
+find src/ \( -name "*.ts" -o -name "*.tsx" -o -name "*.py" -o -name "*.rs" -o -name "*.go" -o -name "*.java" \) \
+  -not -path '*/node_modules/*' -not -path '*/target/*' | xargs wc -l 2>/dev/null | sort -rn | head -20
 
-# Empty returns/stubs
-grep -rn "return null\|return \[\]\|return {}" src/ --include="*.ts" --include="*.tsx" 2>/dev/null | head -30
+# Empty returns/stubs (multi-language patterns)
+grep -rn "return null\|return \[\]\|return {}\|return None\|Ok\(\(\)\)\|panic!\|todo!" src/ \
+  --include="*.ts" --include="*.tsx" --include="*.py" --include="*.rs" --include="*.go" \
+  2>/dev/null | head -30
 ```
 
 Read key files identified during exploration. Use Glob and Grep liberally.

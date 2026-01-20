@@ -48,7 +48,7 @@ mkdir -p .planning/intel
 
 ## Step 2: Find all indexable files
 
-Use Glob tool with pattern: `**/*.{js,ts,jsx,tsx,mjs,cjs}`
+Use Glob tool with pattern: `**/*.{js,ts,jsx,tsx,mjs,cjs,py,pyi,rs,cpp,cc,cxx,hpp,h,go,java}`
 
 Exclude directories (skip any path containing):
 - node_modules
@@ -59,6 +59,11 @@ Exclude directories (skip any path containing):
 - coverage
 - .next
 - __pycache__
+- target (Rust)
+- .cargo
+- venv, .venv, env (Python)
+- bin, obj (C#/Java)
+- out
 
 Filter results to remove excluded paths before processing.
 
@@ -77,7 +82,9 @@ For each file found:
 
 1. Read file content using Read tool
 
-2. Extract exports using these patterns:
+2. Detect language from file extension and extract exports using language-specific patterns:
+
+   **JavaScript/TypeScript (.js, .ts, .jsx, .tsx, .mjs, .cjs):**
    - Named exports: `export\s*\{([^}]+)\}`
    - Declaration exports: `export\s+(?:const|let|var|function\*?|async\s+function|class)\s+(\w+)`
    - Default exports: `export\s+default\s+(?:function\s*\*?\s*|class\s+)?(\w+)?`
@@ -85,10 +92,59 @@ For each file found:
    - CommonJS single: `module\.exports\s*=\s*(\w+)\s*[;\n]`
    - TypeScript: `export\s+(?:type|interface)\s+(\w+)`
 
-3. Extract imports using these patterns:
+   **Python (.py, .pyi):**
+   - Functions: `^\s*(async\s+)?def\s+([a-zA-Z_]\w*)\s*\(`
+   - Classes: `^\s*class\s+([a-zA-Z_]\w*)\s*[\(:]`
+   - __all__ list: `__all__\s*=\s*\[([^\]]*)\]` (items in list are explicit exports)
+   - Module-level variables: `^([A-Z][A-Z0-9_]*)\s*=` (SCREAMING_SNAKE constants)
+
+   **Rust (.rs):**
+   - pub fn: `^\s*pub(?:\([\w:]+\))?\s+fn\s+([a-zA-Z_]\w*)`
+   - pub struct: `^\s*pub(?:\([\w:]+\))?\s+struct\s+([A-Z]\w*)`
+   - pub enum: `^\s*pub(?:\([\w:]+\))?\s+enum\s+([A-Z]\w*)`
+   - pub trait: `^\s*pub(?:\([\w:]+\))?\s+trait\s+([A-Z]\w*)`
+   - pub mod: `^\s*pub(?:\([\w:]+\))?\s+mod\s+(\w+)`
+
+   **Go (.go):**
+   - Exported func: `^func\s+([A-Z]\w*)\s*\(` (capitalized = exported)
+   - Exported method: `^func\s+\([^)]+\)\s+([A-Z]\w*)\s*\(`
+   - Exported type: `^type\s+([A-Z]\w*)\s+(?:struct|interface)`
+   - Exported const/var: `^(?:const|var)\s+([A-Z]\w*)`
+
+   **Java (.java):**
+   - public class: `^\s*public\s+(?:abstract\s+|final\s+)?class\s+([A-Z]\w*)`
+   - public interface: `^\s*public\s+interface\s+([A-Z]\w*)`
+   - public enum: `^\s*public\s+enum\s+([A-Z]\w*)`
+
+   **C++ (.cpp, .cc, .cxx, .hpp, .h):**
+   - class: `^\s*class\s+([A-Z]\w*)\s*[:{;]`
+   - struct: `^\s*struct\s+([A-Z]\w*)\s*[:{;]`
+   - namespace: `^\s*namespace\s+(\w+)\s*\{`
+
+3. Extract imports using language-specific patterns:
+
+   **JavaScript/TypeScript:**
    - ES6: `import\s+(?:\{[^}]*\}|\*\s+as\s+\w+|\w+)\s+from\s+['"]([^'"]+)['"]`
    - Side-effect: `import\s+['"]([^'"]+)['"]` (not preceded by 'from')
    - CommonJS: `require\s*\(\s*['"]([^'"]+)['"]\s*\)`
+
+   **Python:**
+   - import: `^import\s+([\w.]+)`
+   - from import: `^from\s+([\w.]+)\s+import`
+
+   **Rust:**
+   - use: `^\s*use\s+([\w:]+)`
+   - extern crate: `^\s*extern\s+crate\s+(\w+)`
+
+   **Go:**
+   - import: `^import\s+"([^"]+)"` or grouped `^\s*"([^"]+)"`
+
+   **Java:**
+   - import: `^import\s+([\w.]+);`
+
+   **C++:**
+   - #include: `^\s*#include\s*[<"]([^>"]+)[>"]`
+   - using namespace: `^\s*using\s+namespace\s+(\w+)`
 
 4. Store in index:
    ```javascript
@@ -108,10 +164,23 @@ Analyze the collected index for patterns.
 - PascalCase: `^[A-Z][a-z0-9]+(?:[A-Z][a-z0-9]+)*$` or single `^[A-Z][a-z0-9]+$`
 - snake_case: `^[a-z][a-z0-9]*(?:_[a-z0-9]+)+$`
 - SCREAMING_SNAKE: `^[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+$` or single `^[A-Z][A-Z0-9]*$`
+- mixedCaps: `^[a-z][a-zA-Z0-9]*$` (Go style - no underscores, starts lowercase)
 - Skip 'default' when counting (it's a keyword, not naming convention)
+
+**Language-specific naming expectations:**
+
+| Language | Functions | Types | Constants |
+|----------|-----------|-------|-----------|
+| JavaScript/TypeScript | camelCase | PascalCase | SCREAMING_SNAKE |
+| Python | snake_case | PascalCase | SCREAMING_SNAKE |
+| Rust | snake_case | PascalCase | SCREAMING_SNAKE |
+| Go | mixedCaps/PascalCase | PascalCase | PascalCase |
+| Java | camelCase | PascalCase | SCREAMING_SNAKE |
+| C++ | varies | PascalCase | SCREAMING_SNAKE |
 
 **Directory patterns** (use lookup table):
 ```
+# JavaScript/TypeScript
 components -> UI components
 hooks -> React/custom hooks
 utils, lib -> Utility functions
@@ -126,6 +195,23 @@ config -> Configuration
 constants -> Constants
 pages -> Page components
 views -> View templates
+
+# Go
+cmd -> Application entry points
+internal -> Private packages
+pkg -> Public packages
+
+# Rust
+benches -> Benchmarks
+examples -> Example code
+
+# Java
+src/main/java -> Source code
+src/test/java -> Test code
+src/main/resources -> Resources
+
+# C++
+include -> Header files
 ```
 
 **Suffix patterns** (require 5+ occurrences):
@@ -400,7 +486,10 @@ Next: Intel hooks will continue incremental updates as you code.
 
 <success_criteria>
 - [ ] .planning/intel/ directory created
-- [ ] All JS/TS files scanned (excluding node_modules, dist, build, .git, vendor, coverage)
+- [ ] All supported language files scanned (JS/TS, Python, Rust, Go, Java, C++)
+- [ ] Excluded directories properly filtered (node_modules, dist, build, .git, vendor, coverage, target, __pycache__, venv, etc.)
+- [ ] Language-specific export patterns applied correctly
+- [ ] Language-specific import patterns applied correctly
 - [ ] index.json populated with exports and imports for each file
 - [ ] conventions.json has detected patterns (naming, directories, suffixes)
 - [ ] summary.md is concise (< 500 tokens)

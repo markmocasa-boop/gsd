@@ -31,6 +31,22 @@ Template for `.planning/codebase/TESTING.md` - captures test framework and patte
 [e.g., "npm run test:coverage"]                   # Coverage report
 ```
 
+## Language-Specific Test Frameworks
+
+Reference table for multi-language codebases:
+
+| Language | Framework | Test File Pattern | Run Command |
+|----------|-----------|-------------------|-------------|
+| JavaScript/TypeScript | Jest, Vitest, Mocha | *.test.js, *.spec.ts | npm test |
+| Python | pytest, unittest | test_*.py, *_test.py | pytest |
+| Rust | cargo test | #[test], #[cfg(test)] | cargo test |
+| Go | testing | *_test.go | go test ./... |
+| Java | JUnit, TestNG | *Test.java, *Tests.java | mvn test |
+| C++ | GTest, Catch2 | *_test.cpp, test_*.cpp | ctest |
+
+**Detected Primary Language:** [language]
+**Test Framework in Use:** [framework from table or custom]
+
 ## Test File Organization
 
 **Location:**
@@ -448,6 +464,7 @@ it('mocks file system', () => {
 - Coverage requirements
 - How to run tests (commands)
 - Common testing patterns in actual code
+- Language-specific test framework detection (multi-language projects)
 
 **What does NOT belong here:**
 - Specific test cases (defer to actual test files)
@@ -455,12 +472,21 @@ it('mocks file system', () => {
 - CI/CD setup (that's deployment docs)
 
 **When filling this template:**
-- Check package.json scripts for test commands
-- Find test config file (jest.config.js, vitest.config.ts)
+- Detect primary language(s) from file extensions
+- Check package manifests for test framework (package.json, Cargo.toml, pyproject.toml, go.mod, pom.xml)
+- Find test config file (jest.config.js, vitest.config.ts, pytest.ini, Cargo.toml)
 - Read 3-5 existing test files to identify patterns
 - Look for test utilities in tests/ or test-utils/
 - Check for coverage configuration
 - Document actual patterns used, not ideal patterns
+
+**Multi-language test detection:**
+- JavaScript/TypeScript: Look for jest.config.*, vitest.config.*, *.test.ts
+- Python: Look for pytest.ini, conftest.py, test_*.py
+- Rust: Look for #[test] annotations, tests/ directory
+- Go: Look for *_test.go files
+- Java: Look for src/test/java/, *Test.java files
+- C++: Look for CMakeLists.txt with testing, tests/ directory
 
 **Useful for phase planning when:**
 - Adding new features (write matching tests)
@@ -470,7 +496,8 @@ it('mocks file system', () => {
 - Setting up test infrastructure
 
 **Analysis approach:**
-- Check package.json for test framework and scripts
+- Detect language from source files and package manifests
+- Check package manifests for test framework and scripts
 - Read test config file for coverage, setup
 - Examine test file organization (collocated vs separate)
 - Review 5 test files for patterns (mocking, structure, assertions)

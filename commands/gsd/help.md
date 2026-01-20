@@ -155,6 +155,37 @@ Use when you know exactly what to do and the task is small enough to not need re
 Usage: `/gsd:quick`
 Result: Creates `.planning/quick/NNN-slug/PLAN.md`, `.planning/quick/NNN-slug/SUMMARY.md`
 
+### Feature Development
+
+**`/gsd:feature <description>`**
+Thorough feature development with exploration, architecture, and review phases.
+
+Combines feature-dev's thoroughness with GSD's execution guarantees:
+- **Exploration**: 2 code-explorer agents analyze existing codebase
+- **Clarifying Questions**: Dedicated phase to gather requirements
+- **Architecture**: 2 code-architect agents propose approaches, you choose
+- **Planning & Execution**: gsd-planner and gsd-executor with atomic commits
+- **Quality Review**: 2 code-reviewer agents check the result
+
+Creates 6 artifacts in `.planning/features/NNN-slug/`:
+- EXPLORATION.md — codebase analysis findings
+- CLARIFICATIONS.md — user answers to clarifying questions
+- ARCHITECTURE.md — chosen approach with trade-offs
+- PLAN.md — execution plan with tasks
+- SUMMARY.md — what was built
+- REVIEW.md — quality review findings
+
+**Flags:**
+- `--skip-explore` — Skip exploration phase (you already know the codebase)
+- `--skip-review` — Skip quality review phase (for speed)
+- `--quick` — Skip explore + architect + review (essentially /gsd:quick in features/)
+
+Use when you want thorough feature development with exploration and architecture phases.
+For quick tasks where you already know what to do, use `/gsd:quick` instead.
+
+Usage: `/gsd:feature "Add OAuth authentication"`
+Result: Creates `.planning/features/001-add-oauth-authentication/` with all artifacts
+
 ### Roadmap Management
 
 **`/gsd:add-phase <description>`**
@@ -376,6 +407,19 @@ Update GSD to latest version with changelog preview.
 
 Usage: `/gsd:update`
 
+**`/gsd:setup-lsp`**
+Configure Language Server Protocol for code intelligence.
+
+- Detects languages in your codebase
+- Asks about additional languages (greenfield support)
+- Checks plugin and binary installation status
+- Provides install commands for missing components
+- Offers automatic binary installation
+
+LSP enables: `goToDefinition`, `findReferences`, `hover`, `documentSymbol`, `incomingCalls`, `outgoingCalls`
+
+Usage: `/gsd:setup-lsp`
+
 ## Files & Structure
 
 ```
@@ -389,6 +433,18 @@ Usage: `/gsd:update`
 │   └── done/             # Completed todos
 ├── debug/                # Active debug sessions
 │   └── resolved/         # Archived resolved issues
+├── quick/                # Quick tasks (/gsd:quick)
+│   └── 001-fix-bug/
+│       ├── 001-PLAN.md
+│       └── 001-SUMMARY.md
+├── features/             # Feature development (/gsd:feature)
+│   └── 001-oauth/
+│       ├── 001-EXPLORATION.md
+│       ├── 001-CLARIFICATIONS.md
+│       ├── 001-ARCHITECTURE.md
+│       ├── 001-PLAN.md
+│       ├── 001-SUMMARY.md
+│       └── 001-REVIEW.md
 ├── intel/                # Codebase intelligence (auto-populated)
 │   ├── index.json        # File exports and imports
 │   ├── conventions.json  # Detected patterns
@@ -496,6 +552,14 @@ Example config:
 /gsd:add-todo Fix modal z-index  # Capture with explicit description
 /gsd:check-todos                 # Review and work on todos
 /gsd:check-todos api             # Filter by area
+```
+
+**Thorough feature development:**
+
+```
+/gsd:feature "Add OAuth authentication"  # Full exploration → architecture → execution
+/gsd:feature --skip-explore "Add logout"  # Skip exploration (you know the codebase)
+/gsd:feature --quick "Fix button styling" # Skip explore + architect + review
 ```
 
 **Debugging an issue:**
