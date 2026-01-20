@@ -642,6 +642,111 @@
       max-width: 100%;
       height: auto;
     }
+
+    /* Support page styles */
+    .support-actions {
+      display: grid;
+      gap: 0.75rem;
+      margin: 1.25rem 0;
+    }
+
+    .support-actions p {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      margin: 0;
+      transition: all 0.15s ease;
+      box-shadow: var(--shadow);
+      font-size: 0.95rem;
+    }
+
+    .support-actions p:hover {
+      border-color: var(--border-dark);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .video-container {
+      position: relative;
+      padding-bottom: 56.25%;
+      height: 0;
+      overflow: hidden;
+      border-radius: 12px;
+      box-shadow: var(--shadow-lg);
+      background: var(--bg-secondary);
+      margin: 1.5rem 0;
+    }
+
+    .video-container iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    .testimonial-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+      box-shadow: var(--shadow);
+    }
+
+    .testimonial-card p {
+      font-size: 1.05rem;
+      line-height: 1.7;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+      font-style: italic;
+    }
+
+    .testimonial-card cite {
+      color: var(--text);
+      font-style: normal;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .sponsor-banner {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.25rem 1.5rem;
+      margin: 1.25rem 0;
+      box-shadow: var(--shadow);
+      transition: all 0.15s ease;
+    }
+
+    .sponsor-banner:hover {
+      border-color: var(--border-dark);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .sponsor-header {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .sponsor-heart {
+      color: #db61a2;
+    }
+
+    .sponsor-banner p {
+      margin-bottom: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .sponsor-banner .sponsor-btn {
+      font-weight: 500;
+    }
+
   </style>
 </head>
 <body>
@@ -667,6 +772,7 @@
         <li><a href="{{ '/getting-started' | relative_url }}" {% if page.url contains 'getting-started' %}class="active"{% endif %}>Getting Started</a></li>
         <li><a href="{{ '/commands' | relative_url }}" {% if page.url contains 'commands' %}class="active"{% endif %}>Commands</a></li>
         <li><a href="{{ '/philosophy' | relative_url }}" {% if page.url contains 'philosophy' %}class="active"{% endif %}>Philosophy</a></li>
+        <li><a href="{{ '/support' | relative_url }}" {% if page.url contains 'support' %}class="active"{% endif %}>Support</a></li>
       </ul>
     </nav>
 
@@ -709,6 +815,7 @@
         <li><a href="{{ '/getting-started' | relative_url }}" {% if page.url contains 'getting-started' %}class="active"{% endif %}>Getting Started</a></li>
         <li><a href="{{ '/commands' | relative_url }}" {% if page.url contains 'commands' %}class="active"{% endif %}>Commands</a></li>
         <li><a href="{{ '/philosophy' | relative_url }}" {% if page.url contains 'philosophy' %}class="active"{% endif %}>Philosophy</a></li>
+        <li><a href="{{ '/support' | relative_url }}" {% if page.url contains 'support' %}class="active"{% endif %}>Support</a></li>
       </ul>
       <div class="bottom-sheet-footer">
         <a href="https://github.com/glittercowboy/get-shit-done" target="_blank">GitHub</a>
