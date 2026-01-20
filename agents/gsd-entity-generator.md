@@ -170,6 +170,8 @@ TBD
 <type_heuristics>
 Determine entity type from file path and content:
 
+**JavaScript/TypeScript:**
+
 | Type | Indicators |
 |------|-----------|
 | api | In api/, routes/, endpoints/ directory, exports route handlers |
@@ -181,25 +183,62 @@ Determine entity type from file path and content:
 | model | In models/, types/, exports data models or TypeScript types |
 | test | *.test.*, *.spec.*, contains test suites |
 | module | Default if unclear, general-purpose module |
+
+**Python:**
+
+| Type | Indicators |
+|------|-----------|
+| api | In api/, routers/, endpoints/, exports FastAPI/Flask routes |
+| view | In views/, *_views.py, Django/Flask view functions/classes |
+| serializer | In serializers/, *_serializers.py, DRF serializers |
+| util | In utils/, lib/, helpers/, exports utility functions |
+| config | In config/, settings.py, *_config.py, configuration |
+| service | In services/, exports service classes/functions |
+| model | In models/, *_models.py, Django/SQLAlchemy models |
+| schema | In schemas/, *_schemas.py, Pydantic/marshmallow schemas |
+| task | In tasks/, *_tasks.py, Celery/async task definitions |
+| crud | In crud/, *_crud.py, database CRUD operations |
+| test | test_*.py, *_test.py, conftest.py, contains pytest tests |
+| migration | In migrations/, Alembic/Django migrations |
+| admin | *_admin.py, admin.py, Django admin configuration |
+| form | In forms/, *_forms.py, Django forms |
+| module | Default if unclear, general-purpose module |
 </type_heuristics>
 
 <wiki_link_rules>
 **Internal dependencies** (files in the codebase):
 - Convert import path to slug format
 - Wrap in [[double brackets]]
-- Example: Import from `../../lib/db.ts` -> Dependency: `[[src-lib-db]]`
-- Example: Import from `@/services/auth` -> Dependency: `[[src-services-auth]]`
+
+**JavaScript/TypeScript examples:**
+- Import from `../../lib/db.ts` -> Dependency: `[[src-lib-db]]`
+- Import from `@/services/auth` -> Dependency: `[[src-services-auth]]`
+
+**Python examples:**
+- `from app.services.auth import AuthService` -> Dependency: `[[app-services-auth]]`
+- `from .models import User` -> Dependency: `[[current-package-models]]` (resolve relative)
+- `from ..utils.helpers import format_date` -> Dependency: `[[parent-package-utils-helpers]]`
 
 **External dependencies** (npm/pip/cargo packages):
 - Plain text, no brackets
 - Include brief purpose
-- Example: `import { z } from 'zod'` -> Dependency: `zod - Schema validation`
+- JS example: `import { z } from 'zod'` -> Dependency: `zod - Schema validation`
+- Python example: `from pydantic import BaseModel` -> Dependency: `pydantic - Data validation`
 
 **Identifying internal vs external:**
+
+*JavaScript/TypeScript:*
 - Import path starts with `.` or `..` -> internal (wiki-link)
 - Import path starts with `@/` or `~/` -> internal (wiki-link, resolve alias)
 - Import path is package name (no path separator) -> external (plain text)
 - Import path starts with `@org/` -> usually external (npm scoped package)
+
+*Python:*
+- Import starts with `.` (relative) -> internal (wiki-link, resolve to absolute path)
+- Import matches project package structure (e.g., `app.`, `src.`, project name) -> internal (wiki-link)
+- Import is stdlib module (os, sys, typing, etc.) -> external (plain text, note "stdlib")
+- Import is third-party package (requests, django, fastapi, etc.) -> external (plain text)
+- Check if module path exists in codebase to distinguish internal from external
 </wiki_link_rules>
 
 <critical_rules>
