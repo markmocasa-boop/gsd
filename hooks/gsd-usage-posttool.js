@@ -14,11 +14,48 @@ const TOOL_ESTIMATES = {
   Bash: { input: 1500, output: 1000 },
   Grep: { input: 1000, output: 800 },
   Glob: { input: 500, output: 300 },
-  Task: { input: 5000, output: 1000 },  // Agent spawning
+  Task: { input: 5000, output: 1000 },  // Base agent spawning (overridden by agent type)
   WebFetch: { input: 2000, output: 3000 },
   WebSearch: { input: 1500, output: 2000 },
   AskUserQuestion: { input: 1000, output: 500 },
   Default: { input: 1500, output: 1000 }
+};
+
+// Agent-specific token estimates based on typical workload
+// These agents run in separate contexts and can consume significant tokens
+const AGENT_ESTIMATES = {
+  // Planning & Research agents (high input for context, medium output)
+  'gsd-planner': { input: 80000, output: 15000 },
+  'gsd-phase-researcher': { input: 60000, output: 12000 },
+  'gsd-plan-checker': { input: 40000, output: 8000 },
+  'gsd-research-synthesizer': { input: 50000, output: 10000 },
+  'gsd-roadmapper': { input: 70000, output: 12000 },
+
+  // Execution agents (medium-high input, high output for code)
+  'gsd-executor': { input: 60000, output: 20000 },
+  'gsd-verifier': { input: 50000, output: 8000 },
+  'gsd-debugger': { input: 55000, output: 15000 },
+
+  // Codebase analysis agents (high input for large codebases)
+  'gsd-codebase-mapper': { input: 100000, output: 15000 },
+  'gsd-entity-generator': { input: 70000, output: 10000 },
+  'gsd-integration-checker': { input: 60000, output: 10000 },
+
+  // General purpose agents
+  'Explore': { input: 50000, output: 8000 },
+  'Plan': { input: 60000, output: 10000 },
+  'Bash': { input: 30000, output: 5000 },
+  'general-purpose': { input: 50000, output: 10000 },
+
+  // Specialized domain agents
+  'backend-developer': { input: 55000, output: 18000 },
+  'frontend-developer': { input: 55000, output: 18000 },
+  'fullstack-developer': { input: 60000, output: 20000 },
+  'devops-engineer': { input: 50000, output: 12000 },
+  'database-optimizer': { input: 45000, output: 10000 },
+
+  // Default for unknown agents
+  'default-agent': { input: 50000, output: 10000 }
 };
 
 // Read JSON from stdin (standard hook pattern)
@@ -81,11 +118,30 @@ process.stdin.on('end', () => {
     }
 
     // Get model from data or use default
-    const model = extractModel(data.model?.id || data.model?.display_name || 'sonnet');
+    let model = extractModel(data.model?.id || data.model?.display_name || 'sonnet');
 
     // Get token estimates for this tool
     const toolName = data.tool_name || 'Default';
-    const estimates = TOOL_ESTIMATES[toolName] || TOOL_ESTIMATES.Default;
+    let estimates = TOOL_ESTIMATES[toolName] || TOOL_ESTIMATES.Default;
+
+    // Special handling for Task tool (agent spawning)
+    // Try to extract agent type and use agent-specific estimates
+    let agentType = null;
+    if (toolName === 'Task' && data.tool_input) {
+      const agentInfo = extractAgentInfo(data.tool_input);
+      if (agentInfo) {
+        // Use agent-specific estimates
+        estimates = agentInfo.estimates;
+
+        // Use agent's requested model if specified
+        if (agentInfo.model) {
+          model = agentInfo.model;
+        }
+
+        // Store agent type for task metadata
+        agentType = agentInfo.type;
+      }
+    }
 
     // Create task entry
     const task = {
@@ -96,6 +152,11 @@ process.stdin.on('end', () => {
       output_tokens: estimates.output
     };
 
+    // Add agent type if this was a Task tool
+    if (agentType) {
+      task.agent_type = agentType;
+    }
+
     // Add current task tracking for "current task cost"
     usage.current_task = {
       tool_name: toolName,
@@ -103,6 +164,11 @@ process.stdin.on('end', () => {
       cost: calculateSingleTaskCost(model, estimates.input, estimates.output),
       timestamp: new Date().toISOString()
     };
+
+    // Add agent type to current task tracking if available
+    if (agentType) {
+      usage.current_task.agent_type = agentType;
+    }
 
     session.tasks.push(task);
 
@@ -117,12 +183,60 @@ process.stdin.on('end', () => {
 });
 
 /**
+ * Extract agent information from Task tool input
+ * Returns { type, estimates, model } or null
+ */
+function extractAgentInfo(toolInput) {
+  if (!toolInput) return null;
+
+  try {
+    // Extract subagent_type (most reliable)
+    let agentType = toolInput.subagent_type || toolInput.agent_type;
+
+    // If no explicit agent type, try to infer from prompt
+    if (!agentType && toolInput.prompt) {
+      // Look for common agent patterns in prompt
+      const prompt = toolInput.prompt.toLowerCase();
+      if (prompt.includes('gsd-planner') || prompt.includes('create.*plan')) {
+        agentType = 'gsd-planner';
+      } else if (prompt.includes('gsd-executor') || prompt.includes('execute.*plan')) {
+        agentType = 'gsd-executor';
+      } else if (prompt.includes('gsd-verifier') || prompt.includes('verify.*phase')) {
+        agentType = 'gsd-verifier';
+      } else if (prompt.includes('researcher') || prompt.includes('research')) {
+        agentType = 'gsd-phase-researcher';
+      }
+    }
+
+    if (!agentType) return null;
+
+    // Get agent-specific estimates or use default
+    const estimates = AGENT_ESTIMATES[agentType] || AGENT_ESTIMATES['default-agent'];
+
+    // Extract model if specified
+    let model = null;
+    if (toolInput.model) {
+      model = extractModel(toolInput.model);
+    }
+
+    return {
+      type: agentType,
+      estimates: estimates,
+      model: model
+    };
+  } catch (e) {
+    // Failed to parse, return null
+    return null;
+  }
+}
+
+/**
  * Extract model name from various formats
  */
 function extractModel(modelStr) {
   if (!modelStr) return 'sonnet';
 
-  const lower = modelStr.toLowerCase();
+  const lower = String(modelStr).toLowerCase();
   if (lower.includes('opus')) return 'opus';
   if (lower.includes('sonnet')) return 'sonnet';
   if (lower.includes('haiku')) return 'haiku';
