@@ -467,7 +467,7 @@ detect_project_type() {
     echo "rust"
   elif [ -f "build.gradle" ] || [ -f "pom.xml" ]; then
     echo "java"
-  elif [ -f "*.csproj" ] || [ -f "*.sln" ]; then
+  elif ls *.csproj *.sln >/dev/null 2>&1; then
     echo "dotnet"
   else
     echo "unknown"

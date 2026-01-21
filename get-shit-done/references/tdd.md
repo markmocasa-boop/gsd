@@ -237,7 +237,7 @@ detect_project_type() {
   [ -f "go.mod" ] && echo "go" && return
   [ -f "Cargo.toml" ] && echo "rust" && return
   [ -f "build.gradle" ] || [ -f "pom.xml" ] && echo "java" && return
-  [ -f "*.csproj" ] || [ -f "*.sln" ] && echo "dotnet" && return
+  ls *.csproj *.sln >/dev/null 2>&1 && echo "dotnet" && return
   echo "unknown"
 }
 ```
