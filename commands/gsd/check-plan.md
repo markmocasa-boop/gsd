@@ -2,7 +2,7 @@
 name: gsd:check-plan
 description: Check your Claude Code plan type and get rate limit guidance for GSD usage
 argument-hint: ""
-allowed-tools: [Bash, Read, Write, AskUserQuestion]
+allowed-tools: [Bash, Read, Write]
 ---
 
 <objective>
@@ -61,52 +61,44 @@ If no project found, exit gracefully with guidance.
 </step>
 
 <step name="get_config_output">
-Get Claude Code configuration:
+Attempt automated plan type detection using environment variables and session data:
 
 ```bash
-# Note: /config is a Claude Code built-in command
-# We need to capture its output programmatically
-# This may need adjustment based on how commands access session info
-
-CONFIG_OUTPUT=$(cat <<'EOF' | bash 2>/dev/null
-# Attempt to get config via Claude Code's session info
-# This is a placeholder - actual implementation depends on available APIs
-echo "Checking Claude Code configuration..."
-EOF
-)
-```
-
-**For Claude Code context:** Use the Bash tool to run `/config` if accessible, or read from session environment variables/files.
-
-**Fallback:** If `/config` output cannot be obtained programmatically, ask the user:
-
-Use AskUserQuestion to ask:
-```
-"What type of Claude Code account are you using?"
-Options:
-- Claude Team Account
-- Personal Account (Pro/Pro Max)
-- Not sure
-```
-</step>
-
-<step name="parse_plan_type">
-Parse the configuration output to detect plan type:
-
-```bash
+# Check environment variables (Claude Code may expose plan info)
 PLAN_TYPE="unknown"
 
-if echo "$CONFIG_OUTPUT" | grep -q "Claude Team Account"; then
+if [ -n "$CLAUDE_TEAM_ACCOUNT" ] && [ "$CLAUDE_TEAM_ACCOUNT" = "true" ]; then
   PLAN_TYPE="team"
-elif echo "$CONFIG_OUTPUT" | grep -q "Personal"; then
-  PLAN_TYPE="personal"
-else
-  PLAN_TYPE="unknown"
 fi
+
+# Try reading from Claude Code session files if env var not set
+if [ "$PLAN_TYPE" = "unknown" ]; then
+  CLAUDE_DIR="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
+  if [ -f "$CLAUDE_DIR/session.json" ]; then
+    # Look for team account indicators in session file
+    if grep -q '"loginMethod".*[Tt]eam' "$CLAUDE_DIR/session.json" 2>/dev/null; then
+      PLAN_TYPE="team"
+    elif grep -q '"accountType".*"team"' "$CLAUDE_DIR/session.json" 2>/dev/null; then
+      PLAN_TYPE="team"
+    elif grep -q '"organization"' "$CLAUDE_DIR/session.json" 2>/dev/null; then
+      # Presence of organization field suggests team account
+      PLAN_TYPE="team"
+    else
+      # No team indicators found, likely personal account
+      PLAN_TYPE="personal"
+    fi
+  fi
+fi
+
+echo "Detected plan type: $PLAN_TYPE"
 ```
 
-Store result for display and config update.
+**Detection Strategy:**
+1. Check `CLAUDE_TEAM_ACCOUNT` environment variable
+2. Parse `~/.claude/session.json` for team account indicators
+3. Return `unknown` only if both methods fail
 </step>
+
 
 <step name="display_results">
 Show formatted output based on detected plan type.
@@ -223,33 +215,24 @@ CONFIG_JSON=$(cat .planning/config.json)
 - `team_plan_warning_shown`: false (reset to allow hook notification if needed)
 </step>
 
-<step name="offer_actions">
-Offer follow-up actions based on plan type:
+<step name="complete">
+Complete the command after displaying results and updating config.
 
-**If Team plan detected:**
+No user interaction required. The displayed information includes actionable recommendations:
+- For Team plans: Suggests running `/gsd:settings` to reduce usage
+- For Personal plans: Confirms plan is well-suited for GSD
+- For Unknown: Provides manual verification steps
 
-Use AskUserQuestion:
-```
-"What would you like to do?"
-Options:
-- Configure settings to reduce usage → Opens /gsd:settings
-- Dismiss (I understand the implications)
-- Learn more about personal plans → Show external link
-```
-
-Route to selected action.
-
-**If Personal plan or Unknown:**
-Simply complete with the informational message.
+Users can choose to follow recommendations at their discretion.
 </step>
 
 </process>
 
 <success_criteria>
-- [ ] Plan type detected from /config output (or asked from user)
-- [ ] Appropriate guidance displayed based on plan type
+- [ ] Plan type detected automatically from environment/session data
+- [ ] Appropriate guidance displayed based on plan type (team/personal/unknown)
 - [ ] `.planning/config.json` updated with plan type and timestamp
-- [ ] User offered actionable next steps (for team plans)
+- [ ] Actionable recommendations provided in output (no user prompts required)
 - [ ] Command exits gracefully if no GSD project found
-- [ ] Handles missing /config output without crashing
+- [ ] Handles detection failures without crashing (defaults to 'unknown')
 </success_criteria>
