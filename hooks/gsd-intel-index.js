@@ -822,7 +822,9 @@ async function syncEntityToGraph(entityPath) {
       path: frontmatter.path || entityPath,
       type: frontmatter.type || 'unknown',
       updated: frontmatter.updated || new Date().toISOString().split('T')[0],
-      status: frontmatter.status || 'active'
+      status: frontmatter.status || 'active',
+      stack: frontmatter.stack || null,
+      framework: frontmatter.framework || null
     });
 
     // Upsert node (ON CONFLICT handled by schema)
@@ -1042,7 +1044,8 @@ function updateIndex(filePath, exports, imports) {
   index.files[normalizedPath] = {
     exports,
     imports,
-    indexed: Date.now()
+    indexed: Date.now(),
+    stack: null  // Populated during bulk scan (analyze-codebase.md Step 0.5)
   };
   index.updated = Date.now();
 

@@ -1,6 +1,6 @@
 ---
 name: gsd:analyze-codebase
-description: Scan existing codebase and populate .planning/intel/ with file index, conventions, and semantic entity files
+description: Scan existing codebase and populate .planning/intel/ with file index, conventions, and semantic entity files. Supports 35+ programming languages with automatic stack detection.
 argument-hint: ""
 allowed-tools:
   - Read
@@ -39,6 +39,66 @@ After initial scan, the PostToolUse hook (hooks/intel-index.js) maintains increm
 </context>
 
 <process>
+
+## Step 0: Detect programming stacks
+
+Run stack detection to identify all languages and frameworks in the codebase:
+
+```bash
+node hooks/lib/detect-stacks.js "$(pwd)" json > /tmp/gsd-stacks.json
+cat /tmp/gsd-stacks.json
+```
+
+Parse the JSON result to get:
+- `detected[]` - Array of detected stacks with confidence scores
+- `primary` - The dominant stack (highest confidence)
+- `isPolyglot` - Boolean indicating multiple stacks detected
+- `stackCount` - Number of stacks above threshold
+
+**Decision logic:**
+- If `stackCount` is 0: Fall back to default JS/TS patterns (current behavior)
+- If `stackCount` is 1: Use single stack's globs and patterns
+- If `stackCount` > 1 (polyglot): Spawn subagent per stack in Step 0.5
+
+Store detected stacks for use in subsequent steps. Primary stack determines conventions priority.
+
+## Step 0.5: Analyze each stack (if polyglot)
+
+If `isPolyglot` is true OR `stackCount` > 1, spawn a subagent for each detected stack.
+
+For each stack in `detected[]`:
+
+```python
+Task(
+    prompt=f"""Analyze the {stack.name} stack in this codebase.
+
+**Stack ID:** {stack.stack}
+**Project root:** {project_root}
+**Confidence:** {stack.confidence}%
+**Frameworks detected:** {stack.frameworks}
+
+**Your job:**
+1. Load profile: `node hooks/lib/get-stack-profile.js {stack.stack}`
+2. Find files matching profile globs (up to 100 files)
+3. Extract exports using profile's export_patterns
+4. Extract imports using profile's import_patterns
+5. Detect naming conventions from actual code
+6. Return JSON summary (not file contents)
+
+Return ONLY JSON with: stack, files_analyzed, exports_found, imports_found, exports_by_type, naming_observed, directories, frameworks_confirmed
+""",
+    subagent_type="gsd-intel-stack-analyzer"
+)
+```
+
+**Wait for all subagents to complete.** Each runs in parallel with fresh 200k context.
+
+**Merge results:**
+- Combine exports from all stacks into unified index
+- Store per-stack conventions (nested structure)
+- Track which files belong to which stack
+
+If single-stack (not polyglot), skip Step 0.5 and use primary stack directly in Step 2.
 
 ## Step 1: Create directory structure
 

@@ -67,6 +67,8 @@ For each file path:
    - What does it export? (Functions, classes, types, constants)
    - What does it import? (Dependencies and why they're needed)
    - What type of module is it? (Use type heuristics table)
+   - **What stack is it?** (Use extension: .ts/.tsx -> typescript, .py -> python, .cs -> csharp, etc.)
+   - **What framework?** (Look for imports: react, django, express, etc.)
 
 3. **Generate slug:**
    - Remove leading `/`
@@ -130,6 +132,8 @@ Use this EXACT format for every entity:
 ---
 path: {absolute_path}
 type: [module|component|util|config|api|hook|service|model|test]
+stack: {stack_id}
+framework: {framework_id}
 updated: {YYYY-MM-DD}
 status: active
 ---
@@ -183,6 +187,41 @@ Determine entity type from file path and content:
 | module | Default if unclear, general-purpose module |
 </type_heuristics>
 
+<stack_detection>
+### Stack Detection from File
+
+Determine stack from file extension:
+
+| Extension | Stack |
+|-----------|-------|
+| .js, .mjs, .cjs | javascript |
+| .ts, .tsx | typescript |
+| .py | python |
+| .cs | csharp |
+| .go | go |
+| .rs | rust |
+| .java | java |
+| .kt | kotlin |
+| .rb | ruby |
+| .php | php |
+| .swift | swift |
+| .ps1 | powershell |
+
+### Framework Detection from Imports
+
+Look for framework-specific imports:
+- `import React` or `from 'react'` -> react
+- `from django` or `import django` -> django
+- `from flask` -> flask
+- `from fastapi` -> fastapi
+- `using Microsoft.AspNetCore` -> aspnetcore
+- `import express` -> express
+- `@nestjs` imports -> nestjs
+- `from next` -> nextjs
+
+If no framework detected, omit the framework field entirely (don't set to null or "none").
+</stack_detection>
+
 <wiki_link_rules>
 **Internal dependencies** (files in the codebase):
 - Convert import path to slug format
@@ -209,6 +248,10 @@ Determine entity type from file path and content:
 **USE EXACT TEMPLATE FORMAT.** The PostToolUse hook parses frontmatter and [[wiki-links]]. Wrong format = broken graph sync.
 
 **FRONTMATTER MUST BE VALID YAML.** No tabs, proper quoting for paths with special characters.
+
+**INCLUDE STACK FIELD.** Every entity must have a stack field based on file extension.
+
+**FRAMEWORK IS OPTIONAL.** Only include framework field if framework-specific imports detected.
 
 **PURPOSE MUST BE SUBSTANTIVE.** Bad: "Exports database functions." Good: "Manages database connection pooling and query execution. Provides transaction support and connection health monitoring."
 
