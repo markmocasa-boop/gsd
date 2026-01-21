@@ -14,10 +14,10 @@ Switch the model profile used by GSD agents. This controls which Claude model ea
 <profiles>
 | Profile | Description |
 |---------|-------------|
+| **adaptive** | Intelligent selection based on task complexity (default, recommended) |
 | **quality** | Opus everywhere except read-only verification |
-| **balanced** | Opus for planning, Sonnet for execution/verification (default) |
+| **balanced** | Opus for planning, Sonnet for execution/verification |
 | **budget** | Sonnet for writing, Haiku for research/verification |
-| **adaptive** | Intelligent selection based on task complexity (35-65% cost savings) |
 </profiles>
 
 <process>
@@ -54,6 +54,21 @@ Update `model_profile` field (or add if missing):
 ```json
 {
   "model_profile": "$ARGUMENTS.profile"
+}
+```
+
+**If profile is "adaptive"**, also add default adaptive_settings (if not already present):
+```json
+{
+  "model_profile": "adaptive",
+  "adaptive_settings": {
+    "enable_auto_selection": true,
+    "prefer_cost_optimization": true,
+    "fallback_on_rate_limit": true,
+    "min_model": "haiku",
+    "max_model": "opus",
+    "log_selections": true
+  }
 }
 ```
 
