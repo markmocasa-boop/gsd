@@ -1,0 +1,143 @@
+# Stack Profiles Configuration for GSD Analyze-Codebase
+# Version: 1.0.0
+# Purpose: Multi-stack support for semantic analysis, export detection, and naming conventions
+# Usage: Referenced by .planning/intel/analyze-codebase for stack-aware semantic indexing
+
+# =============================================================================
+# JAVASCRIPT / TYPESCRIPT ECOSYSTEM
+# =============================================================================
+
+javascript:
+  display_name: "JavaScript"
+  marker_files: ["package.json", "yarn.lock", "npm-shrinkwrap.json"]
+  globs: ["**/*.js", "**/*.mjs", "**/*.cjs"]
+  excludes: ["**/node_modules/**", "**/dist/**", "**/build/**", "**/.next/**"]
+  export_patterns:
+    - pattern: 'export\s+(?:default\s+)?(?:async\s+)?function\s+(\w+)'
+      type: function
+      scope: public
+    - pattern: 'export\s+(?:default\s+)?class\s+(\w+)'
+      type: class
+      scope: public
+    - pattern: 'export\s+const\s+(\w+)\s*='
+      type: constant
+      scope: public
+    - pattern: 'module\.exports\.(\w+)'
+      type: commonjs_export
+      scope: public
+    - pattern: 'exports\.(\w+)\s*='
+      type: commonjs_export
+      scope: public
+  import_patterns:
+    - pattern: 'import\s+.*from\s+["\']([^"\']+)["\']'
+      type: es6
+    - pattern: 'require\(["\']([^"\']+)["\']\)'
+      type: commonjs
+    - pattern: 'import\(["\']([^"\']+)["\']\)'
+      type: dynamic
+  naming:
+    functions: camelCase
+    classes: PascalCase
+    constants: SCREAMING_SNAKE_CASE
+    variables: camelCase
+    files: kebab-case
+  directories:
+    src: "Source code"
+    lib: "Library code"
+    tests: "Test files"
+    __tests__: "Jest tests"
+    spec: "Spec files"
+    dist: "Distribution build"
+    build: "Build output"
+  frameworks:
+    react:
+      markers: ["**/*.jsx"]
+      package_deps: ["react", "react-dom"]
+      directories:
+        components: "React components"
+        hooks: "Custom hooks"
+        pages: "Page components"
+    express:
+      markers: ["app.js", "server.js"]
+      package_deps: ["express"]
+      directories:
+        routes: "Route handlers"
+        middleware: "Middleware functions"
+        controllers: "Controllers"
+
+typescript:
+  display_name: "TypeScript"
+  marker_files: ["tsconfig.json", "package.json"]
+  globs: ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"]
+  excludes: ["**/node_modules/**", "**/dist/**", "**/build/**", "**/.next/**"]
+  export_patterns:
+    - pattern: 'export\s+(?:default\s+)?(?:async\s+)?function\s+(\w+)'
+      type: function
+      scope: public
+    - pattern: 'export\s+(?:default\s+)?class\s+(\w+)'
+      type: class
+      scope: public
+    - pattern: 'export\s+(?:default\s+)?interface\s+(\w+)'
+      type: interface
+      scope: public
+    - pattern: 'export\s+(?:default\s+)?type\s+(\w+)'
+      type: type
+      scope: public
+    - pattern: 'export\s+(?:default\s+)?enum\s+(\w+)'
+      type: enum
+      scope: public
+    - pattern: 'export\s+const\s+(\w+)\s*:'
+      type: constant
+      scope: public
+  import_patterns:
+    - pattern: 'import\s+.*from\s+["\']([^"\']+)["\']'
+      type: es6
+    - pattern: 'import\s+type\s+.*from\s+["\']([^"\']+)["\']'
+      type: type_import
+    - pattern: 'require\(["\']([^"\']+)["\']\)'
+      type: commonjs
+  naming:
+    functions: camelCase
+    classes: PascalCase
+    interfaces: PascalCase
+    types: PascalCase
+    enums: PascalCase
+    constants: SCREAMING_SNAKE_CASE
+    variables: camelCase
+    files: kebab-case
+  directories:
+    src: "Source code"
+    lib: "Library code"
+    types: "Type definitions"
+    tests: "Test files"
+    __tests__: "Jest tests"
+    dist: "Distribution build"
+  frameworks:
+    react:
+      markers: ["**/*.tsx"]
+      package_deps: ["react", "@types/react"]
+      directories:
+        components: "React components"
+        hooks: "Custom hooks"
+    nextjs:
+      markers: ["next.config.js", "next.config.ts"]
+      package_deps: ["next"]
+      directories:
+        pages: "Next.js pages"
+        app: "App router"
+        api: "API routes"
+    nestjs:
+      markers: ["nest-cli.json"]
+      package_deps: ["@nestjs/core"]
+      directories:
+        modules: "NestJS modules"
+        controllers: "Controllers"
+        services: "Services"
+    angular:
+      markers: ["angular.json"]
+      package_deps: ["@angular/core"]
+      directories:
+        app: "Application code"
+        services: "Services"
+        components: "Components"
+
