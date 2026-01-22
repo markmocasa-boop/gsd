@@ -347,6 +347,14 @@ function install(isGlobal) {
     }
   }
 
+  // Copy skills directory
+  const skillsDir = path.join(claudeDir, 'skills');
+  fs.mkdirSync(skillsDir, { recursive: true });
+  const archiveSessionSrc = path.join(src, 'skills', 'archive-session');
+  const archiveSessionDest = path.join(skillsDir, 'archive-session');
+  copyWithPathReplacement(archiveSessionSrc, archiveSessionDest, pathPrefix);
+  console.log(`  ${green}✓${reset} Installed skills/archive-session`);
+
   // Copy CHANGELOG.md
   const changelogSrc = path.join(src, 'CHANGELOG.md');
   const changelogDest = path.join(claudeDir, 'get-shit-done', 'CHANGELOG.md');
