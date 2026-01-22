@@ -20,7 +20,11 @@ const args = process.argv.slice(2);
 const hasGlobal = args.includes('--global') || args.includes('-g');
 const hasLocal = args.includes('--local') || args.includes('-l');
 const hasOpencode = args.includes('--opencode');
-const claudeDirName = hasOpencode ? '.opencode' : '.claude'
+// For opencode: global uses ~/.config/opencode/, local uses .opencode/
+// For Claude Code: both use .claude/
+const claudeDirName = '.claude';  // Used for local installs and Claude Code
+const opencodeDirName = '.opencode';  // Used for opencode local installs
+const opencodeGlobalDir = '.config/opencode';  // Used for opencode global installs
 
 const banner = `
 ${cyan}   ██████╗ ███████╗██████╗
@@ -198,8 +202,8 @@ function convertClaudeToOpencodeFrontmatter(content) {
   convertedContent = convertedContent.replace(/\bTodoWrite\b/g, 'todowrite');
   // Replace /gsd:command with /gsd/command for opencode
   convertedContent = convertedContent.replace(/\/gsd:/g, '/gsd/');
-  // Replace ~/.claude with ~/.opencode
-  convertedContent = convertedContent.replace(/~\/\.claude\b/g, '~/.opencode');
+  // Replace ~/.claude with ~/.config/opencode (opencode's global config location)
+  convertedContent = convertedContent.replace(/~\/\.claude\b/g, '~/.config/opencode');
 
   // Check if content has frontmatter
   if (!convertedContent.startsWith('---')) {
@@ -389,6 +393,64 @@ function cleanupOrphanedHooks(settings) {
 }
 
 /**
+ * Configure OpenCode permissions to allow reading GSD reference docs
+ * This prevents permission prompts when GSD accesses ~/.config/opencode/get-shit-done/
+ */
+function configureOpencodePermissions() {
+  // OpenCode global config is at ~/.config/opencode/opencode.json
+  const configDir = path.join(os.homedir(), '.config', 'opencode');
+  const configPath = path.join(configDir, 'opencode.json');
+
+  // Ensure config directory exists
+  fs.mkdirSync(configDir, { recursive: true });
+
+  // Read existing config or create empty object
+  let config = {};
+  if (fs.existsSync(configPath)) {
+    try {
+      config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+    } catch (e) {
+      // Invalid JSON - start fresh but warn user
+      console.log(`  ${yellow}⚠${reset} ~/.config/opencode/opencode.json had invalid JSON, recreating`);
+    }
+  }
+
+  // Ensure permission structure exists
+  if (!config.permission) {
+    config.permission = {};
+  }
+
+  const gsdPath = '~/.config/opencode/get-shit-done/*';
+  let modified = false;
+
+  // Configure read permission
+  if (!config.permission.read || typeof config.permission.read !== 'object') {
+    config.permission.read = {};
+  }
+  if (config.permission.read[gsdPath] !== 'allow') {
+    config.permission.read[gsdPath] = 'allow';
+    modified = true;
+  }
+
+  // Configure external_directory permission (the safety guard for paths outside project)
+  if (!config.permission.external_directory || typeof config.permission.external_directory !== 'object') {
+    config.permission.external_directory = {};
+  }
+  if (config.permission.external_directory[gsdPath] !== 'allow') {
+    config.permission.external_directory[gsdPath] = 'allow';
+    modified = true;
+  }
+
+  if (!modified) {
+    return; // Already configured
+  }
+
+  // Write config back
+  fs.writeFileSync(configPath, JSON.stringify(config, null, 2) + '\n');
+  console.log(`  ${green}✓${reset} Configured read permission for GSD docs`);
+}
+
+/**
  * Verify a directory exists and contains files
  */
 function verifyInstalled(dirPath, description) {
@@ -425,22 +487,35 @@ function verifyFileInstalled(filePath, description) {
  */
 function install(isGlobal) {
   const src = path.join(__dirname, '..');
-  // Priority: explicit --config-dir arg > CLAUDE_CONFIG_DIR env var > default ~/.claude
-  const configDir = expandTilde(explicitConfigDir) || expandTilde(process.env.CLAUDE_CONFIG_DIR);
-  const defaultGlobalDir = configDir || path.join(os.homedir(), claudeDirName);
-  const claudeDir = isGlobal
-    ? defaultGlobalDir
-    : path.join(process.cwd(), claudeDirName);
+
+  // Determine target directory based on tool and install type
+  // OpenCode: global uses ~/.config/opencode/, local uses .opencode/
+  // Claude Code: both use .claude/ (with optional CLAUDE_CONFIG_DIR override)
+  let claudeDir;
+  let pathPrefix;
+
+  if (hasOpencode) {
+    if (isGlobal) {
+      claudeDir = path.join(os.homedir(), opencodeGlobalDir);
+      pathPrefix = `~/${opencodeGlobalDir}/`;
+    } else {
+      claudeDir = path.join(process.cwd(), opencodeDirName);
+      pathPrefix = `./${opencodeDirName}/`;
+    }
+  } else {
+    // Claude Code: respect CLAUDE_CONFIG_DIR for global installs
+    const configDir = expandTilde(explicitConfigDir) || expandTilde(process.env.CLAUDE_CONFIG_DIR);
+    claudeDir = isGlobal
+      ? (configDir || path.join(os.homedir(), claudeDirName))
+      : path.join(process.cwd(), claudeDirName);
+    pathPrefix = isGlobal
+      ? (configDir ? `${claudeDir}/` : `~/${claudeDirName}/`)
+      : `./${claudeDirName}/`;
+  }
 
   const locationLabel = isGlobal
     ? claudeDir.replace(os.homedir(), '~')
     : claudeDir.replace(process.cwd(), '.');
-
-  // Path prefix for file references
-  // Use actual path when CLAUDE_CONFIG_DIR is set, otherwise use ~ shorthand
-  const pathPrefix = isGlobal
-    ? (configDir ? `${claudeDir}/` : `~/${claudeDirName}/`)
-    : `./${claudeDirName}/`;
 
   console.log(`  Installing to ${cyan}${locationLabel}${reset}\n`);
 
@@ -707,14 +782,22 @@ function promptLocation() {
     }
   });
 
-  const configDir = expandTilde(explicitConfigDir) || expandTilde(process.env.CLAUDE_CONFIG_DIR);
-  const globalPath = configDir || path.join(os.homedir(), claudeDirName);
+  // Determine paths based on tool type
+  let globalPath, localDirName;
+  if (hasOpencode) {
+    globalPath = path.join(os.homedir(), opencodeGlobalDir);
+    localDirName = opencodeDirName;
+  } else {
+    const configDir = expandTilde(explicitConfigDir) || expandTilde(process.env.CLAUDE_CONFIG_DIR);
+    globalPath = configDir || path.join(os.homedir(), claudeDirName);
+    localDirName = claudeDirName;
+  }
   const globalLabel = globalPath.replace(os.homedir(), '~');
 
   console.log(`  ${yellow}Where would you like to install?${reset}
 
   ${cyan}1${reset}) Global ${dim}(${globalLabel})${reset} - available in all projects
-  ${cyan}2${reset}) Local  ${dim}(./${claudeDirName})${reset} - this project only
+  ${cyan}2${reset}) Local  ${dim}(./${localDirName})${reset} - this project only
 `);
 
   rl.question(`  Choice ${dim}[1]${reset}: `, (answer) => {
@@ -743,6 +826,7 @@ if (hasGlobal && hasLocal) {
     console.log(`  ${yellow}Note: opencode doesn't support statusline configuration (uses themes instead)${reset}\n`);
   }
   const { settingsPath, settings, statuslineCommand } = install(hasGlobal);
+  configureOpencodePermissions();
   finishInstall(settingsPath, settings, statuslineCommand, false);
 } else if (hasGlobal || hasLocal) {
   const { settingsPath, settings, statuslineCommand } = install(hasGlobal);
