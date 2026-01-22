@@ -6,6 +6,30 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.9.6] - 2026-01-22
+
+### Added
+- Interactive runtime selection: installer now prompts to choose Claude Code, OpenCode, or both
+- Native OpenCode support: `--opencode` flag converts GSD to OpenCode format automatically
+- `--both` flag to install for both Claude Code and OpenCode in one command
+- Auto-configures `~/.opencode.json` permissions for seamless GSD doc access
+
+### Changed
+- Installation flow now asks for runtime first, then location
+- Updated README with new installation options
+
+## [1.9.5] - 2025-01-22
+
+### Fixed
+- Subagents can now access MCP tools (Context7, etc.) - workaround for Claude Code bug #13898
+- Installer: Escape/Ctrl+C now cancels instead of installing globally
+- Installer: Fixed hook paths on Windows
+- Removed stray backticks in `/gsd:new-project` output
+
+### Changed
+- Condensed verbose documentation in templates and workflows (-170 lines)
+- Added CI/CD automation for releases
+
 ## [1.9.4] - 2026-01-21
 
 ### Changed
@@ -990,7 +1014,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - YOLO mode for autonomous execution
 - Interactive mode with checkpoints
 
-[Unreleased]: https://github.com/glittercowboy/get-shit-done/compare/v1.9.4...HEAD
+[Unreleased]: https://github.com/glittercowboy/get-shit-done/compare/v1.9.6...HEAD
+[1.9.6]: https://github.com/glittercowboy/get-shit-done/releases/tag/v1.9.6
 [1.9.4]: https://github.com/glittercowboy/get-shit-done/releases/tag/v1.9.4
 [1.9.2]: https://github.com/glittercowboy/get-shit-done/releases/tag/v1.9.2
 [1.9.0]: https://github.com/glittercowboy/get-shit-done/releases/tag/v1.9.0

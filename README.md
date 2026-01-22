@@ -75,7 +75,11 @@ People who want to describe what they want and have it built correctly — witho
 npx get-shit-done-cc
 ```
 
-That's it. Verify with `/gsd:help` inside your Claude Code interface.
+The installer prompts you to choose:
+1. **Runtime** — Claude Code, OpenCode, or both
+2. **Location** — Global (all projects) or local (current project only)
+
+Verify with `/gsd:help` inside your Claude Code or OpenCode interface.
 
 ### Staying Updated
 
@@ -95,11 +99,19 @@ npx get-shit-done-cc@latest
 <summary><strong>Non-interactive Install (Docker, CI, Scripts)</strong></summary>
 
 ```bash
-npx get-shit-done-cc --global   # Install to ~/.claude/
-npx get-shit-done-cc --local    # Install to ./.claude/
+# Claude Code
+npx get-shit-done-cc --claude --global   # Install to ~/.claude/
+npx get-shit-done-cc --claude --local    # Install to ./.claude/
+
+# OpenCode (open source, free models)
+npx get-shit-done-cc --opencode --global # Install to ~/.opencode/
+
+# Both runtimes
+npx get-shit-done-cc --both --global     # Install to both directories
 ```
 
-Use `--global` (`-g`) or `--local` (`-l`) to skip the interactive prompt.
+Use `--global` (`-g`) or `--local` (`-l`) to skip the location prompt.
+Use `--claude`, `--opencode`, or `--both` to skip the runtime prompt.
 
 </details>
 
@@ -111,7 +123,7 @@ Clone the repository and run the installer locally:
 ```bash
 git clone https://github.com/glittercowboy/get-shit-done.git
 cd get-shit-done
-node bin/install.js --local
+node bin/install.js --claude --local
 ```
 
 Installs to `./.claude/` for testing modifications before contributing.
@@ -518,6 +530,65 @@ Use `/gsd:settings` to toggle these, or override per-invocation:
 
 ---
 
+## LSP Support (Optional)
+
+GSD can use Language Server Protocol (LSP) for semantic code navigation instead of grep-based searching. This enables more accurate results for "find references", "go to definition", and understanding call hierarchies.
+
+### What LSP Enables
+
+- **Semantic navigation**: Find actual usages vs. text matches
+- **Call hierarchies**: See what calls a function and what it calls
+- **Type-aware search**: Distinguish between identically-named symbols
+- **Cross-file intelligence**: Follow imports and dependencies accurately
+
+### Setup
+
+Run the setup command to configure LSP for your project:
+
+```
+/gsd:setup-lsp
+```
+
+This will:
+1. Detect your project's languages
+2. Guide you through installing required language servers
+3. Configure `settings.json` with the appropriate LSP settings
+
+### Supported Languages
+
+| Language | Server | Install |
+|----------|--------|---------|
+| TypeScript/JavaScript | typescript-language-server | `npm i -g typescript-language-server typescript` |
+| Python | pylsp | `pip install python-lsp-server` |
+| Rust | rust-analyzer | Via rustup or system package |
+| Go | gopls | `go install golang.org/x/tools/gopls@latest` |
+
+### Configuration
+
+LSP is configured in `~/.claude/settings.json`:
+
+```json
+{
+  "lsp": {
+    "enabled": true,
+    "servers": {
+      "typescript": {
+        "command": ["typescript-language-server", "--stdio"]
+      }
+    }
+  }
+}
+```
+
+### Fallback Behavior
+
+LSP is opt-in. If not configured or if a language server isn't available:
+- GSD automatically falls back to grep-based searching
+- All functionality continues to work, just with text-based matching
+- No errors or interruptions to your workflow
+
+---
+
 ## Troubleshooting
 
 **Commands not found after install?**
@@ -540,6 +611,14 @@ If file reads fail with tilde paths (`~/.claude/...`), set `CLAUDE_CONFIG_DIR` b
 CLAUDE_CONFIG_DIR=/home/youruser/.claude npx get-shit-done-cc --global
 ```
 This ensures absolute paths are used instead of `~` which may not expand correctly in containers.
+
+---
+
+## Community Ports
+
+| Project | Platform | Description |
+|---------|----------|-------------|
+| [gsd-gemini](https://github.com/uberfuzzy/gsd-gemini) | Gemini CLI | GSD adapted for Google's Gemini CLI |
 
 ---
 
