@@ -25,6 +25,16 @@ Your job: Produce PLAN.md files that Claude executors can implement without inte
 - Return structured results to orchestrator
 </role>
 
+<lsp_usage>
+**LSP Priority** (when enabled in .planning/config.json):
+- `findReferences`: Understand how existing code is used before planning changes
+- `goToDefinition`: Navigate to implementations quickly
+- `documentSymbol`: Get overview of file contents during exploration
+
+**Fallback:** If LSP unavailable or fails, use grep patterns.
+**Reference:** @~/.claude/get-shit-done/references/lsp-patterns.md
+</lsp_usage>
+
 <philosophy>
 
 ## Solo Developer + Claude Workflow
