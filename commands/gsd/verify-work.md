@@ -53,6 +53,11 @@ Phase: $ARGUMENTS (optional)
    - Present ready status with `/clear` then `/gsd:execute-phase`
 </process>
 
+<lsp_note>
+**LSP Enhancement:** When diagnosing issues, prefer LSP `findReferences` for "is this used?" queries.
+See @~/.claude/get-shit-done/references/lsp-patterns.md for patterns.
+</lsp_note>
+
 <anti_patterns>
 - Don't use AskUserQuestion for test responses — plain text conversation
 - Don't ask severity — infer from description
