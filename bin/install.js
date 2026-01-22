@@ -435,6 +435,39 @@ function install(isGlobal) {
 }
 
 /**
+ * Detect project languages for LSP suggestion
+ */
+function detectProjectLanguages() {
+  const langs = [];
+  const cwd = process.cwd();
+
+  // TypeScript/JavaScript
+  if (fs.existsSync(path.join(cwd, 'tsconfig.json')) ||
+      fs.existsSync(path.join(cwd, 'package.json'))) {
+    langs.push('TypeScript/JavaScript');
+  }
+
+  // Python
+  if (fs.existsSync(path.join(cwd, 'pyproject.toml')) ||
+      fs.existsSync(path.join(cwd, 'requirements.txt')) ||
+      fs.existsSync(path.join(cwd, 'setup.py'))) {
+    langs.push('Python');
+  }
+
+  // Rust
+  if (fs.existsSync(path.join(cwd, 'Cargo.toml'))) {
+    langs.push('Rust');
+  }
+
+  // Go
+  if (fs.existsSync(path.join(cwd, 'go.mod'))) {
+    langs.push('Go');
+  }
+
+  return langs;
+}
+
+/**
  * Apply statusline config, then print completion message
  */
 function finishInstall(settingsPath, settings, statuslineCommand, shouldInstallStatusline) {
@@ -449,9 +482,17 @@ function finishInstall(settingsPath, settings, statuslineCommand, shouldInstallS
   // Always write settings (hooks were already configured in install())
   writeSettings(settingsPath, settings);
 
+  // Detect project languages and suggest LSP setup
+  const detectedLangs = detectProjectLanguages();
+
   console.log(`
   ${green}Done!${reset} Launch Claude Code and run ${cyan}/gsd:help${reset}.
 `);
+
+  if (detectedLangs.length > 0) {
+    console.log(`  ${yellow}LSP Support${reset}: Detected ${detectedLangs.join(', ')}.`);
+    console.log(`  Run ${cyan}/gsd:setup-lsp${reset} to enable enhanced code navigation.\n`);
+  }
 }
 
 /**
