@@ -333,6 +333,17 @@ Usage: `/gsd:set-profile budget`
 **`/gsd:help`**
 Show this command reference.
 
+**`/gsd:setup-lsp`**
+Configure LSP support for enhanced code navigation.
+
+- Detects project languages (TypeScript, Python, Rust, Go, etc.)
+- Updates `.planning/config.json` with LSP settings
+- Provides setup instructions for language servers and plugins
+- Enables faster `findReferences` and `goToDefinition` for GSD agents
+- Falls back to grep silently when LSP unavailable
+
+Usage: `/gsd:setup-lsp`
+
 **`/gsd:whats-new`**
 See what's changed since your installed version.
 
