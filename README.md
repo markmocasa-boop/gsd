@@ -532,6 +532,65 @@ Use `/gsd:settings` to toggle these, or override per-invocation:
 
 ---
 
+## LSP Support (Optional)
+
+GSD can use Language Server Protocol (LSP) for semantic code navigation instead of grep-based searching. This enables more accurate results for "find references", "go to definition", and understanding call hierarchies.
+
+### What LSP Enables
+
+- **Semantic navigation**: Find actual usages vs. text matches
+- **Call hierarchies**: See what calls a function and what it calls
+- **Type-aware search**: Distinguish between identically-named symbols
+- **Cross-file intelligence**: Follow imports and dependencies accurately
+
+### Setup
+
+Run the setup command to configure LSP for your project:
+
+```
+/gsd:setup-lsp
+```
+
+This will:
+1. Detect your project's languages
+2. Guide you through installing required language servers
+3. Configure `settings.json` with the appropriate LSP settings
+
+### Supported Languages
+
+| Language | Server | Install |
+|----------|--------|---------|
+| TypeScript/JavaScript | typescript-language-server | `npm i -g typescript-language-server typescript` |
+| Python | pylsp | `pip install python-lsp-server` |
+| Rust | rust-analyzer | Via rustup or system package |
+| Go | gopls | `go install golang.org/x/tools/gopls@latest` |
+
+### Configuration
+
+LSP is configured in `~/.claude/settings.json`:
+
+```json
+{
+  "lsp": {
+    "enabled": true,
+    "servers": {
+      "typescript": {
+        "command": ["typescript-language-server", "--stdio"]
+      }
+    }
+  }
+}
+```
+
+### Fallback Behavior
+
+LSP is opt-in. If not configured or if a language server isn't available:
+- GSD automatically falls back to grep-based searching
+- All functionality continues to work, just with text-based matching
+- No errors or interruptions to your workflow
+
+---
+
 ## Troubleshooting
 
 **Commands not found after install?**
@@ -577,7 +636,6 @@ This removes all GSD commands, agents, hooks, and settings while preserving your
 
 | Project | Platform | Description |
 |---------|----------|-------------|
-| [gsd-opencode](https://github.com/rokicool/gsd-opencode) | OpenCode | GSD adapted for OpenCode CLI |
 | [gsd-gemini](https://github.com/uberfuzzy/gsd-gemini) | Gemini CLI | GSD adapted for Google's Gemini CLI |
 
 ---

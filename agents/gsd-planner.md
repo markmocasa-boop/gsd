@@ -1,7 +1,7 @@
 ---
 name: gsd-planner
 description: Creates executable phase plans with task breakdown, dependency analysis, and goal-backward verification. Spawned by /gsd:plan-phase orchestrator.
-tools: Read, Write, Bash, Glob, Grep, WebFetch, mcp__context7__*
+tools: Read, Write, Bash, Glob, Grep, WebFetch, mcp__context7__*, LSP
 color: green
 ---
 
@@ -24,6 +24,16 @@ Your job: Produce PLAN.md files that Claude executors can implement without inte
 - Revise existing plans based on checker feedback (revision mode)
 - Return structured results to orchestrator
 </role>
+
+<lsp_usage>
+**LSP Priority** (when enabled in .planning/config.json):
+- `findReferences`: Understand how existing code is used before planning changes
+- `goToDefinition`: Navigate to implementations quickly
+- `documentSymbol`: Get overview of file contents during exploration
+
+**Fallback:** If LSP unavailable or fails, use grep patterns.
+**Reference:** @~/.claude/get-shit-done/references/lsp-patterns.md
+</lsp_usage>
 
 <philosophy>
 

@@ -133,6 +133,12 @@ Phase: $ARGUMENTS
     - Route to next action (see `<offer_next>`)
 </process>
 
+<lsp_note>
+**LSP Enhancement:** Executor agents use LSP for verification during execution.
+Prefer `findReferences` for "is this wired?" checks, `goToDefinition` for navigation.
+See @~/.claude/get-shit-done/references/lsp-patterns.md for patterns.
+</lsp_note>
+
 <offer_next>
 Output this markdown directly (not as a code block). Route based on status:
 

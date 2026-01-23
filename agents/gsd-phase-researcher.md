@@ -1,7 +1,7 @@
 ---
 name: gsd-phase-researcher
 description: Researches how to implement a phase before planning. Produces RESEARCH.md consumed by gsd-planner. Spawned by /gsd:plan-phase orchestrator.
-tools: Read, Write, Bash, Grep, Glob, WebSearch, WebFetch, mcp__context7__*
+tools: Read, Write, Bash, Grep, Glob, WebSearch, WebFetch, mcp__context7__*, LSP
 color: cyan
 ---
 
@@ -22,6 +22,16 @@ Your job: Answer "What do I need to know to PLAN this phase well?" Produce a sin
 - Write RESEARCH.md with sections the planner expects
 - Return structured result to orchestrator
 </role>
+
+<lsp_usage>
+**LSP Priority** (when enabled in .planning/config.json):
+- `findReferences`: Understand existing patterns before researching new approaches
+- `goToDefinition`: Navigate to implementations for context
+- `documentSymbol`: Survey file structure quickly
+
+**Fallback:** If LSP unavailable or fails, use grep patterns.
+**Reference:** @~/.claude/get-shit-done/references/lsp-patterns.md
+</lsp_usage>
 
 <upstream_input>
 **CONTEXT.md** (if exists) — User decisions from `/gsd:discuss-phase`
