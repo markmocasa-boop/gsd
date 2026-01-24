@@ -65,6 +65,59 @@ git check-ignore -q .planning 2>/dev/null && COMMIT_PLANNING_DOCS=false
 ```
 
 Store `COMMIT_PLANNING_DOCS` for use in git operations.
+
+**Load git branching config:**
+
+```bash
+# Check if branch-per-phase is enabled (default: false)
+BRANCH_PER_PHASE=$(cat .planning/config.json 2>/dev/null | grep -o '"branch_per_phase"[[:space:]]*:[[:space:]]*[^,}]*' | grep -o 'true\|false' || echo "false")
+
+# Get branch template (default if not set)
+BRANCH_TEMPLATE=$(cat .planning/config.json 2>/dev/null | grep -o '"branch_template"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*:.*"\([^"]*\)"/\1/' || echo "gsd/phase-{phase}-{slug}")
+```
+
+Store `BRANCH_PER_PHASE` and `BRANCH_TEMPLATE` for use in branch creation step.
+</step>
+
+<step name="create_phase_branch">
+If branch-per-phase is enabled, create or switch to the phase branch before execution.
+
+**Skip if disabled:**
+
+```bash
+if [ "$BRANCH_PER_PHASE" != "true" ]; then
+  # Branch-per-phase disabled, continue on current branch
+  exit 0
+fi
+```
+
+**Generate branch name:**
+
+```bash
+# Get phase name from directory (e.g., "03-authentication" → "authentication")
+PHASE_NAME=$(basename "$PHASE_DIR" | sed 's/^[0-9]*-//')
+
+# Create slug from phase name
+PHASE_SLUG=$(echo "$PHASE_NAME" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/--*/-/g' | sed 's/^-//;s/-$//')
+
+# Apply template
+BRANCH_NAME=$(echo "$BRANCH_TEMPLATE" | sed "s/{phase}/$PADDED_PHASE/g" | sed "s/{slug}/$PHASE_SLUG/g")
+```
+
+**Create or switch to branch:**
+
+```bash
+# Try to create new branch, if exists just switch to it
+git checkout -b "$BRANCH_NAME" 2>/dev/null || git checkout "$BRANCH_NAME"
+```
+
+**Report:**
+
+```
+Branch: $BRANCH_NAME (branch-per-phase enabled)
+```
+
+**Note:** All subsequent plan commits in this phase go to this branch. User merges after phase completion.
 </step>
 
 <step name="validate_phase">
