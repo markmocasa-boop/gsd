@@ -2,14 +2,15 @@
 
 # GET SHIT DONE
 
-**A light-weight and powerful meta-prompting, context engineering and spec-driven development system for Claude Code by TÂCHES.**
+**A light-weight and powerful meta-prompting, context engineering and spec-driven development system for Claude Code and OpenCode.**
 
 **Solves context rot — the quality degradation that happens as Claude fills its context window.**
 
 [![npm version](https://img.shields.io/npm/v/get-shit-done-cc?style=for-the-badge&logo=npm&logoColor=white&color=CB3837)](https://www.npmjs.com/package/get-shit-done-cc)
 [![npm downloads](https://img.shields.io/npm/dm/get-shit-done-cc?style=for-the-badge&logo=npm&logoColor=white&color=CB3837)](https://www.npmjs.com/package/get-shit-done-cc)
-[![License](https://img.shields.io/badge/license-MIT-blue?style=for-the-badge)](LICENSE)
+[![Discord](https://img.shields.io/badge/Discord-Join%20Server-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/5JJgD5svVS)
 [![GitHub stars](https://img.shields.io/github/stars/glittercowboy/get-shit-done?style=for-the-badge&logo=github&color=181717)](https://github.com/glittercowboy/get-shit-done)
+[![License](https://img.shields.io/badge/license-MIT-blue?style=for-the-badge)](LICENSE)
 
 <br>
 
@@ -75,17 +76,15 @@ People who want to describe what they want and have it built correctly — witho
 npx get-shit-done-cc
 ```
 
-That's it. Verify with `/gsd:help` inside your Claude Code interface.
+The installer prompts you to choose:
+1. **Runtime** — Claude Code, OpenCode, or both
+2. **Location** — Global (all projects) or local (current project only)
+
+Verify with `/gsd:help` inside your Claude Code or OpenCode interface.
 
 ### Staying Updated
 
-GSD evolves fast. Check for updates periodically:
-
-```
-/gsd:whats-new
-```
-
-Update with:
+GSD evolves fast. Update periodically:
 
 ```bash
 npx get-shit-done-cc@latest
@@ -95,11 +94,19 @@ npx get-shit-done-cc@latest
 <summary><strong>Non-interactive Install (Docker, CI, Scripts)</strong></summary>
 
 ```bash
-npx get-shit-done-cc --global   # Install to ~/.claude/
-npx get-shit-done-cc --local    # Install to ./.claude/
+# Claude Code
+npx get-shit-done-cc --claude --global   # Install to ~/.claude/
+npx get-shit-done-cc --claude --local    # Install to ./.claude/
+
+# OpenCode (open source, free models)
+npx get-shit-done-cc --opencode --global # Install to ~/.opencode/
+
+# Both runtimes
+npx get-shit-done-cc --both --global     # Install to both directories
 ```
 
-Use `--global` (`-g`) or `--local` (`-l`) to skip the interactive prompt.
+Use `--global` (`-g`) or `--local` (`-l`) to skip the location prompt.
+Use `--claude`, `--opencode`, or `--both` to skip the runtime prompt.
 
 </details>
 
@@ -111,7 +118,7 @@ Clone the repository and run the installer locally:
 ```bash
 git clone https://github.com/glittercowboy/get-shit-done.git
 cd get-shit-done
-node bin/install.js --local
+node bin/install.js --claude --local
 ```
 
 Installs to `./.claude/` for testing modifications before contributing.
@@ -426,8 +433,8 @@ You're never locked in. The system adapts.
 |---------|--------------|
 | `/gsd:progress` | Where am I? What's next? |
 | `/gsd:help` | Show all commands and usage guide |
-| `/gsd:whats-new` | See what changed since your installed version |
 | `/gsd:update` | Update GSD with changelog preview |
+| `/gsd:join-discord` | Join the GSD Discord community |
 
 ### Brownfield
 
@@ -540,6 +547,31 @@ If file reads fail with tilde paths (`~/.claude/...`), set `CLAUDE_CONFIG_DIR` b
 CLAUDE_CONFIG_DIR=/home/youruser/.claude npx get-shit-done-cc --global
 ```
 This ensures absolute paths are used instead of `~` which may not expand correctly in containers.
+
+### Uninstalling
+
+To remove GSD completely:
+
+```bash
+# Global installs
+npx get-shit-done-cc --claude --global --uninstall
+npx get-shit-done-cc --opencode --global --uninstall
+
+# Local installs (current project)
+npx get-shit-done-cc --claude --local --uninstall
+npx get-shit-done-cc --opencode --local --uninstall
+```
+
+This removes all GSD commands, agents, hooks, and settings while preserving your other configurations.
+
+---
+
+## Community Ports
+
+| Project | Platform | Description |
+|---------|----------|-------------|
+| [gsd-opencode](https://github.com/rokicool/gsd-opencode) | OpenCode | GSD adapted for OpenCode CLI |
+| [gsd-gemini](https://github.com/uberfuzzy/gsd-gemini) | Gemini CLI | GSD adapted for Google's Gemini CLI |
 
 ---
 

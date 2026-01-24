@@ -6,6 +6,71 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.9.12] - 2025-01-23
+
+### Removed
+- `/gsd:whats-new` command — use `/gsd:update` instead (shows changelog with cancel option)
+
+### Fixed
+- Restored auto-release GitHub Actions workflow
+
+## [1.9.11] - 2026-01-23
+
+### Changed
+- Switched to manual npm publish workflow (removed GitHub Actions CI/CD)
+
+### Fixed
+- Discord badge now uses static format for reliable rendering
+
+## [1.9.10] - 2026-01-23
+
+### Added
+- Discord community link shown in installer completion message
+
+## [1.9.9] - 2026-01-23
+
+### Added
+- `/gsd:join-discord` command to quickly access the GSD Discord community invite link
+
+## [1.9.8] - 2025-01-22
+
+### Added
+- Uninstall flag (`--uninstall`) to cleanly remove GSD from global or local installations
+
+### Fixed
+- Context file detection now matches filename variants (handles both `CONTEXT.md` and `{phase}-CONTEXT.md` patterns)
+
+## [1.9.7] - 2026-01-22
+
+### Fixed
+- OpenCode installer now uses correct XDG-compliant config path (`~/.config/opencode/`) instead of `~/.opencode/`
+- OpenCode commands use flat structure (`command/gsd-help.md`) matching OpenCode's expected format
+- OpenCode permissions written to `~/.config/opencode/opencode.json`
+
+## [1.9.6] - 2026-01-22
+
+### Added
+- Interactive runtime selection: installer now prompts to choose Claude Code, OpenCode, or both
+- Native OpenCode support: `--opencode` flag converts GSD to OpenCode format automatically
+- `--both` flag to install for both Claude Code and OpenCode in one command
+- Auto-configures `~/.opencode.json` permissions for seamless GSD doc access
+
+### Changed
+- Installation flow now asks for runtime first, then location
+- Updated README with new installation options
+
+## [1.9.5] - 2025-01-22
+
+### Fixed
+- Subagents can now access MCP tools (Context7, etc.) - workaround for Claude Code bug #13898
+- Installer: Escape/Ctrl+C now cancels instead of installing globally
+- Installer: Fixed hook paths on Windows
+- Removed stray backticks in `/gsd:new-project` output
+
+### Changed
+- Condensed verbose documentation in templates and workflows (-170 lines)
+- Added CI/CD automation for releases
+
 ## [1.9.4] - 2026-01-21
 
 ### Changed
@@ -990,7 +1055,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - YOLO mode for autonomous execution
 - Interactive mode with checkpoints
 
-[Unreleased]: https://github.com/glittercowboy/get-shit-done/compare/v1.9.4...HEAD
+[Unreleased]: https://github.com/glittercowboy/get-shit-done/compare/v1.9.12...HEAD
+[1.9.12]: https://github.com/glittercowboy/get-shit-done/releases/tag/v1.9.12
+[1.9.11]: https://github.com/glittercowboy/get-shit-done/releases/tag/v1.9.11
+[1.9.10]: https://github.com/glittercowboy/get-shit-done/releases/tag/v1.9.10
+[1.9.9]: https://github.com/glittercowboy/get-shit-done/releases/tag/v1.9.9
+[1.9.8]: https://github.com/glittercowboy/get-shit-done/releases/tag/v1.9.8
+[1.9.7]: https://github.com/glittercowboy/get-shit-done/releases/tag/v1.9.7
+[1.9.6]: https://github.com/glittercowboy/get-shit-done/releases/tag/v1.9.6
+[1.9.5]: https://github.com/glittercowboy/get-shit-done/releases/tag/v1.9.5
 [1.9.4]: https://github.com/glittercowboy/get-shit-done/releases/tag/v1.9.4
 [1.9.2]: https://github.com/glittercowboy/get-shit-done/releases/tag/v1.9.2
 [1.9.0]: https://github.com/glittercowboy/get-shit-done/releases/tag/v1.9.0
