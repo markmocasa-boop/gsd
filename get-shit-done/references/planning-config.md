@@ -7,6 +7,10 @@ Configuration options for `.planning/` directory behavior.
 "planning": {
   "commit_docs": true,
   "search_gitignored": false
+},
+"git": {
+  "branch_per_phase": false,
+  "branch_template": "gsd/phase-{phase}-{slug}"
 }
 ```
 
@@ -14,6 +18,8 @@ Configuration options for `.planning/` directory behavior.
 |--------|---------|-------------|
 | `commit_docs` | `true` | Whether to commit planning artifacts to git |
 | `search_gitignored` | `false` | Add `--no-ignore` to broad rg searches |
+| `git.branch_per_phase` | `false` | Create a git branch for each phase instead of committing to current branch |
+| `git.branch_template` | `"gsd/phase-{phase}-{slug}"` | Template for branch names. `{phase}` = phase number, `{slug}` = phase name slug |
 </config_schema>
 
 <commit_docs_behavior>
@@ -90,5 +96,52 @@ To use uncommitted mode:
    ```
 
 </setup_uncommitted_mode>
+
+<branch_per_phase_behavior>
+
+**When `git.branch_per_phase: false` (default):**
+- All phase work commits to current branch
+- Standard GSD behavior
+
+**When `git.branch_per_phase: true`:**
+- `execute-phase` creates/switches to a branch before execution
+- Branch name generated from template (e.g., `gsd/phase-03-authentication`)
+- All plan commits go to that branch
+- User merges branches manually after phase completion
+
+**Branch template variables:**
+- `{phase}` — Zero-padded phase number (e.g., "03")
+- `{slug}` — Lowercase, hyphenated phase name (e.g., "user-authentication")
+
+**Checking the config:**
+
+```bash
+# Check if branch-per-phase is enabled
+BRANCH_PER_PHASE=$(cat .planning/config.json 2>/dev/null | grep -o '"branch_per_phase"[[:space:]]*:[[:space:]]*[^,}]*' | grep -o 'true\|false' || echo "false")
+
+# Get branch template (default if not set)
+BRANCH_TEMPLATE=$(cat .planning/config.json 2>/dev/null | grep -o '"branch_template"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*:.*"\([^"]*\)"/\1/' || echo "gsd/phase-{phase}-{slug}")
+```
+
+**Branch creation in execute-phase:**
+
+```bash
+if [ "$BRANCH_PER_PHASE" = "true" ]; then
+  # Generate branch name from template
+  PHASE_SLUG=$(echo "$PHASE_NAME" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/--*/-/g' | sed 's/^-//;s/-$//')
+  BRANCH_NAME=$(echo "$BRANCH_TEMPLATE" | sed "s/{phase}/$PADDED_PHASE/g" | sed "s/{slug}/$PHASE_SLUG/g")
+
+  # Create or switch to branch
+  git checkout -b "$BRANCH_NAME" 2>/dev/null || git checkout "$BRANCH_NAME"
+fi
+```
+
+**Use cases:**
+- Code review per phase (PR per phase)
+- Rollback individual phases
+- Feature flags via branches
+- Team collaboration (different developers on different phases)
+
+</branch_per_phase_behavior>
 
 </planning_config>

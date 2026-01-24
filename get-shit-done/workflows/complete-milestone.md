@@ -579,6 +579,94 @@ Progress: [updated progress bar]
 
 </step>
 
+<step name="handle_phase_branches">
+
+Check if branch-per-phase was used and offer merge options.
+
+**Check for phase branches:**
+
+```bash
+# Check if branch-per-phase is enabled in config
+BRANCH_PER_PHASE=$(cat .planning/config.json 2>/dev/null | grep -o '"branch_per_phase"[[:space:]]*:[[:space:]]*[^,}]*' | grep -o 'true\|false' || echo "false")
+
+# Get branch template to find phase branches
+BRANCH_TEMPLATE=$(cat .planning/config.json 2>/dev/null | grep -o '"branch_template"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*:.*"\([^"]*\)"/\1/' || echo "gsd/phase-{phase}-{slug}")
+
+# Extract prefix from template (before first variable)
+BRANCH_PREFIX=$(echo "$BRANCH_TEMPLATE" | sed 's/{.*//')
+
+# Find all phase branches for this milestone
+PHASE_BRANCHES=$(git branch --list "${BRANCH_PREFIX}*" 2>/dev/null | sed 's/^\*//' | tr -d ' ')
+```
+
+**If no phase branches found:** Skip to git_tag step.
+
+**If phase branches exist:**
+
+Present merge options:
+
+```
+## Phase Branches Detected
+
+The following phase branches exist for this milestone:
+
+${PHASE_BRANCHES}
+
+Options:
+1. **Merge all to main** — Merge each branch to main sequentially
+2. **Delete without merging** — Branches already merged or not needed
+3. **Keep branches** — Leave branches for manual handling
+```
+
+Use AskUserQuestion:
+
+```
+AskUserQuestion([
+  {
+    question: "How should phase branches be handled?",
+    header: "Branches",
+    multiSelect: false,
+    options: [
+      { label: "Merge all to main", description: "Merge each phase branch to main sequentially" },
+      { label: "Delete without merging", description: "Branches already merged or not needed" },
+      { label: "Keep branches", description: "Leave branches for manual handling later" }
+    ]
+  }
+])
+```
+
+**If "Merge all to main":**
+
+```bash
+CURRENT_BRANCH=$(git branch --show-current)
+git checkout main
+
+for branch in $PHASE_BRANCHES; do
+  echo "Merging $branch..."
+  git merge --no-ff "$branch" -m "Merge branch '$branch' for v[X.Y]"
+done
+
+git checkout "$CURRENT_BRANCH"
+```
+
+Report: "Merged {N} phase branches to main"
+
+**If "Delete without merging":**
+
+```bash
+for branch in $PHASE_BRANCHES; do
+  git branch -d "$branch" 2>/dev/null || git branch -D "$branch"
+done
+```
+
+Report: "Deleted {N} phase branches"
+
+**If "Keep branches":**
+
+Report: "Phase branches preserved for manual handling"
+
+</step>
+
 <step name="git_tag">
 
 Create git tag for milestone:
